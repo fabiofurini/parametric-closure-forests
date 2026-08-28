@@ -149,22 +149,43 @@ coefficient families, sizes, seeds, algorithms) follow plan section 9:
   `rho∈{0.3,0.6,0.9,1.0}`, 6 families, 10 seeds (2400 instances), FMA, HFMA
   and RaC on every instance, paired sequence verification.
 - **C — large random**: `n∈{10000,...,100000}`, same structural/coefficient
-  matrix as B, HFMA and RaC on every instance; FMA only up to the size where
-  it stays under the 300 s timeout.
+  matrix as B, HFMA and RaC on every instance; FMA restricted to `n=10000`
+  only (2 repetitions instead of the campaign's usual 3, since it is a
+  reference baseline, not the headline comparison), preregistered from the
+  timing calibration in "Known measurement limitation" above (FMA already
+  takes tens of seconds per instance at `n=20000`).
 - **D — structured stress**: `path-mixed`, `binary-mixed`, `star-mixed`,
-  `n∈{100,...,100000}`, 6 families, 10 seeds, HFMA vs RaC paired (FMA where
-  it fits the timeout).
+  `n∈{100,200,500,1000,2000,5000,10000,20000,50000,100000}`, 6 families, 10
+  seeds (600 instances per topology), HFMA vs RaC paired; FMA restricted to
+  `n≤2000` for the same reason as campaign C. On `star-mixed`, HFMA and
+  DHFMA both exhaust the 8GB memory ceiling on every single instance at
+  `n∈{20000,50000,100000}` (180/600 instances); because HFMA and RaC are
+  benchmarked together in one process, that also loses RaC's result for
+  those instances even though RaC alone is unaffected, so a RaC-only
+  recovery pass is run on exactly that size/topology subset
+  (`instances/campaign_d_star_large_only`, see `tools/run_official_campaigns.sh`).
 - **E — specialized orientations**: `in-forest` (HFMA vs HIMA vs RaC) and
-  `out-forest` (HFMA vs HOMA vs RaC), medium and large sizes.
-- **F — BPPF baseline (optional, scope-limited)**: BPPF is used as Oracle 2
-  (above) at arbitrary scale, since a single fixed-lambda min-cut call is
-  cheap and scale-independent in principle. Using it as a *timed baseline*
-  across a full parametric sweep is scoped to small/medium instances only
-  (`n` up to a few thousand), because `tools/convert_to_bppf.py` bakes one
-  exact lambda into integer arc capacities per call and requires the scaled
-  coefficients to stay under `2**53` (double-precision-safe) with one BPPF
-  process invocation per breakpoint — correct at any scale, but too many
-  process spawns to be a fair wall-clock comparison once an instance has
-  many thousands of breakpoints. This scope limitation is a direct instance
-  of the "transparent handling of limited precision" the plan requires for
-  this campaign (section 9.6).
+  `out-forest` (HFMA vs HOMA vs RaC), `n∈{100,...,1000}∪{10000,...,100000}`
+  (20 sizes), `rho∈{0.6,1.0}` (a reduced density set relative to campaigns B
+  and C, since in-/out-forest structure is already the primary variable
+  under study here), 6 coefficient families, 5 seeds: 1200 instances per
+  orientation, 2400 total. This reduced matrix (vs. B/C's 4 densities and 10
+  seeds) is a preregistered scoping choice to keep the campaign tractable
+  once extended across two orientations and the full size range up to
+  n=100000, not an ad hoc reduction after the fact.
+- **F — BPPF baseline (optional, scope-limited)**: `n∈{100,200,500,1000}`,
+  `mixed-forest`, `rho=0.6`, all 6 coefficient families, 3 seeds (72
+  instances), 3 repetitions (`tools/run_bppf_campaign.py`). BPPF is used as
+  Oracle 2 (above) at arbitrary scale, since a single fixed-lambda min-cut
+  call is cheap and scale-independent in principle. Using it as a *timed
+  baseline* across a full parametric sweep is scoped to small/medium
+  instances only, because `tools/convert_to_bppf.py` bakes one exact lambda
+  into integer arc capacities per call and requires the scaled coefficients
+  to stay under `2**53` (double-precision-safe) with one BPPF process
+  invocation per breakpoint — correct at any scale, but too many process
+  spawns to be a fair wall-clock comparison once an instance has many
+  thousands of breakpoints. This scope limitation is a direct instance of
+  the "transparent handling of limited precision" the plan requires for this
+  campaign (section 9.6); the resulting total time is 91x-1270x HFMA's
+  in-process time on the same instance, reported only as evidence BPPF is a
+  correct oracle at this scale, never as a native-speed baseline.
