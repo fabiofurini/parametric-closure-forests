@@ -2,7 +2,7 @@
 
 This is the independent C++ codebase for the computational part of the
 parametric maximum-closure paper on directed forests.  It does not compile,
-read or depend on the historical PCKP project.
+read or depend on the historical PCKP project (see `PROVENANCE.md`).
 
 The notation follows the manuscript: each item has integral profit \(p_i\),
 strictly positive integral weight \(w_i\), and affine contribution
@@ -10,11 +10,22 @@ strictly positive integral weight \(w_i\), and affine contribution
 
 ## Layout
 
-- `include/`, `src/`: C++ library and command-line solver;
+- `include/`, `src/`: C++ library and command-line solver/benchmark;
 - `tests/`: CTest differential and structural checks;
-- `instances/`: new closure-format instances;
-- `docs/`: the validated plan and the RaC specification traceability record.
-- `instances/manifests/`: deterministic instance metadata and SHA-256 checksums.
+- `instances/`: closure-format instances (bulk archives are generated, not
+  committed — see `docs/REPRODUCIBILITY.md`; `instances/tiny/` and
+  `instances/mixed_tree.pcf` are small committed fixtures);
+- `instances/manifests/`: deterministic instance metadata and SHA-256 checksums;
+- `tools/`: instance generators, the benchmark runner, the BPPF (Oracle 2)
+  converter/verifier, and the aggregation/reporting/packaging pipeline;
+- `third_party/bppf/`: unmodified upstream bounded-precision parametric
+  pseudoflow source, used only as an independent max-flow oracle and
+  optional baseline;
+- `docs/`: the validated plan, the RaC audit and specification, the instance
+  format, the experimental protocol, and reproducibility instructions;
+- `results/`: raw and processed campaign data, LaTeX table fragments;
+- `PROVENANCE.md`: what was ported from the legacy PCKP codebase and how it
+  was verified; `docs/RAC_AUDIT.md`: the line-by-line audit of the RaC port.
 
 ## Build and test
 
@@ -59,18 +70,41 @@ closure-enumeration oracle on all small cases, verifies HOMA on out-forests,
 and checks partition, strict ratio ordering and closure-prefix invariants.
 
 RaC is specified against the manuscript in
-[`docs/RAC_SPECIFICATION.md`](docs/RAC_SPECIFICATION.md). It must continue to
-pass these checks before it is used in a benchmark campaign.
+[`docs/RAC_SPECIFICATION.md`](docs/RAC_SPECIFICATION.md) and audited
+line-by-line against the recovered legacy source in
+[`docs/RAC_AUDIT.md`](docs/RAC_AUDIT.md). It must continue to pass these
+checks before it is used in a benchmark campaign.
+
+`tools/verify_with_bppf.py` implements Oracle 2 (plan section 7.2): it
+recomputes the maximum closure at a fixed rational lambda with
+`third_party/bppf`, an unrelated third-party max-flow/min-cut solver, and
+checks agreement with this repository's own algorithms.
 
 ## Instance manifests
 
 Build or verify a deterministic manifest for one instance directory with:
 
 ```bash
-python3 tools/build_instance_manifest.py --instances instances/structured/star_pilot --output /tmp/star.json
-python3 tools/build_instance_manifest.py --instances instances/structured/star_pilot --verify /tmp/star.json
+python3 tools/build_instance_manifest.py --instances instances/tiny --output /tmp/tiny.json
+python3 tools/build_instance_manifest.py --instances instances/tiny --verify /tmp/tiny.json
 ```
 
 The committed manifests record the stable identifier, topology classification,
 coefficient bounds, component count, seed when encoded in the filename, and
 the SHA-256 checksum of every `.pcf` file.
+
+## Official benchmark campaigns
+
+```bash
+tools/run_official_campaigns.sh          # campaigns B, C, D, E (plan section 9)
+python3 tools/run_bppf_campaign.py \
+  --pcf-solve build/pcf_solve --pcf-benchmark build/pcf_benchmark \
+  --pcf-bppf-oracle build/pcf_bppf_oracle --instances instances/campaign_f \
+  --output results/raw/campaign_f_bppf.csv                     # campaign F, scope-limited
+tools/build_report.sh                    # validate, aggregate, emit tables
+tools/package_release.sh                 # zip instances/ and results/ for a release
+```
+
+See `docs/EXPERIMENTAL_PROTOCOL.md` for the full campaign design, measurement
+protocol and documented scope limitations, and `docs/REPRODUCIBILITY.md` for
+the clean-clone independence checklist.

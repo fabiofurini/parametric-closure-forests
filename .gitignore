@@ -6,6 +6,8 @@
 *.so
 *.gcda
 *.gcno
+__pycache__/
+*.pyc
 
 # Bulk generated instance archives are reproducible from tools/ + manifests/
 # and are not stored in git history (see docs/REPRODUCIBILITY.md).

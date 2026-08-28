@@ -10,20 +10,63 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: [gcc, clang]
-        build_type: [Release, Debug]
+        include:
+          - compiler: gcc
+            build_type: Release
+            sanitize: false
+          - compiler: gcc
+            build_type: Debug
+            sanitize: true
+          - compiler: clang
+            build_type: Debug
+            sanitize: false
     steps:
       - uses: actions/checkout@v4
       - name: Configure
         env:
           CC: ${{ matrix.compiler == 'gcc' && 'gcc' || 'clang' }}
           CXX: ${{ matrix.compiler == 'gcc' && 'g++' || 'clang++' }}
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        run: |
+          if [ "${{ matrix.sanitize }}" = "true" ]; then
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
+              -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+          else
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          fi
       - name: Build
         run: cmake --build build --parallel 2
       - name: Test
         run: ctest --test-dir build --output-on-failure
-      - name: Manifest smoke test
+
+  tooling-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure and build
         run: |
-          python3 tools/build_instance_manifest.py --instances instances/structured/star_pilot --output /tmp/manifest.json
-          python3 tools/build_instance_manifest.py --instances instances/structured/star_pilot --verify /tmp/manifest.json
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+      - name: Manifest round-trip on the committed tiny fixture
+        run: |
+          python3 tools/build_instance_manifest.py --instances instances/tiny --output /tmp/manifest.json
+          python3 tools/build_instance_manifest.py --instances instances/tiny --verify /tmp/manifest.json
+          python3 tools/build_instance_manifest.py --instances instances/tiny --verify instances/manifests/tiny.json
+      - name: Generate, benchmark, validate, aggregate, and emit a table end to end
+        run: |
+          python3 tools/generate_random_instances.py --output /tmp/ci_instances --sizes 20,40 \
+            --densities 0.6 --topology gen --seeds 1
+          python3 tools/run_benchmark.py --binary build/pcf_benchmark --instances /tmp/ci_instances \
+            --output /tmp/ci_raw.csv --algorithms fma,hfma,rac --repetitions 2 --campaign-id ci_smoke \
+            --timeout-seconds 60
+          python3 tools/validate_raw_data.py --raw /tmp/ci_raw.csv --instances-root /tmp/ci_instances
+          python3 tools/aggregate_results.py --raw /tmp/ci_raw.csv --output-dir /tmp/ci_processed
+          test "$(python3 -c "import json; print(json.load(open('/tmp/ci_processed/results_summary.json'))['n_mismatched_instances'])")" = "0"
+          python3 tools/emit_latex_tables.py --mode correctness --processed-dir /tmp/ci_processed --output /tmp/ci_correctness.tex
+          python3 tools/emit_latex_tables.py --mode ratio --processed-dir /tmp/ci_processed --output /tmp/ci_ratio.tex \
+            --campaign-id ci_smoke --baseline hfma --candidate rac --group-by n_nodes
+      - name: Oracle 2 cross-check against BPPF on one small instance
+        run: |
+          cmake --build build --target pcf_bppf_oracle --parallel 2
+          python3 tools/verify_with_bppf.py --pcf-solve build/pcf_solve --pcf-bppf-oracle build/pcf_bppf_oracle \
+            --instance instances/mixed_tree.pcf --algorithm hfma --lambda-num 7 --lambda-den 2

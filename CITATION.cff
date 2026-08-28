@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it and the accompanying manuscript once it is public."
+title: "parametric-closure-forests: exact algorithms for parametric maximum closure on directed forests"
+type: software
+authors:
+  - family-names: Furini
+    given-names: Fabio
+license: MIT
+repository-code: "https://github.com/fabiofurini/parametric-closure-forests"
+version: "0.1.0"
+date-released: "2026-08-28"
+abstract: >
+  Independent C++ implementation and benchmark infrastructure for the
+  parametric maximum-closure problem on directed forests: FMA, DFMA, HFMA,
+  DHFMA, HIMA, HOMA and a rake-and-compress (RaC) algorithm, together with an
+  exhaustive-enumeration oracle, reproducible instance generators and a
+  benchmark/aggregation pipeline. This repository accompanies a forthcoming
+  paper on the parametric closure problem; it is independent from, and does
+  not depend on, the precedence-constrained knapsack (PCKP) codebase and
+  arXiv paper it was ported from (see PROVENANCE.md).
+preferred-citation:
+  type: article
+  title: "Parametric maximum closure on directed forests: exact algorithms and computational study"
+  authors:
+    - family-names: Furini
+      given-names: Fabio
+  status: in-preparation
