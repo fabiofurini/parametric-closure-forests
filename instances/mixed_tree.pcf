@@ -1,0 +1,8 @@
+pcf 1
+n 4
+profits 10 3 8 -2
+weights 2 1 4 1
+arcs 3
+1 2
+3 2
+4 3

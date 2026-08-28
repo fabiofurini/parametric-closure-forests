@@ -1,0 +1,14 @@
+/build/
+/cmake-build-*/
+/.cache/
+*.o
+*.a
+*.so
+*.gcda
+*.gcno
+
+# Bulk generated instance archives are reproducible from tools/ + manifests/
+# and are not stored in git history (see docs/REPRODUCIBILITY.md).
+instances/**/*.pcf
+!instances/tiny/**/*.pcf
+!instances/mixed_tree.pcf

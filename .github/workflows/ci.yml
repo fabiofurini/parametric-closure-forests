@@ -1,0 +1,29 @@
+name: C++ validation
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+        build_type: [Release, Debug]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        env:
+          CC: ${{ matrix.compiler == 'gcc' && 'gcc' || 'clang' }}
+          CXX: ${{ matrix.compiler == 'gcc' && 'g++' || 'clang++' }}
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      - name: Build
+        run: cmake --build build --parallel 2
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Manifest smoke test
+        run: |
+          python3 tools/build_instance_manifest.py --instances instances/structured/star_pilot --output /tmp/manifest.json
+          python3 tools/build_instance_manifest.py --instances instances/structured/star_pilot --verify /tmp/manifest.json

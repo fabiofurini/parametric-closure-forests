@@ -1,0 +1,17 @@
+instance,algorithm,run,elapsed_ns,macroitems
+random_n10000_rho0.3_strongly-corr_seed0.pcf,hfma,0,4850678,1480
+random_n10000_rho0.3_strongly-corr_seed0.pcf,rac,0,16895457,1480
+random_n10000_rho0.3_uncorr_seed0.pcf,hfma,0,4103896,8320
+random_n10000_rho0.3_uncorr_seed0.pcf,rac,0,16923410,8320
+random_n10000_rho0.6_strongly-corr_seed0.pcf,hfma,0,8974714,1774
+random_n10000_rho0.6_strongly-corr_seed0.pcf,rac,0,36557935,1774
+random_n10000_rho0.6_uncorr_seed0.pcf,hfma,0,11544772,6899
+random_n10000_rho0.6_uncorr_seed0.pcf,rac,0,40208374,6899
+random_n20000_rho0.3_strongly-corr_seed0.pcf,hfma,0,7969425,1860
+random_n20000_rho0.3_strongly-corr_seed0.pcf,rac,0,48392016,1860
+random_n20000_rho0.3_uncorr_seed0.pcf,hfma,0,8777506,16347
+random_n20000_rho0.3_uncorr_seed0.pcf,rac,0,50086076,16347
+random_n20000_rho0.6_strongly-corr_seed0.pcf,hfma,0,19390293,2337
+random_n20000_rho0.6_strongly-corr_seed0.pcf,rac,0,107223424,2337
+random_n20000_rho0.6_uncorr_seed0.pcf,hfma,0,19818986,13612
+random_n20000_rho0.6_uncorr_seed0.pcf,rac,0,108352857,13612
