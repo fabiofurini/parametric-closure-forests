@@ -63,6 +63,18 @@ No number in a committed `.tex` table fragment is hand-typed: regenerating a
 table from the same raw CSV must reproduce it exactly (byte-for-byte, since
 `tools/emit_latex_tables.py` has no non-deterministic step).
 
+`tools/build_report.sh` runs the full pipeline above for every official
+campaign at once. Its raw CSVs (`results/raw/*.csv`) are committed to git,
+but the `.pcf` instance files they reference are not (see "Large instance
+archives" below); `validate_raw_data.py` needs those files to confirm every
+referenced instance actually exists, so on a fresh clone `build_report.sh`
+fails at the validation step until `dist/instances.zip` (or a regenerated
+equivalent) has been downloaded and extracted into `instances/`. The
+already-committed `results/processed/` and `results/tables/*.tex` are the
+exact output of the last time this pipeline was run against the full
+archive and are available immediately, without any download, for anyone who
+only wants the numbers rather than to regenerate them from scratch.
+
 ## Large instance archives and raw data
 
 Full-scale campaign archives (campaigns C and D reach `n=100000`) and their
