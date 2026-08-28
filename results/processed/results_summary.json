@@ -1,0 +1,32 @@
+{
+  "algorithms": [
+    "dfma",
+    "dhfma",
+    "fma",
+    "hfma",
+    "hima",
+    "homa",
+    "rac"
+  ],
+  "campaigns": [
+    "campaign_b",
+    "campaign_c",
+    "campaign_d_binary",
+    "campaign_d_path",
+    "campaign_d_star",
+    "campaign_e_in",
+    "campaign_e_out"
+  ],
+  "n_instances": 9000,
+  "n_mismatched_instances": 0,
+  "n_raw_rows": 203880,
+  "runs_per_algorithm": {
+    "dfma": 29580,
+    "dhfma": 45660,
+    "fma": 29580,
+    "hfma": 45660,
+    "hima": 3600,
+    "homa": 3600,
+    "rac": 46200
+  }
+}

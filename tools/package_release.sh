@@ -14,7 +14,7 @@ zip -rq -X dist/instances.zip \
   instances/campaign_d_path instances/campaign_d_binary instances/campaign_d_star \
   instances/campaign_e_in instances/campaign_e_out instances/campaign_f \
   instances/manifests instances/tiny instances/mixed_tree.pcf \
-  -x '*.failures.csv'
+  -x '*.failures.csv' -x '*_fma_subset/*' -x '*_large_only/*'
 sha256sum dist/instances.zip > dist/instances.zip.sha256
 echo "instances.zip: $(du -h dist/instances.zip | cut -f1)"
 

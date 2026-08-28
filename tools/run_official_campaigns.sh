@@ -66,6 +66,22 @@ campaign_d() {
       --sizes 100,200,500,1000,2000,5000,10000,20000,50000,100000 --seeds 10
     run "${dir}" hfma,rac 3 campaign_d_${shape} 3
 
+    if [ "${shape}" = star ]; then
+      # HFMA is known to exhaust the memory ceiling on large mixed-star
+      # instances (docs/EXPERIMENTAL_PROTOCOL.md). Since hfma and rac run in
+      # the same process above, an HFMA memory failure also loses RaC's
+      # result for that instance even though RaC alone is unaffected. Recover
+      # it with a RaC-only pass restricted to the sizes where this happens.
+      local large_only=instances/campaign_d_star_large_only
+      if [ ! -d "${large_only}" ]; then
+        mkdir -p "${large_only}"
+        for n in 20000 50000 100000; do
+          find "${dir}" -name "star_n${n}_*" -exec ln -sf "$(pwd)/{}" "${large_only}/" \;
+        done
+      fi
+      run "${large_only}" rac 3 campaign_d_star 3
+    fi
+
     local fma_subset=instances/campaign_d_${shape}_fma_subset
     if [ ! -d "${fma_subset}" ]; then
       mkdir -p "${fma_subset}"

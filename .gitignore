@@ -9,6 +9,9 @@
 __pycache__/
 *.pyc
 
+# Release packages (dist/) are attached to GitHub releases, not committed.
+/dist/
+
 # Bulk generated instance archives are reproducible from tools/ + manifests/
 # and are not stored in git history (see docs/REPRODUCIBILITY.md).
 instances/**/*.pcf
