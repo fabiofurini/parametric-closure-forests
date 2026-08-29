@@ -1,7 +1,10 @@
 # The `.pcf` instance format
 
-One parametric maximum-closure instance per file. Grammar (whitespace
-including newlines is insignificant between tokens):
+One parametric maximum-closure instance per file. For how the topology and
+coefficients of a benchmark instance are actually generated, see
+[`INSTANCE_GENERATION.md`](INSTANCE_GENERATION.md); this page covers only
+the file grammar. Grammar (whitespace including newlines is insignificant
+between tokens):
 
 ```text
 pcf 1
