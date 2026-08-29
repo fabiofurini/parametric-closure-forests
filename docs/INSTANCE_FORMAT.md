@@ -65,9 +65,9 @@ used across the test suite documentation.
 ## CLI
 
 ```text
-pcf_solve --instance FILE --algorithm fma|dfma|hfma|dhfma|hima|homa|rac [--output FILE]
+pcf_solve --instance FILE --algorithm pac|dpac|hpac|dhpac|hipac|hopac|rac [--output FILE]
 ```
 
-`pcf_solve` prints the full macroitem sequence: node membership, cumulative
-profit/weight and the exact `P/W` ratio of every macroitem, in non-increasing
+`pcf_solve` prints the full closure layer sequence: node membership, cumulative
+profit/weight and the exact `P/W` ratio of every closure layer, in non-increasing
 ratio order. No capacity flag exists; passing one is a usage error.

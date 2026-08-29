@@ -11,7 +11,7 @@ the resulting profit-to-weight ratios p_i/w_i, never by a knapsack class:
 - near-ties: many nodes share a common target ratio up to a small integer
   jitter -> stresses exact rational comparisons near-equal but distinct.
 - exact-ties: many nodes share one exact rational ratio -> stresses the
-  canonicalization rule that merges consecutive macroitems at equal ratio.
+  canonicalization rule that merges consecutive layers at equal ratio.
 
 Every function returns (profits, weights) with weights strictly positive, as
 required by section 1 of the plan.

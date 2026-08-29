@@ -15,18 +15,18 @@ int main(int argc, char* argv[]) {
                 if (flag == "--instance") instance_path = value;
                 else algorithm = value;
             } else {
-                throw std::invalid_argument("usage: pcf_solve --instance FILE --algorithm fma|dfma|hfma|hima|dhfma|homa|rac");
+                throw std::invalid_argument("usage: pcf_solve --instance FILE --algorithm pac|dpac|hpac|hipac|dhpac|hopac|rac");
             }
         }
         if (instance_path.empty() || algorithm.empty()) throw std::invalid_argument("missing required option");
         const auto instance = pcf::read_instance(instance_path);
-        pcf::MacroitemSequence result;
-        if (algorithm == "fma") result = pcf::compute_fma(instance);
-        else if (algorithm == "dfma") result = pcf::compute_dfma(instance);
-        else if (algorithm == "hfma") result = pcf::compute_hfma(instance);
-        else if (algorithm == "hima") result = pcf::compute_hima(instance);
-        else if (algorithm == "dhfma") result = pcf::compute_dhfma(instance);
-        else if (algorithm == "homa") result = pcf::compute_homa(instance);
+        pcf::ClosureLayerSequence result;
+        if (algorithm == "pac") result = pcf::compute_pac(instance);
+        else if (algorithm == "dpac") result = pcf::compute_dpac(instance);
+        else if (algorithm == "hpac") result = pcf::compute_hpac(instance);
+        else if (algorithm == "hipac") result = pcf::compute_hipac(instance);
+        else if (algorithm == "dhpac") result = pcf::compute_dhpac(instance);
+        else if (algorithm == "hopac") result = pcf::compute_hopac(instance);
         else if (algorithm == "rac") result = pcf::compute_rac(instance);
         else throw std::invalid_argument("unknown closure algorithm: " + algorithm);
         pcf::write_sequence(std::cout, result);

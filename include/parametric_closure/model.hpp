@@ -20,7 +20,10 @@ struct Instance {
     std::vector<Arc> arcs;
 };
 
-struct Macroitem {
+// A closure layer is one increment M_r \ M_{r-1} of the nested optimal
+// closure sequence -- itself the maximal closure of the residual instance
+// at lambda = lambda_r (see the manuscript's Proposition on optimal ratios).
+struct ClosureLayer {
     std::vector<int> nodes;
     std::int64_t profit = 0;
     std::int64_t weight = 0;
@@ -28,8 +31,8 @@ struct Macroitem {
     Ratio ratio() const { return {profit, weight}; }
 };
 
-struct MacroitemSequence {
-    std::vector<Macroitem> macroitems;
+struct ClosureLayerSequence {
+    std::vector<ClosureLayer> layers;
 };
 
 }  // namespace pcf

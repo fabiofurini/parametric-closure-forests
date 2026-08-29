@@ -1,11 +1,11 @@
 {
   "algorithms": [
-    "dfma",
-    "dhfma",
-    "fma",
-    "hfma",
-    "hima",
-    "homa",
+    "dhpac",
+    "dpac",
+    "hipac",
+    "hopac",
+    "hpac",
+    "pac",
     "rac"
   ],
   "campaigns": [
@@ -21,12 +21,12 @@
   "n_mismatched_instances": 0,
   "n_raw_rows": 203880,
   "runs_per_algorithm": {
-    "dfma": 29580,
-    "dhfma": 45660,
-    "fma": 29580,
-    "hfma": 45660,
-    "hima": 3600,
-    "homa": 3600,
+    "dhpac": 45660,
+    "dpac": 29580,
+    "hipac": 3600,
+    "hopac": 3600,
+    "hpac": 45660,
+    "pac": 29580,
     "rac": 46200
   }
 }

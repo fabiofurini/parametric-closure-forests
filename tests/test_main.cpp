@@ -13,11 +13,11 @@ void require(bool value, const char* message) {
     if (!value) throw std::runtime_error(message);
 }
 
-bool same_sequence(const pcf::MacroitemSequence& lhs, const pcf::MacroitemSequence& rhs) {
-    if (lhs.macroitems.size() != rhs.macroitems.size()) return false;
-    for (std::size_t i = 0; i < lhs.macroitems.size(); ++i) {
-        if (lhs.macroitems[i].nodes != rhs.macroitems[i].nodes) return false;
-        if (!(lhs.macroitems[i].ratio() == rhs.macroitems[i].ratio())) return false;
+bool same_sequence(const pcf::ClosureLayerSequence& lhs, const pcf::ClosureLayerSequence& rhs) {
+    if (lhs.layers.size() != rhs.layers.size()) return false;
+    for (std::size_t i = 0; i < lhs.layers.size(); ++i) {
+        if (lhs.layers[i].nodes != rhs.layers[i].nodes) return false;
+        if (!(lhs.layers[i].ratio() == rhs.layers[i].ratio())) return false;
     }
     return true;
 }
@@ -26,20 +26,20 @@ pcf::Instance mixed_tree() {
     return {4, {10, 3, 8, -2}, {2, 1, 4, 1}, {{0, 1}, {2, 1}, {3, 2}}};
 }
 
-void require_well_formed(const pcf::Instance& instance, const pcf::MacroitemSequence& sequence) {
+void require_well_formed(const pcf::Instance& instance, const pcf::ClosureLayerSequence& sequence) {
     std::vector<int> rank(instance.n, -1);
-    for (std::size_t r = 0; r < sequence.macroitems.size(); ++r) {
-        const auto& macroitem = sequence.macroitems[r];
-        if (macroitem.nodes.empty()) throw std::runtime_error("empty macroitem");
-        if (macroitem.weight <= 0) throw std::runtime_error("non-positive macroitem weight");
-        for (const int v : macroitem.nodes) {
-            if (v < 0 || v >= instance.n || rank[v] != -1) throw std::runtime_error("macroitems do not partition items");
+    for (std::size_t r = 0; r < sequence.layers.size(); ++r) {
+        const auto& layer = sequence.layers[r];
+        if (layer.nodes.empty()) throw std::runtime_error("empty layer");
+        if (layer.weight <= 0) throw std::runtime_error("non-positive layer weight");
+        for (const int v : layer.nodes) {
+            if (v < 0 || v >= instance.n || rank[v] != -1) throw std::runtime_error("layers do not partition items");
             rank[v] = static_cast<int>(r);
         }
-        if (r > 0 && pcf::compare(sequence.macroitems[r - 1].ratio(), macroitem.ratio()) <= 0)
-            throw std::runtime_error("macroitem ratios are not strictly decreasing");
+        if (r > 0 && pcf::compare(sequence.layers[r - 1].ratio(), layer.ratio()) <= 0)
+            throw std::runtime_error("layer ratios are not strictly decreasing");
     }
-    for (const int r : rank) if (r < 0) throw std::runtime_error("missing item in macroitem sequence");
+    for (const int r : rank) if (r < 0) throw std::runtime_error("missing item in layer sequence");
     for (const auto& arc : instance.arcs) {
         if (rank[arc.tail] < rank[arc.head]) throw std::runtime_error("prefix is not a closure");
     }
@@ -67,21 +67,21 @@ void require_optimal_mask(const pcf::Instance& instance, unsigned mask, const pc
     const __int128 value = value_at(instance, mask, lambda);
     for (unsigned candidate = 0; candidate < (1U << instance.n); ++candidate) {
         if (is_closed_mask(instance, candidate) && value_at(instance, candidate, lambda) > value)
-            throw std::runtime_error("macroitem prefix is not maximum closure at tested lambda");
+            throw std::runtime_error("layer prefix is not maximum closure at tested lambda");
     }
 }
 
-void require_matches_enumeration(const pcf::Instance& instance, const pcf::MacroitemSequence& sequence) {
+void require_matches_enumeration(const pcf::Instance& instance, const pcf::ClosureLayerSequence& sequence) {
     if (instance.n > 20) throw std::runtime_error("enumeration oracle called beyond its safe limit");
     unsigned prefix = 0U;
-    for (std::size_t r = 0; r < sequence.macroitems.size(); ++r) {
-        const auto& macroitem = sequence.macroitems[r];
-        for (const int v : macroitem.nodes) prefix |= 1U << v;
-        const pcf::Ratio breakpoint = macroitem.ratio();
+    for (std::size_t r = 0; r < sequence.layers.size(); ++r) {
+        const auto& layer = sequence.layers[r];
+        for (const int v : layer.nodes) prefix |= 1U << v;
+        const pcf::Ratio breakpoint = layer.ratio();
         require_optimal_mask(instance, prefix, breakpoint);
         pcf::Ratio sample;
-        if (r + 1 < sequence.macroitems.size()) {
-            const auto next = sequence.macroitems[r + 1].ratio();
+        if (r + 1 < sequence.layers.size()) {
+            const auto next = sequence.layers[r + 1].ratio();
             sample = {breakpoint.num * next.den + next.num * breakpoint.den,
                       2 * breakpoint.den * next.den};
         } else {
@@ -89,7 +89,7 @@ void require_matches_enumeration(const pcf::Instance& instance, const pcf::Macro
         }
         require_optimal_mask(instance, prefix, sample);
     }
-    const auto first = sequence.macroitems.front().ratio();
+    const auto first = sequence.layers.front().ratio();
     require_optimal_mask(instance, 0U, {first.num + first.den, first.den});
 }
 
@@ -139,20 +139,20 @@ void test_rac_differential() {
         for (int repetition = 0; repetition < 20; ++repetition) {
             const auto instance = random_forest(n, generator);
             pcf::validate_instance(instance);
-            const auto fma = pcf::compute_fma(instance);
-            const auto dfma = pcf::compute_dfma(instance);
-            const auto hfma = pcf::compute_hfma(instance);
-            const auto dhfma = pcf::compute_dhfma(instance);
+            const auto pac = pcf::compute_pac(instance);
+            const auto dpac = pcf::compute_dpac(instance);
+            const auto hpac = pcf::compute_hpac(instance);
+            const auto dhpac = pcf::compute_dhpac(instance);
             const auto rac = pcf::compute_rac(instance);
-            require_well_formed(instance, fma);
-            require_well_formed(instance, dfma);
-            require_well_formed(instance, hfma);
-            require_well_formed(instance, dhfma);
+            require_well_formed(instance, pac);
+            require_well_formed(instance, dpac);
+            require_well_formed(instance, hpac);
+            require_well_formed(instance, dhpac);
             require_well_formed(instance, rac);
-            require(same_sequence(fma, dfma), "FMA and DFMA differ on random forest");
-            require(same_sequence(fma, hfma), "FMA and HFMA differ on random forest");
-            require(same_sequence(dhfma, hfma), "DHFMA and HFMA differ on random forest");
-            require(same_sequence(fma, rac), "FMA and RaC differ on random forest");
+            require(same_sequence(pac, dpac), "PaC and DPaC differ on random forest");
+            require(same_sequence(pac, hpac), "PaC and HPaC differ on random forest");
+            require(same_sequence(dhpac, hpac), "DHPaC and HPaC differ on random forest");
+            require(same_sequence(pac, rac), "PaC and RaC differ on random forest");
         }
     }
 }
@@ -162,51 +162,51 @@ void test_rac_small_random_enumeration() {
     std::uniform_int_distribution<int> size(2, 11);
     for (int repetition = 0; repetition < 10000; ++repetition) {
         const auto instance = random_forest(size(generator), generator);
-        const auto fma = pcf::compute_fma(instance);
-        const auto dfma = pcf::compute_dfma(instance);
-        const auto hfma = pcf::compute_hfma(instance);
-        const auto dhfma = pcf::compute_dhfma(instance);
+        const auto pac = pcf::compute_pac(instance);
+        const auto dpac = pcf::compute_dpac(instance);
+        const auto hpac = pcf::compute_hpac(instance);
+        const auto dhpac = pcf::compute_dhpac(instance);
         const auto rac = pcf::compute_rac(instance);
-        require_well_formed(instance, fma);
-        require_well_formed(instance, dfma);
-        require_well_formed(instance, hfma);
-        require_well_formed(instance, dhfma);
+        require_well_formed(instance, pac);
+        require_well_formed(instance, dpac);
+        require_well_formed(instance, hpac);
+        require_well_formed(instance, dhpac);
         require_well_formed(instance, rac);
-        require_matches_enumeration(instance, fma);
-        require_matches_enumeration(instance, dfma);
-        require_matches_enumeration(instance, hfma);
-        require_matches_enumeration(instance, dhfma);
+        require_matches_enumeration(instance, pac);
+        require_matches_enumeration(instance, dpac);
+        require_matches_enumeration(instance, hpac);
+        require_matches_enumeration(instance, dhpac);
         require_matches_enumeration(instance, rac);
-        require(same_sequence(dhfma, hfma), "DHFMA and HFMA differ on enumerated random forest");
-        require(same_sequence(dfma, hfma), "DFMA and HFMA differ on enumerated random forest");
-        require(same_sequence(fma, hfma), "FMA and HFMA differ on enumerated random forest");
-        require(same_sequence(fma, rac), "FMA and RaC differ on enumerated random forest");
+        require(same_sequence(dhpac, hpac), "DHPaC and HPaC differ on enumerated random forest");
+        require(same_sequence(dpac, hpac), "DPaC and HPaC differ on enumerated random forest");
+        require(same_sequence(pac, hpac), "PaC and HPaC differ on enumerated random forest");
+        require(same_sequence(pac, rac), "PaC and RaC differ on enumerated random forest");
     }
 }
 
-void test_dhfma_against_hfma() {
+void test_dhpac_against_hpac() {
     std::mt19937 generator(28082026);
     std::uniform_int_distribution<int> small_size(2, 11);
     for (int repetition = 0; repetition < 6000; ++repetition) {
         const auto instance = random_out_forest(small_size(generator), generator);
         require(pcf::is_out_forest(instance), "generated instance must be an out-forest");
-        const auto dfma = pcf::compute_dfma(instance);
-        const auto hfma = pcf::compute_hfma(instance);
-        const auto dhfma = pcf::compute_dhfma(instance);
-        const auto homa = pcf::compute_homa(instance);
-        require_well_formed(instance, dhfma);
-        require_matches_enumeration(instance, dhfma);
-        require(same_sequence(dfma, hfma), "DFMA and HFMA differ on enumerated out-forest");
-        require(same_sequence(dhfma, hfma), "DHFMA and HFMA differ on enumerated out-forest");
-        require(same_sequence(dhfma, homa), "DHFMA and HOMA alias differ");
+        const auto dpac = pcf::compute_dpac(instance);
+        const auto hpac = pcf::compute_hpac(instance);
+        const auto dhpac = pcf::compute_dhpac(instance);
+        const auto hopac = pcf::compute_hopac(instance);
+        require_well_formed(instance, dhpac);
+        require_matches_enumeration(instance, dhpac);
+        require(same_sequence(dpac, hpac), "DPaC and HPaC differ on enumerated out-forest");
+        require(same_sequence(dhpac, hpac), "DHPaC and HPaC differ on enumerated out-forest");
+        require(same_sequence(dhpac, hopac), "DHPaC and HOPaC alias differ");
     }
     for (int n = 1; n <= 500; ++n) {
         for (int repetition = 0; repetition < 4; ++repetition) {
             const auto instance = random_out_forest(n, generator);
-            const auto hfma = pcf::compute_hfma(instance);
-            const auto dhfma = pcf::compute_dhfma(instance);
-            require_well_formed(instance, dhfma);
-            require(same_sequence(dhfma, hfma), "DHFMA and HFMA differ on large out-forest");
+            const auto hpac = pcf::compute_hpac(instance);
+            const auto dhpac = pcf::compute_dhpac(instance);
+            require_well_formed(instance, dhpac);
+            require(same_sequence(dhpac, hpac), "DHPaC and HPaC differ on large out-forest");
         }
     }
 }
@@ -231,20 +231,20 @@ void test_structured_rac_differential() {
     for (const std::string shape : {"path", "binary", "star"}) {
         for (const int n : {1, 2, 3, 4, 7, 16, 63, 128, 257}) {
             const auto instance = structured_tree(n, shape);
-            const auto fma = pcf::compute_fma(instance);
-            const auto dfma = pcf::compute_dfma(instance);
-            const auto hfma = pcf::compute_hfma(instance);
-            const auto dhfma = pcf::compute_dhfma(instance);
+            const auto pac = pcf::compute_pac(instance);
+            const auto dpac = pcf::compute_dpac(instance);
+            const auto hpac = pcf::compute_hpac(instance);
+            const auto dhpac = pcf::compute_dhpac(instance);
             const auto rac = pcf::compute_rac(instance);
-            require_well_formed(instance, fma);
-            require_well_formed(instance, dfma);
-            require_well_formed(instance, hfma);
-            require_well_formed(instance, dhfma);
+            require_well_formed(instance, pac);
+            require_well_formed(instance, dpac);
+            require_well_formed(instance, hpac);
+            require_well_formed(instance, dhpac);
             require_well_formed(instance, rac);
-            require(same_sequence(dfma, hfma), "DFMA and HFMA differ on structured tree");
-            require(same_sequence(dhfma, hfma), "DHFMA and HFMA differ on structured tree");
-            require(same_sequence(fma, hfma), "FMA and HFMA differ on structured tree");
-            require(same_sequence(fma, rac), "FMA and RaC differ on structured tree");
+            require(same_sequence(dpac, hpac), "DPaC and HPaC differ on structured tree");
+            require(same_sequence(dhpac, hpac), "DHPaC and HPaC differ on structured tree");
+            require(same_sequence(pac, hpac), "PaC and HPaC differ on structured tree");
+            require(same_sequence(pac, rac), "PaC and RaC differ on structured tree");
         }
     }
 }
@@ -282,25 +282,25 @@ void test_rac_exhaustive_small() {
                             const auto [u, v] = edges[e];
                             instance.arcs.push_back((direction & (1 << e)) ? pcf::Arc{u, v} : pcf::Arc{v, u});
                         }
-                        const auto fma = pcf::compute_fma(instance);
-                        const auto dfma = pcf::compute_dfma(instance);
-                        const auto hfma = pcf::compute_hfma(instance);
-                        const auto dhfma = pcf::compute_dhfma(instance);
+                        const auto pac = pcf::compute_pac(instance);
+                        const auto dpac = pcf::compute_dpac(instance);
+                        const auto hpac = pcf::compute_hpac(instance);
+                        const auto dhpac = pcf::compute_dhpac(instance);
                         const auto rac = pcf::compute_rac(instance);
-                        require_well_formed(instance, fma);
-                        require_well_formed(instance, dfma);
-                        require_well_formed(instance, hfma);
-                        require_well_formed(instance, dhfma);
+                        require_well_formed(instance, pac);
+                        require_well_formed(instance, dpac);
+                        require_well_formed(instance, hpac);
+                        require_well_formed(instance, dhpac);
                         require_well_formed(instance, rac);
-                        require_matches_enumeration(instance, fma);
-                        require_matches_enumeration(instance, dfma);
-                        require_matches_enumeration(instance, hfma);
-                        require_matches_enumeration(instance, dhfma);
+                        require_matches_enumeration(instance, pac);
+                        require_matches_enumeration(instance, dpac);
+                        require_matches_enumeration(instance, hpac);
+                        require_matches_enumeration(instance, dhpac);
                         require_matches_enumeration(instance, rac);
-                        require(same_sequence(dfma, hfma), "DFMA and HFMA differ on exhaustive small forest");
-                        require(same_sequence(dhfma, hfma), "DHFMA and HFMA differ on exhaustive small forest");
-                        require(same_sequence(fma, hfma), "FMA and HFMA differ on exhaustive small forest");
-                        require(same_sequence(fma, rac), "FMA and RaC differ on exhaustive small forest");
+                        require(same_sequence(dpac, hpac), "DPaC and HPaC differ on exhaustive small forest");
+                        require(same_sequence(dhpac, hpac), "DHPaC and HPaC differ on exhaustive small forest");
+                        require(same_sequence(pac, hpac), "PaC and HPaC differ on exhaustive small forest");
+                        require(same_sequence(pac, rac), "PaC and RaC differ on exhaustive small forest");
                     }
                 }
             }
@@ -316,22 +316,22 @@ int main() {
         pcf::validate_instance(instance);
         require(pcf::is_forest(instance), "fixture must be a forest");
         require(pcf::is_in_forest(instance), "fixture must be an in-forest");
-        const auto fma = pcf::compute_fma(instance);
-        const auto dfma = pcf::compute_dfma(instance);
-        const auto hfma = pcf::compute_hfma(instance);
-        const auto dhfma = pcf::compute_dhfma(instance);
-        const auto hima = pcf::compute_hima(instance);
+        const auto pac = pcf::compute_pac(instance);
+        const auto dpac = pcf::compute_dpac(instance);
+        const auto hpac = pcf::compute_hpac(instance);
+        const auto dhpac = pcf::compute_dhpac(instance);
+        const auto hipac = pcf::compute_hipac(instance);
         const auto rac = pcf::compute_rac(instance);
-        require(same_sequence(fma, hfma), "FMA and HFMA differ");
-        require(same_sequence(fma, dfma), "FMA and DFMA differ");
-        require(same_sequence(hfma, dhfma), "HFMA and DHFMA differ");
-        require(same_sequence(fma, hima), "FMA and HIMA differ");
-        require(same_sequence(fma, rac), "FMA and RaC differ");
-        require_well_formed(instance, fma);
+        require(same_sequence(pac, hpac), "PaC and HPaC differ");
+        require(same_sequence(pac, dpac), "PaC and DPaC differ");
+        require(same_sequence(hpac, dhpac), "HPaC and DHPaC differ");
+        require(same_sequence(pac, hipac), "PaC and HIPaC differ");
+        require(same_sequence(pac, rac), "PaC and RaC differ");
+        require_well_formed(instance, pac);
         require_well_formed(instance, rac);
         test_rac_exhaustive_small();
         test_rac_small_random_enumeration();
-        test_dhfma_against_hfma();
+        test_dhpac_against_hpac();
         test_rac_differential();
         test_structured_rac_differential();
         std::cout << "pcf tests passed\n";

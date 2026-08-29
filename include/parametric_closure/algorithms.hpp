@@ -26,14 +26,14 @@ struct RaCStats {
     std::uint64_t estimated_bytes = 0;
 };
 
-MacroitemSequence compute_fma(const Instance& instance);
-MacroitemSequence compute_dfma(const Instance& instance);
-MacroitemSequence compute_hfma(const Instance& instance);
-MacroitemSequence compute_hima(const Instance& instance);
-// Dual heap-based FMA for a general directed forest.
-MacroitemSequence compute_dhfma(const Instance& instance);
-// Specialized dual heap algorithm for out-forests, called HOMA in the manuscript.
-MacroitemSequence compute_homa(const Instance& instance);
-MacroitemSequence compute_rac(const Instance& instance, RaCStats* stats = nullptr);
+ClosureLayerSequence compute_pac(const Instance& instance);
+ClosureLayerSequence compute_dpac(const Instance& instance);
+ClosureLayerSequence compute_hpac(const Instance& instance);
+ClosureLayerSequence compute_hipac(const Instance& instance);
+// Dual heap-based PaC for a general directed forest.
+ClosureLayerSequence compute_dhpac(const Instance& instance);
+// Specialized dual heap algorithm for out-forests, called HOPaC in the manuscript.
+ClosureLayerSequence compute_hopac(const Instance& instance);
+ClosureLayerSequence compute_rac(const Instance& instance, RaCStats* stats = nullptr);
 
 }  // namespace pcf

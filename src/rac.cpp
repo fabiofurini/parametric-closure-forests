@@ -31,8 +31,8 @@ struct IntInstance {
     std::vector<i64> p,w;
     std::vector<IntArc> arcs;
 };
-struct IntMacroitem { std::vector<int> nodes; i64 p=0,w=0; };
-struct IntSequence { std::vector<IntMacroitem> macroitems; };
+struct IntClosureLayer { std::vector<int> nodes; i64 p=0,w=0; };
+struct IntSequence { std::vector<IntClosureLayer> layers; };
 
 
 struct Rat {
@@ -271,12 +271,12 @@ public:
         std::sort(order.begin(),order.end(),[&](int a,int b){int c=cmp_rat(theta_orig[a],theta_orig[b]);return c?c>0:a<b;});
         IntSequence seq;
         for(int v:order){
-            if(seq.macroitems.empty()) seq.macroitems.push_back({});
+            if(seq.layers.empty()) seq.layers.push_back({});
             else {
-                int prev=seq.macroitems.back().nodes.front();
-                if(!rat_eq(theta_orig[prev],theta_orig[v])) seq.macroitems.push_back({});
+                int prev=seq.layers.back().nodes.front();
+                if(!rat_eq(theta_orig[prev],theta_orig[v])) seq.layers.push_back({});
             }
-            auto &m=seq.macroitems.back();m.nodes.push_back(v);m.p+=ins.p[v];m.w+=ins.w[v];
+            auto &m=seq.layers.back();m.nodes.push_back(v);m.p+=ins.p[v];m.w+=ins.w[v];
         }
         ct.clusters=clusters.size();
         ct.pieces_stored=0; ct.estimated_bytes=clusters.capacity()*sizeof(Cluster);
@@ -483,7 +483,7 @@ private:
 
 }  // namespace
 
-MacroitemSequence compute_rac(const Instance& instance, RaCStats* stats) {
+ClosureLayerSequence compute_rac(const Instance& instance, RaCStats* stats) {
     validate_instance(instance);
     IntInstance in;
     in.n = instance.n;
@@ -494,14 +494,14 @@ MacroitemSequence compute_rac(const Instance& instance, RaCStats* stats) {
 
     RaCSolver solver(in);
     const IntSequence seq = solver.solve();
-    MacroitemSequence out;
-    out.macroitems.reserve(seq.macroitems.size());
-    for (const auto& im : seq.macroitems) {
-        Macroitem m;
+    ClosureLayerSequence out;
+    out.layers.reserve(seq.layers.size());
+    for (const auto& im : seq.layers) {
+        ClosureLayer m;
         m.nodes = im.nodes;
         m.profit = im.p;
         m.weight = im.w;
-        out.macroitems.push_back(std::move(m));
+        out.layers.push_back(std::move(m));
     }
     if (stats) *stats = solver.counters();
     return out;

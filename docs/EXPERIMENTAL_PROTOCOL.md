@@ -54,7 +54,7 @@ its results report, not per row:
 - Correctness is never included in the timed region: `pcf_benchmark` times
   only the `compute_*` call; hashing the result for `sequence_hash` happens
   immediately after the timer stops (a handful of hash mixing operations per
-  macroitem, not part of `elapsed_ns`), and cross-algorithm/oracle
+  closure layer, not part of `elapsed_ns`), and cross-algorithm/oracle
   correctness comparison happens later, in `tools/aggregate_results.py`, on
   already-collected CSV rows.
 - Wall time only: `elapsed_ns` is `std::chrono::steady_clock` wall time.
@@ -75,7 +75,7 @@ its results report, not per row:
 - `tools/aggregate_results.py` reports the median and interquartile range
   (`statistics.quantiles(..., method="inclusive")`, Q3-Q1) of `elapsed_ns`
   and `peak_rss_kib` per (campaign, instance, algorithm).
-- Ratios (e.g. RaC/HFMA) are computed **per paired instance** and then
+- Ratios (e.g. RaC/HPaC) are computed **per paired instance** and then
   aggregated (median and IQR of the per-instance ratios), never as a ratio
   of two aggregate means
   (`tools/emit_latex_tables.py --mode ratio`).
@@ -104,7 +104,7 @@ Two independent oracles are used, plus cross-algorithm differential checks:
    `-DBREAKPOINTS` (target `pcf_bppf_oracle`), and compares the returned
    minimum-cut closure against our own algorithm's closure at that lambda.
    This is genuinely independent: BPPF is a third-party pseudoflow
-   implementation unrelated to FMA/HFMA/RaC. It was validated on 481
+   implementation unrelated to PaC/HPaC/RaC. It was validated on 481
    breakpoint-midpoint checks spanning random/path/star topologies and all
    six coefficient families with zero disagreements before being trusted
    for campaign F.
@@ -114,7 +114,7 @@ Two independent oracles are used, plus cross-algorithm differential checks:
    produced the same `sequence_hash`, else `"mismatch"` (listed in
    `mismatches.csv`). `sequence_hash` is a 64-bit FNV-1a fingerprint over
    the canonical (sorted-node, profit, weight) serialization of the
-   macroitem sequence — **not** a cryptographic SHA-256, unlike the
+   closure layer sequence — **not** a cryptographic SHA-256, unlike the
    `instance_sha256` used for instance-file integrity in
    `instances/manifests/*.json`. This is a deliberate, documented deviation
    from the plan's `sequence_sha256` column name: the goal is a cheap
@@ -129,7 +129,7 @@ to `performance` for the official runs; it stayed at the system default,
 carry ordinary frequency-scaling noise. This is mitigated, not eliminated,
 by: median-of-several-repetitions reporting, `taskset` core pinning, and
 reporting every headline comparison as a **paired, same-instance ratio**
-(HFMA vs RaC on the *same* instance in the *same* process invocation window)
+(HPaC vs RaC on the *same* instance in the *same* process invocation window)
 rather than as independent absolute times — a systematic frequency shift
 during one instance's measurement affects both algorithms compared on it
 almost identically, so paired ratios are far less sensitive to this
@@ -146,26 +146,26 @@ coefficient families, sizes, seeds, algorithms) are as follows:
   `n=11` for random forests, and `n=4` exhaustively over all topologies),
   every topology and coefficient family, oracle + every algorithm.
 - **B — medium random**: `n∈{100,...,1000}`, `mixed-forest`,
-  `rho∈{0.3,0.6,0.9,1.0}`, 6 families, 10 seeds (2400 instances), FMA, HFMA
+  `rho∈{0.3,0.6,0.9,1.0}`, 6 families, 10 seeds (2400 instances), PaC, HPaC
   and RaC on every instance, paired sequence verification.
 - **C — large random**: `n∈{10000,...,100000}`, same structural/coefficient
-  matrix as B, HFMA and RaC on every instance; FMA restricted to `n=10000`
+  matrix as B, HPaC and RaC on every instance; PaC restricted to `n=10000`
   only (2 repetitions instead of the campaign's usual 3, since it is a
   reference baseline, not the headline comparison), preregistered from the
-  timing calibration in "Known measurement limitation" above (FMA already
+  timing calibration in "Known measurement limitation" above (PaC already
   takes tens of seconds per instance at `n=20000`).
 - **D — structured stress**: `path-mixed`, `binary-mixed`, `star-mixed`,
   `n∈{100,200,500,1000,2000,5000,10000,20000,50000,100000}`, 6 families, 10
-  seeds (600 instances per topology), HFMA vs RaC paired; FMA restricted to
-  `n≤2000` for the same reason as campaign C. On `star-mixed`, HFMA and
-  DHFMA both exhaust the 8GB memory ceiling on every single instance at
-  `n∈{20000,50000,100000}` (180/600 instances); because HFMA and RaC are
+  seeds (600 instances per topology), HPaC vs RaC paired; PaC restricted to
+  `n≤2000` for the same reason as campaign C. On `star-mixed`, HPaC and
+  DHPaC both exhaust the 8GB memory ceiling on every single instance at
+  `n∈{20000,50000,100000}` (180/600 instances); because HPaC and RaC are
   benchmarked together in one process, that also loses RaC's result for
   those instances even though RaC alone is unaffected, so a RaC-only
   recovery pass is run on exactly that size/topology subset
   (`instances/campaign_d_star_large_only`, see `tools/run_official_campaigns.sh`).
-- **E — specialized orientations**: `in-forest` (HFMA vs HIMA vs RaC) and
-  `out-forest` (HFMA vs HOMA vs RaC), `n∈{100,...,1000}∪{10000,...,100000}`
+- **E — specialized orientations**: `in-forest` (HPaC vs HIPaC vs RaC) and
+  `out-forest` (HPaC vs HOPaC vs RaC), `n∈{100,...,1000}∪{10000,...,100000}`
   (20 sizes), `rho∈{0.6,1.0}` (a reduced density set relative to campaigns B
   and C, since in-/out-forest structure is already the primary variable
   under study here), 6 coefficient families, 5 seeds: 1200 instances per
@@ -186,6 +186,6 @@ coefficient families, sizes, seeds, algorithms) are as follows:
   spawns to be a fair wall-clock comparison once an instance has many
   thousands of breakpoints. This scope limitation is a direct instance of
   the "transparent handling of limited precision" the plan requires for this
-  campaign (section 9.6); the resulting total time is 91x-1270x HFMA's
+  campaign (section 9.6); the resulting total time is 91x-1270x HPaC's
   in-process time on the same instance, reported only as evidence BPPF is a
   correct oracle at this scale, never as a native-speed baseline.

@@ -97,25 +97,25 @@ void validate_instance(const Instance& instance, bool require_forest) {
     if (require_forest && !is_forest(instance)) throw std::invalid_argument("algorithm requires an underlying forest");
 }
 
-Macroitem make_macroitem(const Instance& instance, std::vector<int> nodes) {
-    return build_macroitem(instance, std::move(nodes));
+ClosureLayer make_closure_layer(const Instance& instance, std::vector<int> nodes) {
+    return build_closure_layer(instance, std::move(nodes));
 }
 
-void canonicalize(MacroitemSequence& sequence) {
-    std::vector<Macroitem> merged;
-    for (auto& macroitem : sequence.macroitems) {
-        std::sort(macroitem.nodes.begin(), macroitem.nodes.end());
-        if (!merged.empty() && compare(merged.back().ratio(), macroitem.ratio()) == 0) {
+void canonicalize(ClosureLayerSequence& sequence) {
+    std::vector<ClosureLayer> merged;
+    for (auto& layer : sequence.layers) {
+        std::sort(layer.nodes.begin(), layer.nodes.end());
+        if (!merged.empty() && compare(merged.back().ratio(), layer.ratio()) == 0) {
             auto& previous = merged.back();
-            previous.nodes.insert(previous.nodes.end(), macroitem.nodes.begin(), macroitem.nodes.end());
+            previous.nodes.insert(previous.nodes.end(), layer.nodes.begin(), layer.nodes.end());
             std::sort(previous.nodes.begin(), previous.nodes.end());
-            previous.profit += macroitem.profit;
-            previous.weight += macroitem.weight;
+            previous.profit += layer.profit;
+            previous.weight += layer.weight;
         } else {
-            merged.push_back(std::move(macroitem));
+            merged.push_back(std::move(layer));
         }
     }
-    sequence.macroitems = std::move(merged);
+    sequence.layers = std::move(merged);
 }
 
 Instance read_instance(const std::string& path) {
@@ -148,12 +148,12 @@ Instance read_instance(const std::string& path) {
     return instance;
 }
 
-void write_sequence(std::ostream& out, const MacroitemSequence& sequence) {
-    out << "macroitems " << sequence.macroitems.size() << '\n';
-    for (std::size_t i = 0; i < sequence.macroitems.size(); ++i) {
-        const auto& macroitem = sequence.macroitems[i];
-        out << "macroitem " << (i + 1) << " ratio " << macroitem.profit << '/' << macroitem.weight << " nodes";
-        for (const int v : macroitem.nodes) out << ' ' << (v + 1);
+void write_sequence(std::ostream& out, const ClosureLayerSequence& sequence) {
+    out << "layers " << sequence.layers.size() << '\n';
+    for (std::size_t i = 0; i < sequence.layers.size(); ++i) {
+        const auto& layer = sequence.layers[i];
+        out << "layer " << (i + 1) << " ratio " << layer.profit << '/' << layer.weight << " nodes";
+        for (const int v : layer.nodes) out << ' ' << (v + 1);
         out << '\n';
     }
 }

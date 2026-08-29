@@ -22,8 +22,8 @@ under test. Coverage:
 - 10,000 deterministic random directed forests up to 11 items;
 - mixed-orientation path, balanced binary and star trees up to 257 items;
 - 6,000 deterministic out-forest instances, plus 2,000 larger ones, checked
-  against the oracle and cross-checked with `HFMA`/`DHFMA`/`HOMA`;
-- macroitem partition, strict ratio ordering, and closure-prefix invariants.
+  against the oracle and cross-checked with `HPaC`/`DHPaC`/`HOPaC`;
+- closure layer partition, strict ratio ordering, and closure-prefix invariants.
 
 ### 2. Independent max-flow oracle (BPPF)
 
@@ -31,7 +31,7 @@ under test. Coverage:
 `lambda` to the standard maximum-weight-closure network and solves it with
 `third_party/bppf` (`pcf_bppf_oracle`) — the unmodified upstream
 Bounded-Precision Parametric Pseudoflow implementation, a third-party
-solver unrelated to `FMA`/`HFMA`/`RaC`/etc. Its minimum-cut closure at that
+solver unrelated to `PaC`/`HPaC`/`RaC`/etc. Its minimum-cut closure at that
 `lambda` is compared against this repository's own algorithms' closure at
 the same `lambda`. This was run at every breakpoint midpoint across
 random/path/star topologies and all six coefficient families before BPPF
@@ -49,7 +49,7 @@ precision-sensitive) mode not used for oracle purposes here.
 Every official benchmark campaign (`docs/EXPERIMENTAL_PROTOCOL.md`) runs
 multiple algorithms on the same instance and compares their returned
 sequences — partition, thresholds and canonical order, not only the
-macroitem count. `tools/aggregate_results.py` records
+closure layer count. `tools/aggregate_results.py` records
 `correctness_status="agreed"` or `"mismatch"` per (campaign, instance)
 group; any mismatch is listed explicitly in `mismatches.csv`, never averaged
 away. Across every official campaign run so far: zero disagreements.

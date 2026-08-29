@@ -39,7 +39,7 @@ acceptance tests in `docs/RAC_SPECIFICATION.md`.
 | 9 | `Rake` (attach detached 1-clusters to the surviving backbone) | `build_component`, the `rs`/`attachments` handling in the main contraction loop | Leaves (`degree==1`) are detached via `add_internalize`/`add_join` against their unique neighbor's accumulated "point" cluster, then re-attached to that neighbor; state-compatible envelopes are combined exactly as in item 7/8, not re-derived. |
 | 10 | Independent-set selection and per-round advancement | `build_component`, "greedy maximal independent set on degree-2 vertices" | Each round rakes all current leaves, then greedily selects a maximal independent set among the remaining degree-2 vertices and compresses each selected vertex's two incident edges via `Compress2`. `ct.rounds` counts rounds; the round loop terminates only when `aliveCount<=1`, and throws (`"contraction stalled"`) if neither a rake nor a compress candidate exists in some round, which would indicate a bug rather than silently looping. |
 | 11 | Top-down threshold reconstruction | `recover`, `recover_internalized`, `selected_at_rat` | Walks the cluster tree top-down; at each internalizing node, merges the breakpoints of every child envelope actually reachable (`merge_events_linear`) with the already-known parent-boundary thresholds, then scans left to right (`root_in_interval`) for the exact rational point where the "vertex included" branch stops dominating the "vertex excluded" branch. All comparisons are exact 64/128-bit integer arithmetic; `theta_known`/`theta_exp` cache one threshold per expanded vertex, and a duplicate computation that disagrees throws (`"inconsistent duplicate threshold"`). |
-| 12 | Canonical macroitem extraction and round/depth bound | `RaCSolver::solve` (sorting by threshold, merging exact ties); `ct.rounds`, `ct.max_cluster_depth` | Items are sorted by exact threshold descending and consecutive exact ties are merged into one macroitem — the same canonicalization rule as FMA/HFMA (`pcf::canonicalize`, `src/instance.cpp`). `RaCStats` records `rounds` and `max_cluster_depth`; the theoretical logarithmic bound on both is checked operationally by the scaling data in campaign D (`results/`), not proved symbolically here. |
+| 12 | Canonical closure layer extraction and round/depth bound | `RaCSolver::solve` (sorting by threshold, merging exact ties); `ct.rounds`, `ct.max_cluster_depth` | Items are sorted by exact threshold descending and consecutive exact ties are merged into one closure layer — the same canonicalization rule as PaC/HPaC (`pcf::canonicalize`, `src/instance.cpp`). `RaCStats` records `rounds` and `max_cluster_depth`; the theoretical logarithmic bound on both is checked operationally by the scaling data in campaign D (`results/`), not proved symbolically here. |
 
 ## Numerical and robustness audit
 
@@ -51,7 +51,7 @@ acceptance tests in `docs/RAC_SPECIFICATION.md`.
   `gcd`).
 - **Coincident breakpoints**: handled by exact equality (`rat_eq`), both when
   deduplicating hull lines with equal slope and when merging equal-ratio
-  macroitems at the end of `solve()`.
+  closure layers at the end of `solve()`.
 - **Signed coefficients**: `independent-signed` instances (see
   `tools/pcf_families.py`) exercise negative `p_i` directly; `env_shift` adds
   signed profit contributions without any positivity assumption.
@@ -60,7 +60,7 @@ acceptance tests in `docs/RAC_SPECIFICATION.md`.
   "exact arithmetic safety bound" (`INT64_MAX/4`) before RaC or any other
   algorithm runs, so overflow is refused explicitly at the API boundary
   rather than silently wrapping.
-- **Cross-algorithm agreement**: RaC's output must match FMA/DFMA/HFMA/DHFMA
+- **Cross-algorithm agreement**: RaC's output must match PaC/DPaC/HPaC/DHPaC
   bit-for-bit (same breakpoints, same partition, same canonical order) under
   the differential and exhaustive-oracle tests below.
 
@@ -70,10 +70,10 @@ acceptance tests in `docs/RAC_SPECIFICATION.md`.
 |---|---|
 | Unit tests on cluster operations | `pcf_tests` exercises envelope sum/max, hull deduplication and infeasible-state handling indirectly through every RaC solve in the exhaustive and differential suites (`tests/test_main.cpp`). |
 | Exhaustive comparison on small instances | Every directed forest with at most four items over a finite coefficient grid, checked against the independent closure-enumeration oracle. |
-| Differential comparison with FMA/HFMA/DHFMA | Deterministic random forests, plus the six coefficient families crossed with mixed/in/out topologies (see the smoke sweep referenced in `results/TEST_REPORT_2026-08-28.md`, extended by campaigns A-D). |
+| Differential comparison with PaC/HPaC/DHPaC | Deterministic random forests, plus the six coefficient families crossed with mixed/in/out topologies (see the smoke sweep referenced in `results/TEST_REPORT_2026-08-28.md`, extended by campaigns A-D). |
 | Sanitizer build | AddressSanitizer/UndefinedBehaviorSanitizer CTest configuration in `.github/workflows/ci.yml`. |
-| No hidden fallback to FMA/HFMA | `compute_rac` (`src/rac.cpp`) never calls `compute_fma`/`compute_hfma`/any other algorithm; its only external dependency is `validate_instance`. |
-| Independent max-flow cross-check | `tools/verify_with_bppf.py` (Oracle 2, section 7.2) recomputes the closure at a fixed lambda with BPPF, an unrelated third-party min-cut solver; agreement is verified at every breakpoint midpoint reported by HFMA on a spread of random/path/star instances across all six coefficient families before RaC is trusted for benchmarking (481/481 agreements in the validation sweep run for this repository; see `docs/EXPERIMENTAL_PROTOCOL.md`). |
+| No hidden fallback to PaC/HPaC | `compute_rac` (`src/rac.cpp`) never calls `compute_pac`/`compute_hpac`/any other algorithm; its only external dependency is `validate_instance`. |
+| Independent max-flow cross-check | `tools/verify_with_bppf.py` (Oracle 2, section 7.2) recomputes the closure at a fixed lambda with BPPF, an unrelated third-party min-cut solver; agreement is verified at every breakpoint midpoint reported by HPaC on a spread of random/path/star instances across all six coefficient families before RaC is trusted for benchmarking (481/481 agreements in the validation sweep run for this repository; see `docs/EXPERIMENTAL_PROTOCOL.md`). |
 
 ## Conclusion
 

@@ -6,8 +6,8 @@ independent maximum-flow/minimum-cut engine.
 
 For a chosen rational lambda, this script:
 
-1. runs pcf_solve to get the full macroitem sequence for --algorithm;
-2. derives that algorithm's closure at lambda (union of macroitems whose
+1. runs pcf_solve to get the full layer sequence for --algorithm;
+2. derives that algorithm's closure at lambda (union of layers whose
    ratio is > lambda; lambda must not equal a returned breakpoint exactly,
    to keep the membership unambiguous -- use --lambda-num/--lambda-den
    strictly between two consecutive breakpoints, e.g. from --midpoint-index);
@@ -39,7 +39,7 @@ def own_closure_at_lambda(pcf_solve: Path, instance: Path, algorithm: str, lam: 
     )
     closure: set[int] = set()
     for line in completed.stdout.splitlines():
-        if not line.startswith("macroitem "):
+        if not line.startswith("layer "):
             continue
         parts = line.split()
         ratio_token = parts[3]  # "P/W"
@@ -76,7 +76,7 @@ def main() -> None:
     parser.add_argument("--pcf-solve", type=Path, required=True)
     parser.add_argument("--pcf-bppf-oracle", type=Path, required=True)
     parser.add_argument("--instance", type=Path, required=True)
-    parser.add_argument("--algorithm", default="hfma")
+    parser.add_argument("--algorithm", default="hpac")
     parser.add_argument("--lambda-num", type=int, required=True)
     parser.add_argument("--lambda-den", type=int, required=True)
     arguments = parser.parse_args()

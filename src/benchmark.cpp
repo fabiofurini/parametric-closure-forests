@@ -21,13 +21,13 @@ namespace {
 
 using pcf::RaCStats;
 
-pcf::MacroitemSequence run(const pcf::Instance& instance, const std::string& algorithm, RaCStats* rac_stats) {
-    if (algorithm == "fma") return pcf::compute_fma(instance);
-    if (algorithm == "dfma") return pcf::compute_dfma(instance);
-    if (algorithm == "hfma") return pcf::compute_hfma(instance);
-    if (algorithm == "hima") return pcf::compute_hima(instance);
-    if (algorithm == "dhfma") return pcf::compute_dhfma(instance);
-    if (algorithm == "homa") return pcf::compute_homa(instance);
+pcf::ClosureLayerSequence run(const pcf::Instance& instance, const std::string& algorithm, RaCStats* rac_stats) {
+    if (algorithm == "pac") return pcf::compute_pac(instance);
+    if (algorithm == "dpac") return pcf::compute_dpac(instance);
+    if (algorithm == "hpac") return pcf::compute_hpac(instance);
+    if (algorithm == "hipac") return pcf::compute_hipac(instance);
+    if (algorithm == "dhpac") return pcf::compute_dhpac(instance);
+    if (algorithm == "hopac") return pcf::compute_hopac(instance);
     if (algorithm == "rac") return pcf::compute_rac(instance, rac_stats);
     throw std::invalid_argument("unknown algorithm: " + algorithm);
 }
@@ -49,7 +49,7 @@ std::vector<std::string> split(const std::string& text) {
 // algorithm outputs during aggregation, not a cryptographic checksum: exact
 // correctness is established separately by the CTest oracle and differential
 // suite (see docs/RAC_AUDIT.md and docs/EXPERIMENTAL_PROTOCOL.md).
-std::uint64_t sequence_fingerprint(const pcf::MacroitemSequence& sequence) {
+std::uint64_t sequence_fingerprint(const pcf::ClosureLayerSequence& sequence) {
     std::uint64_t hash = 1469598103934665603ull;  // FNV offset basis
     auto mix = [&hash](std::int64_t value) {
         for (int byte = 0; byte < 8; ++byte) {
@@ -57,11 +57,11 @@ std::uint64_t sequence_fingerprint(const pcf::MacroitemSequence& sequence) {
             hash *= 1099511628211ull;  // FNV prime
         }
     };
-    for (const auto& macroitem : sequence.macroitems) {
-        mix(macroitem.profit);
-        mix(macroitem.weight);
-        mix(static_cast<std::int64_t>(macroitem.nodes.size()));
-        std::vector<int> nodes = macroitem.nodes;
+    for (const auto& layer : sequence.layers) {
+        mix(layer.profit);
+        mix(layer.weight);
+        mix(static_cast<std::int64_t>(layer.nodes.size()));
+        std::vector<int> nodes = layer.nodes;
         std::sort(nodes.begin(), nodes.end());
         for (const int node : nodes) mix(node);
     }
@@ -124,7 +124,7 @@ int main(int argc, char* argv[]) {
                 else { shuffle_seed = static_cast<unsigned>(std::stoul(value)); shuffle = true; }
             } else {
                 throw std::invalid_argument(
-                    "usage: pcf_benchmark --instance FILE --algorithms hfma,rac --repetitions N "
+                    "usage: pcf_benchmark --instance FILE --algorithms hpac,rac --repetitions N "
                     "[--shuffle-seed S] [--campaign-id ID]");
             }
         }
@@ -153,8 +153,8 @@ int main(int argc, char* argv[]) {
                 const auto fingerprint = sequence_fingerprint(result);
                 const auto rss = peak_rss_kib();
                 std::cout << campaign_id << ',' << path << ',' << algorithm << ',' << repetition << ','
-                          << position << ',' << elapsed << ',' << result.macroitems.size() << ','
-                          << (result.macroitems.empty() ? 0 : result.macroitems.size() - 1) << ','
+                          << position << ',' << elapsed << ',' << result.layers.size() << ','
+                          << (result.layers.empty() ? 0 : result.layers.size() - 1) << ','
                           << fingerprint << ',' << rss << ',' << PCF_GIT_COMMIT << ',' << timestamp_utc() << ','
                           << instance.n << ',' << n_arcs << ',' << n_components;
                 if (algorithm == "rac") {

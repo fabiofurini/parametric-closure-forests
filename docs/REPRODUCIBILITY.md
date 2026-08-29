@@ -46,7 +46,7 @@ archive equals the one used for a published result.
 ```bash
 python3 tools/run_benchmark.py --binary build/pcf_benchmark \
   --instances instances/<name> --output results/raw_<campaign>.csv \
-  --algorithms hfma,rac --repetitions 11 --shuffle-seed 1 --campaign-id <campaign>
+  --algorithms hpac,rac --repetitions 11 --shuffle-seed 1 --campaign-id <campaign>
 
 python3 tools/validate_raw_data.py --raw results/raw_<campaign>.csv \
   --instances-root instances/<name>
@@ -56,7 +56,7 @@ python3 tools/aggregate_results.py --raw results/raw_<campaign>.csv \
 
 python3 tools/emit_latex_tables.py --mode ratio \
   --processed-dir results/processed/<campaign> --output results/tables/<campaign>_ratio.tex \
-  --campaign-id <campaign> --baseline hfma --candidate rac --group-by n_nodes
+  --campaign-id <campaign> --baseline hpac --candidate rac --group-by n_nodes
 ```
 
 No number in a committed `.tex` table fragment is hand-typed: regenerating a
@@ -102,8 +102,8 @@ present on the machine:
 6. `python3 tools/generate_random_instances.py --output /tmp/smoke --sizes 50 --seeds 1`
 7. run `python3 tools/build_instance_manifest.py --instances instances/tiny --verify instances/manifests/tiny.json`
    (or the committed fixture manifest) against a tracked small fixture
-8. `build/pcf_solve --instance instances/mixed_tree.pcf --algorithm fma`,
-   `...--algorithm hfma`, `...--algorithm rac` and diff the outputs
+8. `build/pcf_solve --instance instances/mixed_tree.pcf --algorithm pac`,
+   `...--algorithm hpac`, `...--algorithm rac` and diff the outputs
 9. `python3 tools/verify_with_bppf.py ...` on one small instance (Oracle 2)
 10. `tools/run_benchmark.py` on the `/tmp/smoke` instances followed by
     `tools/aggregate_results.py` and `tools/emit_latex_tables.py`, producing

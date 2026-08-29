@@ -13,10 +13,10 @@ bool is_in_forest(const Instance& instance);
 bool is_out_forest(const Instance& instance);
 void validate_instance(const Instance& instance, bool require_forest = true);
 
-Macroitem make_macroitem(const Instance& instance, std::vector<int> nodes);
-void canonicalize(MacroitemSequence& sequence);
+ClosureLayer make_closure_layer(const Instance& instance, std::vector<int> nodes);
+void canonicalize(ClosureLayerSequence& sequence);
 
 Instance read_instance(const std::string& path);
-void write_sequence(std::ostream& out, const MacroitemSequence& sequence);
+void write_sequence(std::ostream& out, const ClosureLayerSequence& sequence);
 
 }  // namespace pcf

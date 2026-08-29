@@ -21,7 +21,9 @@ maintained independently.
 - **Transformation**: a line-by-line diff between the legacy source and
   `src/rac.cpp` shows the port is verbatim except for:
   1. namespace `macroitems` -> `pcf`, class `TopTreeSolver` -> `RaCSolver`,
-     struct field `items` -> `macroitems` (cosmetic renames only);
+     struct field `items` -> `layers` (cosmetic renames only, the latter
+     updated again in this repository when "macroitem" was renamed to
+     "closure layer" -- see below);
   2. the public entry point no longer stores `profit`/`weight` as `long
      double` with a `1e-9` rounding tolerance; it takes the instance's native
      `std::int64_t` profits and weights directly. This removes a
@@ -34,20 +36,20 @@ maintained independently.
   audit against the manuscript are in `docs/RAC_AUDIT.md`.
 - **Verification**: `pcf_tests` (CTest) exercises RaC against the exhaustive
   closure-enumeration oracle on every directed forest with at most four
-  items over a finite coefficient grid, against FMA/DFMA/HFMA/DHFMA on
+  items over a finite coefficient grid, against PaC/DPaC/HPaC/DHPaC on
   deterministic random forests and on the six coefficient families crossed
   with mixed/in/out topologies, and against sanitizer builds. See
   `results/TEST_REPORT_2026-08-28.md` and `docs/RAC_AUDIT.md` section
   "Acceptance evidence".
 
-### FMA, DFMA, HFMA, DHFMA, HIMA, HOMA
+### PaC, DPaC, HPaC, DHPaC, HIPaC, HOPaC
 
-- **Source**: the direct-scan and heap-based macroitem algorithms for
+- **Source**: the direct-scan and heap-based closure layer algorithms for
   directed forests developed for the manuscript's own computational study,
   "On parametric Maximum Closure Problems over precedence forests" (Dose,
   Furini, Locatelli, arXiv v1), maintained in a separate repository.
-- **Destination**: `src/fma.cpp`, `src/dfma.cpp`, `src/hfma.cpp`,
-  `src/dhfma.cpp`, `src/hima.cpp`, `src/homa.cpp`.
+- **Destination**: `src/pac.cpp`, `src/dpac.cpp`, `src/hpac.cpp`,
+  `src/dhpac.cpp`, `src/hipac.cpp`, `src/hopac.cpp`.
 - **Transfer date**: 2026-08-28 (prior to the audit that produced this file;
   the port predates the CMake/BPPF build fix recorded in the first commit).
 - **Transformation**: re-expressed directly against `pcf::Instance` (signed
@@ -56,7 +58,7 @@ maintained independently.
   comparisons use the exact 128-bit cross-multiplication in
   `include/parametric_closure/rational.hpp`.
 - **Verification**: same CTest suite as RaC (exhaustive oracle, cross-algorithm
-  differential tests, HOMA-on-out-forest and HIMA-on-in-forest checks).
+  differential tests, HOPaC-on-out-forest and HIPaC-on-in-forest checks).
 
 ### BPPF (parametric pseudoflow baseline)
 

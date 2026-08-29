@@ -11,15 +11,15 @@
 
 namespace pcf {
 
-inline Macroitem build_macroitem(const Instance& instance, std::vector<int> nodes) {
+inline ClosureLayer build_closure_layer(const Instance& instance, std::vector<int> nodes) {
     std::sort(nodes.begin(), nodes.end());
-    Macroitem macroitem;
-    macroitem.nodes = std::move(nodes);
-    for (const int v : macroitem.nodes) {
-        macroitem.profit += instance.profit[v];
-        macroitem.weight += instance.weight[v];
+    ClosureLayer layer;
+    layer.nodes = std::move(nodes);
+    for (const int v : layer.nodes) {
+        layer.profit += instance.profit[v];
+        layer.weight += instance.weight[v];
     }
-    return macroitem;
+    return layer;
 }
 
 struct WorkNode {

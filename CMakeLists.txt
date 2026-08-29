@@ -9,12 +9,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(pcf
     src/instance.cpp
-    src/fma.cpp
-    src/dfma.cpp
-    src/hfma.cpp
-    src/dhfma.cpp
-    src/hima.cpp
-    src/homa.cpp
+    src/pac.cpp
+    src/dpac.cpp
+    src/hpac.cpp
+    src/dhpac.cpp
+    src/hipac.cpp
+    src/hopac.cpp
     src/rac.cpp
 )
 target_include_directories(pcf PUBLIC include PRIVATE src)

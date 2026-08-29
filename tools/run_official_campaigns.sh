@@ -5,7 +5,7 @@
 # wall-clock timeout and a memory ceiling (tools/run_benchmark.py), and
 # leaves raw CSVs under results/raw/ for tools/aggregate_results.py.
 #
-# FMA is included only up to a preregistered size cutoff (n<=20000 for
+# PaC is included only up to a preregistered size cutoff (n<=20000 for
 # random/campaign C, n<=2000 for structured/campaign D) with fewer
 # repetitions, since it is a reference baseline, not a headline comparison,
 # and its own O(n^2)-ish scaling makes the full large-n matrix impractical
@@ -41,7 +41,7 @@ campaign_b() {
   [ -d "${dir}" ] || ${GEN_RANDOM} --output "${dir}" \
     --sizes 100,200,300,400,500,600,700,800,900,1000 \
     --densities 0.3,0.6,0.9,1.0 --topology gen --seeds 10
-  run "${dir}" fma,hfma,rac 11 campaign_b 1
+  run "${dir}" pac,hpac,rac 11 campaign_b 1
 }
 
 campaign_c() {
@@ -49,14 +49,14 @@ campaign_c() {
   [ -d "${dir}" ] || ${GEN_RANDOM} --output "${dir}" \
     --sizes 10000,20000,30000,40000,50000,60000,70000,80000,90000,100000 \
     --densities 0.3,0.6,0.9,1.0 --topology gen --seeds 10
-  run "${dir}" hfma,rac 3 campaign_c 2
+  run "${dir}" hpac,rac 3 campaign_c 2
 
-  local fma_subset=instances/campaign_c_fma_subset
-  if [ ! -d "${fma_subset}" ]; then
-    mkdir -p "${fma_subset}"
-    find "${dir}" -name 'gen_n10000_*' -exec ln -sf "$(pwd)/{}" "${fma_subset}/" \;
+  local pac_subset=instances/campaign_c_pac_subset
+  if [ ! -d "${pac_subset}" ]; then
+    mkdir -p "${pac_subset}"
+    find "${dir}" -name 'gen_n10000_*' -exec ln -sf "$(pwd)/{}" "${pac_subset}/" \;
   fi
-  run "${fma_subset}" fma 2 campaign_c 2
+  run "${pac_subset}" pac 2 campaign_c 2
 }
 
 campaign_d() {
@@ -64,12 +64,12 @@ campaign_d() {
     local dir=instances/campaign_d_${shape}
     [ -d "${dir}" ] || ${GEN_STRUCT} --output "${dir}" --shape "${shape}" \
       --sizes 100,200,500,1000,2000,5000,10000,20000,50000,100000 --seeds 10
-    run "${dir}" hfma,rac 3 campaign_d_${shape} 3
+    run "${dir}" hpac,rac 3 campaign_d_${shape} 3
 
     if [ "${shape}" = star ]; then
-      # HFMA is known to exhaust the memory ceiling on large mixed-star
-      # instances (docs/EXPERIMENTAL_PROTOCOL.md). Since hfma and rac run in
-      # the same process above, an HFMA memory failure also loses RaC's
+      # HPaC is known to exhaust the memory ceiling on large mixed-star
+      # instances (docs/EXPERIMENTAL_PROTOCOL.md). Since hpac and rac run in
+      # the same process above, an HPaC memory failure also loses RaC's
       # result for that instance even though RaC alone is unaffected. Recover
       # it with a RaC-only pass restricted to the sizes where this happens.
       local large_only=instances/campaign_d_star_large_only
@@ -82,14 +82,14 @@ campaign_d() {
       run "${large_only}" rac 3 campaign_d_star 3
     fi
 
-    local fma_subset=instances/campaign_d_${shape}_fma_subset
-    if [ ! -d "${fma_subset}" ]; then
-      mkdir -p "${fma_subset}"
+    local pac_subset=instances/campaign_d_${shape}_pac_subset
+    if [ ! -d "${pac_subset}" ]; then
+      mkdir -p "${pac_subset}"
       for n in 100 200 500 1000 2000; do
-        find "${dir}" -name "${shape}_n${n}_*" -exec ln -sf "$(pwd)/{}" "${fma_subset}/" \;
+        find "${dir}" -name "${shape}_n${n}_*" -exec ln -sf "$(pwd)/{}" "${pac_subset}/" \;
       done
     fi
-    run "${fma_subset}" fma 3 campaign_d_${shape} 3
+    run "${pac_subset}" pac 3 campaign_d_${shape} 3
   done
 }
 
@@ -99,9 +99,9 @@ campaign_e() {
     [ -d "${dir}" ] || ${GEN_RANDOM} --output "${dir}" \
       --sizes 100,200,300,400,500,600,700,800,900,1000,10000,20000,30000,40000,50000,60000,70000,80000,90000,100000 \
       --densities 0.6,1.0 --topology "${topo}" --seeds 5
-    local specialized=hima
-    [ "${topo}" = out ] && specialized=homa
-    run "${dir}" "hfma,${specialized},rac" 3 "campaign_e_${topo}" 4
+    local specialized=hipac
+    [ "${topo}" = out ] && specialized=hopac
+    run "${dir}" "hpac,${specialized},rac" 3 "campaign_e_${topo}" 4
   done
 }
 

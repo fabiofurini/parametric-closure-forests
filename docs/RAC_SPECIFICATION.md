@@ -13,8 +13,8 @@ which is maintained in a separate repository.
 - Input: an acyclic directed forest with integral profits \(p_i\) and
   strictly positive integral weights \(w_i\).  An arc \((i,j)\) means
   \(x_i \leq x_j\).
-- Output: the complete sequence of macroitems, in non-increasing exact
-  threshold order. Equal thresholds belong to one macroitem.
+- Output: the complete sequence of closure layers, in non-increasing exact
+  threshold order. Equal thresholds belong to one closure layer.
 - The implementation must support arbitrary orientations of the underlying
   forest and solve each connected component independently.
 - All breakpoint and threshold comparisons are exact signed-64-bit rationals
@@ -30,8 +30,8 @@ which is maintained in a separate repository.
 | `Compress1` | Unary internalization: maximize over the state of the removed border vertex, adding its affine contribution exactly once. |
 | `Compress2` | Join two 2-clusters at their common border vertex; maximize over that state and add the vertex contribution exactly once when it becomes internal. |
 | `Rake` | Join all detached 1-clusters at a common surviving border with the backbone cluster; state-compatible envelopes are summed. |
-| Bottom-up phase | Build a balanced rake-and-compress cluster hierarchy; it computes only the `f` functions and does not form macroitems. |
-| Top-down phase | Traverse the hierarchy from the root, recover each item threshold from the two fixed-state envelopes, then group equal thresholds into macroitems. |
+| Bottom-up phase | Build a balanced rake-and-compress cluster hierarchy; it computes only the `f` functions and does not form closure layers. |
+| Top-down phase | Traverse the hierarchy from the root, recover each item threshold from the two fixed-state envelopes, then group equal thresholds into closure layers. |
 
 An implementation may use degree-three expansion with zero-cost equality edges
 as an internal representation.  This is permitted only because it preserves
@@ -46,11 +46,11 @@ RaC is eligible for benchmarks only if all of the following pass:
 1. unit tests for exact envelope sum, maximum, infeasible states and ties;
 2. fixed hand-checked examples for `Compress1`, `Compress2`, `Rake`, paths,
    stars, mixed orientations, isolated nodes and multiple components;
-3. exhaustive comparison with FMA on all directed forests up to the declared
+3. exhaustive comparison with PaC on all directed forests up to the declared
    small size and a finite coefficient grid;
-4. randomized differential comparison with FMA, including structured path,
+4. randomized differential comparison with PaC, including structured path,
    binary and star families;
-5. structural checks: each returned macroitem is a closure increment, macroitems
+5. structural checks: each returned closure layer is a closure increment, closure layers
    partition the original vertices, and thresholds are non-increasing;
 6. sanitizer-enabled CTest run with no error.
 

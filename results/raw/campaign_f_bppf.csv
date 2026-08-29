@@ -1,4 +1,4 @@
-instance,n_nodes,n_breakpoints_sampled,hfma_median_ns,rac_median_ns,bppf_median_total_ns,bppf_mismatches
+instance,n_nodes,n_breakpoints_sampled,hpac_median_ns,rac_median_ns,bppf_median_total_ns,bppf_mismatches
 gen_n1000_rho0.6_anti-correlated_seed0.pcf,1000,681,733427,2160484,825740709,0
 gen_n1000_rho0.6_anti-correlated_seed1.pcf,1000,710,1072030,3403394,849832052,0
 gen_n1000_rho0.6_anti-correlated_seed2.pcf,1000,687,1079798,2212855,830688476,0

@@ -20,7 +20,7 @@ for csv in "${STANDARD_RAW[@]}"; do
   # Each row's "instance" column is a bare filename; resolve it against the
   # campaign's own instance directory (recorded in the campaign_id column),
   # since the same basename can be symlinked into more than one directory
-  # (e.g. the FMA-eligible size subsets).
+  # (e.g. the PaC-eligible size subsets).
   campaign_id=$(awk -F, 'NR==2{print $1}' "$csv")
   python3 tools/validate_raw_data.py --raw "$csv" --instances-root "instances/${campaign_id}"
 done
@@ -40,29 +40,29 @@ emit_ratio() {
     || echo "  (skipped: no paired rows for ${campaign} ${candidate}/${baseline})"
 }
 
-emit_ratio campaign_b hfma rac
-emit_ratio campaign_b hfma fma
-emit_ratio campaign_b hfma dhfma
-emit_ratio campaign_c hfma rac
-emit_ratio campaign_c hfma dhfma
-emit_ratio campaign_d_path hfma rac
-emit_ratio campaign_d_binary hfma rac
-emit_ratio campaign_d_star hfma rac
-emit_ratio campaign_d_star hfma dhfma
-emit_ratio campaign_d_star fma hfma
-emit_ratio campaign_e_in hfma hima
-emit_ratio campaign_e_in hfma rac
-emit_ratio campaign_e_out hfma homa
-emit_ratio campaign_e_out hfma rac
+emit_ratio campaign_b hpac rac
+emit_ratio campaign_b hpac pac
+emit_ratio campaign_b hpac dhpac
+emit_ratio campaign_c hpac rac
+emit_ratio campaign_c hpac dhpac
+emit_ratio campaign_d_path hpac rac
+emit_ratio campaign_d_binary hpac rac
+emit_ratio campaign_d_star hpac rac
+emit_ratio campaign_d_star hpac dhpac
+emit_ratio campaign_d_star pac hpac
+emit_ratio campaign_e_in hpac hipac
+emit_ratio campaign_e_in hpac rac
+emit_ratio campaign_e_out hpac hopac
+emit_ratio campaign_e_out hpac rac
 
 echo "=== campaign F (BPPF baseline) summary ==="
 python3 - <<'EOF'
 import csv
 rows = list(csv.DictReader(open("results/raw/campaign_f_bppf.csv")))
 mismatches = sum(int(r["bppf_mismatches"]) for r in rows)
-ratios = sorted(float(r["bppf_median_total_ns"]) / float(r["hfma_median_ns"]) for r in rows)
+ratios = sorted(float(r["bppf_median_total_ns"]) / float(r["hpac_median_ns"]) for r in rows)
 print(f"instances={len(rows)} mismatches={mismatches} "
-      f"bppf_total/hfma ratio range=[{ratios[0]:.1f}, {ratios[-1]:.1f}]")
+      f"bppf_total/hpac ratio range=[{ratios[0]:.1f}, {ratios[-1]:.1f}]")
 EOF
 
 echo "=== done: results/processed/results_summary.json, results/tables/*.tex ==="

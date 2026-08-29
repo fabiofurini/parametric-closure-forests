@@ -10,13 +10,13 @@ notation, see `README.md`; for the on-disk instance format, see
 include/parametric_closure/   public C++ headers
   model.hpp                   Rational, node/arc types shared by everything
   instance.hpp                Instance, validate_instance
-  algorithms.hpp               compute_fma/dfma/hfma/dhfma/hima/homa/rac
+  algorithms.hpp               compute_pac/dpac/hpac/dhpac/hipac/hopac/rac
   rational.hpp                 exact rational arithmetic (128-bit products)
   pcf.hpp                      .pcf format reader/writer
 src/                          implementation, one algorithm per file
-  fma.cpp / dfma.cpp           direct-scan reference algorithm and its dual
-  hfma.cpp / dhfma.cpp         heap-based variant and its dual
-  hima.cpp / homa.cpp          specialized heap variants (in-forests/out-forests)
+  pac.cpp / dpac.cpp           direct-scan reference algorithm and its dual
+  hpac.cpp / dhpac.cpp         heap-based variant and its dual
+  hipac.cpp / hopac.cpp          specialized heap variants (in-forests/out-forests)
   rac.cpp                      rake-and-compress / top-tree algorithm
   instance.cpp                 instance validation, canonicalization
   cli.cpp                      pcf_solve executable
@@ -36,22 +36,22 @@ docs/                         this documentation
 
 ## Algorithms
 
-Every algorithm has signature `MacroitemSequence compute_*(const Instance&)`
+Every algorithm has signature `ClosureLayerSequence compute_*(const Instance&)`
 (`RaC` additionally takes an optional `RaCStats*`) and returns the same
-canonical object: the ordered sequence of macroitems, each with its exact
+canonical object: the ordered sequence of closure layers, each with its exact
 rational threshold and member nodes, in non-increasing ratio order.
 
 | Function | Orientation | Time | Space | Notes |
 |---|---|---|---|---|
-| `compute_fma` | any forest | $O(n^2)$ | $O(n)$ | direct-scan reference |
-| `compute_dfma` | any forest | $O(n^2)$ | $O(n)$ | dual of `fma` (increasing order) |
-| `compute_hfma` | any forest | $O(n^2\log n)$ worst case, $O(n\log n)$ typical | $O(n)$ | heap-based |
-| `compute_dhfma` | any forest | as `hfma` | $O(n)$ | dual of `hfma` |
-| `compute_hima` | in-forests only | $O(n\log n)$ | $O(n)$ | requires out-degree $\le 1$ |
-| `compute_homa` | out-forests only | $O(n\log n)$ | $O(n)$ | requires in-degree $\le 1$ |
+| `compute_pac` | any forest | $O(n^2)$ | $O(n)$ | direct-scan reference |
+| `compute_dpac` | any forest | $O(n^2)$ | $O(n)$ | dual of `pac` (increasing order) |
+| `compute_hpac` | any forest | $O(n^2\log n)$ worst case, $O(n\log n)$ typical | $O(n)$ | heap-based |
+| `compute_dhpac` | any forest | as `hpac` | $O(n)$ | dual of `hpac` |
+| `compute_hipac` | in-forests only | $O(n\log n)$ | $O(n)$ | requires out-degree $\le 1$ |
+| `compute_hopac` | out-forests only | $O(n\log n)$ | $O(n)$ | requires in-degree $\le 1$ |
 | `compute_rac` | any tree | $O(n\log n)$ | $O(n\log n)$ | rake-and-compress / top-tree |
 
-`HIMA`/`HOMA` assume their required orientation and do not validate it at
+`HIPaC`/`HOPaC` assume their required orientation and do not validate it at
 runtime; passing a mixed-orientation forest to either is a caller error, not
 a checked precondition.
 
@@ -65,16 +65,16 @@ a checked precondition.
   positive `int64_t` weight per node. `validate_instance` rejects malformed
   instances (non-forest, non-positive weight, overflow risk) before any
   algorithm runs.
-- `MacroitemSequence`: the shared output type — see above.
+- `ClosureLayerSequence`: the shared output type — see above.
 - Canonicalization (`pcf::canonicalize`, `src/instance.cpp`): consecutive
-  items with an exactly equal threshold are merged into one macroitem. Every
+  items with an exactly equal threshold are merged into one closure layer. Every
   algorithm uses the same rule, which is part of why cross-algorithm
   differential testing (`docs/VALIDATION.md`) is meaningful.
 
 ## Executables
 
-- `pcf_solve --instance FILE --algorithm <fma|dfma|hfma|dhfma|hima|homa|rac>`:
-  prints the full macroitem sequence for one instance.
+- `pcf_solve --instance FILE --algorithm <pac|dpac|hpac|dhpac|hipac|hopac|rac>`:
+  prints the full closure layer sequence for one instance.
 - `pcf_benchmark`: times one (instance, algorithm) pair per invocation,
   emitting one CSV row per repetition (`elapsed_ns`, `peak_rss_kib`,
   operation counters for `rac`, `git_commit`, `timestamp_utc`); driven by

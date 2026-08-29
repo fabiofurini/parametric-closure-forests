@@ -6,7 +6,7 @@ optionally, a virtual-memory ceiling (docs/EXPERIMENTAL_PROTOCOL.md, "Known
 measurement limitation" / OOM censoring): a run that exceeds either is
 recorded as a censored event in --failures-log and the campaign continues
 with the next instance, instead of aborting the whole batch. This matters in
-practice: HFMA on large mixed-star instances can exhaust tens of gigabytes
+practice: HPaC on large mixed-star instances can exhaust tens of gigabytes
 of RAM before throwing std::bad_alloc (see docs/PIANO_PARTE_COMPUTAZIONALE.md
 section 12.3.6/12.3.11), and a single such instance must not lose every
 other result already collected in the same campaign.
@@ -50,7 +50,7 @@ def main() -> None:
     parser.add_argument("--binary", type=Path, required=True)
     parser.add_argument("--instances", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--algorithms", default="hfma,rac")
+    parser.add_argument("--algorithms", default="hpac,rac")
     parser.add_argument("--repetitions", type=int, default=11)
     parser.add_argument("--shuffle-seed", type=int)
     parser.add_argument("--campaign-id", default="unspecified")

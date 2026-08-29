@@ -54,11 +54,11 @@ Node identifiers in files are one-based. The solver is invoked as:
 build/pcf_solve --instance instances/mixed_tree.pcf --algorithm rac
 ```
 
-Algorithms `fma`, `dfma`, `hfma`, `dhfma`, `hima`, `homa` and `rac` are C++.
-`dhfma` is the dual heap-based FMA for general directed forests. `homa` is the
-specialized dual heap method for out-forests, called Heap-based Out-tree
-Macroitem Algorithm in the manuscript. Python, when added, is reserved for
-reproducible utility scripts and never implements an algorithm. HFMA and DHFMA
+Algorithms `pac`, `dpac`, `hpac`, `dhpac`, `hipac`, `hopac` and `rac` are C++.
+`dhpac` is the dual heap-based Peel-and-Contract for general directed forests.
+`hopac` is the specialized dual heap method for out-forests, called
+Heap-based Out-tree Peel-and-Contract in the manuscript. Python, when added, is reserved for
+reproducible utility scripts and never implements an algorithm. HPaC and DHPaC
 use lazy heaps with exact ratio comparisons.
 
 ## Current validation
@@ -67,10 +67,10 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how the codebase is
 structured and [`docs/VALIDATION.md`](docs/VALIDATION.md) for the full
 correctness methodology. Summary:
 
-`pcf_tests` checks FMA/DFMA/HFMA/DHFMA/RaC agreement on a mixed tree,
+`pcf_tests` checks PaC/DPaC/HPaC/DHPaC/RaC agreement on a mixed tree,
 exhaustively on every directed forest with at most four items over a finite
 coefficient grid, and on deterministic random forests. It uses an independent
-closure-enumeration oracle on all small cases, verifies HOMA on out-forests,
+closure-enumeration oracle on all small cases, verifies HOPaC on out-forests,
 and checks partition, strict ratio ordering and closure-prefix invariants.
 
 RaC is specified against the manuscript in
