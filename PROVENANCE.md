@@ -4,8 +4,7 @@ This file tracks every piece of code and every instance family in this
 repository that originated outside it. This repository does
 not compile, import or read any file from the legacy PCKP workspace at
 runtime; everything listed below was copied once, adapted, and is now
-maintained independently. See `docs/HISTORY.md` for how and why this
-repository was created.
+maintained independently.
 
 ## Code provenance
 

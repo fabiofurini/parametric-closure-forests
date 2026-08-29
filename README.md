@@ -22,8 +22,7 @@ strictly positive integral weight \(w_i\), and affine contribution
   pseudoflow source, used only as an independent max-flow oracle and
   optional baseline;
 - `docs/`: architecture, instance format, validation methodology, RaC audit
-  and specification, experimental protocol, reproducibility instructions,
-  and the project history (`docs/HISTORY.md`);
+  and specification, experimental protocol, and reproducibility instructions;
 - `results/`: raw and processed campaign data, LaTeX table fragments;
 - `PROVENANCE.md`: what was ported from the legacy PCKP codebase and how it
   was verified; `docs/RAC_AUDIT.md`: the line-by-line audit of the RaC port.
