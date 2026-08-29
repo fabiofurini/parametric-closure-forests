@@ -77,7 +77,7 @@ its results report, not per row:
   and `peak_rss_kib` per (campaign, instance, algorithm).
 - Ratios (e.g. RaC/HFMA) are computed **per paired instance** and then
   aggregated (median and IQR of the per-instance ratios), never as a ratio
-  of two aggregate means, per plan section 10.3
+  of two aggregate means
   (`tools/emit_latex_tables.py --mode ratio`).
 - Bootstrap confidence intervals for the headline ratios are not yet
   implemented; `iqr` of the per-instance ratio distribution is reported
@@ -89,7 +89,7 @@ its results report, not per row:
   `results_summary.json` records `n_mismatched_instances` for
   cross-algorithm disagreement.
 
-## Correctness verification (plan section 7)
+## Correctness verification
 
 Two independent oracles are used, plus cross-algorithm differential checks:
 
@@ -140,7 +140,7 @@ limitation than raw absolute times would be.
 See `results/` for the report and raw/processed CSV of each campaign as it
 is run; `results_summary.json` (produced by `tools/aggregate_results.py`) is
 the single source of citable totals. Campaign definitions (topologies,
-coefficient families, sizes, seeds, algorithms) follow plan section 9:
+coefficient families, sizes, seeds, algorithms) are as follows:
 
 - **A — small correctness**: `n=1..10` (extended by `pcf_tests` up to
   `n=11` for random forests, and `n=4` exhaustively over all topologies),

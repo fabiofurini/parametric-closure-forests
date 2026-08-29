@@ -1,4 +1,4 @@
-# RaC mathematical audit (plan section 6.2)
+# RaC mathematical audit
 
 This is the operation-by-operation audit required before RaC enters the
 official benchmark campaign. It supersedes nothing in
@@ -20,10 +20,11 @@ traversal logic differs between the two files.
 
 ## Method
 
-Each of the twelve items required by plan section 6.2 is checked against
+Each of the twelve required correspondence items is checked against
 both (a) the legacy/ported C++ source and (b) the manuscript's RaC section
-(`PAPER_MARCO/macroitems_v1_with_appendix.tex`), and against the acceptance
-tests in `docs/RAC_SPECIFICATION.md`.
+("On parametric Maximum Closure Problems over precedence forests", Dose,
+Furini, Locatelli, maintained in a separate repository), and against the
+acceptance tests in `docs/RAC_SPECIFICATION.md`.
 
 | # | Manuscript operation | Where in `src/rac.cpp` | Finding |
 |---|---|---|---|
@@ -40,7 +41,7 @@ tests in `docs/RAC_SPECIFICATION.md`.
 | 11 | Top-down threshold reconstruction | `recover`, `recover_internalized`, `selected_at_rat` | Walks the cluster tree top-down; at each internalizing node, merges the breakpoints of every child envelope actually reachable (`merge_events_linear`) with the already-known parent-boundary thresholds, then scans left to right (`root_in_interval`) for the exact rational point where the "vertex included" branch stops dominating the "vertex excluded" branch. All comparisons are exact 64/128-bit integer arithmetic; `theta_known`/`theta_exp` cache one threshold per expanded vertex, and a duplicate computation that disagrees throws (`"inconsistent duplicate threshold"`). |
 | 12 | Canonical macroitem extraction and round/depth bound | `RaCSolver::solve` (sorting by threshold, merging exact ties); `ct.rounds`, `ct.max_cluster_depth` | Items are sorted by exact threshold descending and consecutive exact ties are merged into one macroitem — the same canonicalization rule as FMA/HFMA (`pcf::canonicalize`, `src/instance.cpp`). `RaCStats` records `rounds` and `max_cluster_depth`; the theoretical logarithmic bound on both is checked operationally by the scaling data in campaign D (`results/`), not proved symbolically here. |
 
-## Numerical and robustness audit (plan section 6.3)
+## Numerical and robustness audit
 
 - **Integer width**: all coefficients are `std::int64_t`; every product that
   could overflow 64 bits (ratio cross-multiplication, envelope intersection
@@ -63,7 +64,7 @@ tests in `docs/RAC_SPECIFICATION.md`.
   bit-for-bit (same breakpoints, same partition, same canonical order) under
   the differential and exhaustive-oracle tests below.
 
-## Acceptance evidence (plan section 6.4)
+## Acceptance evidence
 
 | Gate | Evidence |
 |---|---|
@@ -78,6 +79,6 @@ tests in `docs/RAC_SPECIFICATION.md`.
 
 No discrepancy between the recovered `algo_top_tree.cpp` and the ported
 `src/rac.cpp` was found beyond the two documented cosmetic/precision changes
-in `PROVENANCE.md`. RaC satisfies every item of the gate in plan section 6.4
+in `PROVENANCE.md`. RaC satisfies every item of the acceptance gate
 and is accepted for the official benchmark campaigns (sections 9 and 15,
 phase 6).

@@ -1,10 +1,12 @@
 # RaC: specification to implementation traceability
 
 This document freezes the implementation contract for `RaC` before its source
-is accepted for experiments.  It is derived from the RaC section of
-`../macroitems_v1_with_appendix.tex`, in particular the definitions of cluster,
-the functions \(f_{\mathcal C}^\sigma\), `Compress1`, `Compress2`, `Rake`, and
-the bottom-up/top-down phases.  It does not alter the manuscript.
+is accepted for experiments.  It is derived from the RaC section of the
+accompanying manuscript, "On parametric Maximum Closure Problems over
+precedence forests" (Dose, Furini, Locatelli), in particular the definitions
+of cluster, the functions \(f_{\mathcal C}^\sigma\), `Compress1`, `Compress2`,
+`Rake`, and the bottom-up/top-down phases.  It does not alter the manuscript,
+which is maintained in a separate repository.
 
 ## Input and output
 

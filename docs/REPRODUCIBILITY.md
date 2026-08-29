@@ -80,12 +80,12 @@ only wants the numbers rather than to regenerate them from scratch.
 Full-scale campaign archives (campaigns C and D reach `n=100000`) and their
 raw CSV output are attached as a compressed asset (`instances.zip`) on the
 GitHub release that accompanies the manuscript's computational section,
-rather than committed to git history, per plan section 4. The manifest
+rather than committed to git history (see docs/HISTORY.md). The manifest
 SHA-256 checksums under `instances/manifests/` let anyone verify a
 downloaded or regenerated archive against the one actually used, without
 needing git history to carry the binary data.
 
-## Clean-clone independence test (plan section 14.1.1)
+## Clean-clone independence test
 
 Before any publication, this checklist must pass starting from a fresh clone
 in an otherwise empty directory, with `PAPER/`, `CODE_FOREST/`,

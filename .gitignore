@@ -17,3 +17,14 @@ __pycache__/
 instances/**/*.pcf
 !instances/tiny/**/*.pcf
 !instances/mixed_tree.pcf
+
+# LaTeX build artifacts (report/computational_report.tex and .pdf are
+# committed; everything latexmk regenerates from them is not).
+report/*.aux
+report/*.log
+report/*.out
+report/*.fls
+report/*.fdb_latexmk
+report/*.synctex.gz
+report/*.bbl
+report/*.blg

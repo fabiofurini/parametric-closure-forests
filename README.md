@@ -21,8 +21,9 @@ strictly positive integral weight \(w_i\), and affine contribution
 - `third_party/bppf/`: unmodified upstream bounded-precision parametric
   pseudoflow source, used only as an independent max-flow oracle and
   optional baseline;
-- `docs/`: the validated plan, the RaC audit and specification, the instance
-  format, the experimental protocol, and reproducibility instructions;
+- `docs/`: architecture, instance format, validation methodology, RaC audit
+  and specification, experimental protocol, reproducibility instructions,
+  and the project history (`docs/HISTORY.md`);
 - `results/`: raw and processed campaign data, LaTeX table fragments;
 - `PROVENANCE.md`: what was ported from the legacy PCKP codebase and how it
   was verified; `docs/RAC_AUDIT.md`: the line-by-line audit of the RaC port.
@@ -63,6 +64,10 @@ use lazy heaps with exact ratio comparisons.
 
 ## Current validation
 
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how the codebase is
+structured and [`docs/VALIDATION.md`](docs/VALIDATION.md) for the full
+correctness methodology. Summary:
+
 `pcf_tests` checks FMA/DFMA/HFMA/DHFMA/RaC agreement on a mixed tree,
 exhaustively on every directed forest with at most four items over a finite
 coefficient grid, and on deterministic random forests. It uses an independent
@@ -75,7 +80,7 @@ line-by-line against the recovered legacy source in
 [`docs/RAC_AUDIT.md`](docs/RAC_AUDIT.md). It must continue to pass these
 checks before it is used in a benchmark campaign.
 
-`tools/verify_with_bppf.py` implements Oracle 2 (plan section 7.2): it
+`tools/verify_with_bppf.py` implements the independent max-flow oracle: it
 recomputes the maximum closure at a fixed rational lambda with
 `third_party/bppf`, an unrelated third-party max-flow/min-cut solver, and
 checks agreement with this repository's own algorithms.
@@ -96,7 +101,7 @@ the SHA-256 checksum of every `.pcf` file.
 ## Official benchmark campaigns
 
 ```bash
-tools/run_official_campaigns.sh          # campaigns B, C, D, E (plan section 9)
+tools/run_official_campaigns.sh          # campaigns B, C, D, E
 python3 tools/run_bppf_campaign.py \
   --pcf-solve build/pcf_solve --pcf-benchmark build/pcf_benchmark \
   --pcf-bppf-oracle build/pcf_bppf_oracle --instances instances/campaign_f \

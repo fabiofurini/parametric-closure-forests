@@ -1,11 +1,11 @@
 # Provenance
 
 This file tracks every piece of code and every instance family in this
-repository that originated outside it, as required by
-`docs/PIANO_PARTE_COMPUTAZIONALE.md` sections 2.3 and 3. This repository does
+repository that originated outside it. This repository does
 not compile, import or read any file from the legacy PCKP workspace at
 runtime; everything listed below was copied once, adapted, and is now
-maintained independently.
+maintained independently. See `docs/HISTORY.md` for how and why this
+repository was created.
 
 ## Code provenance
 
@@ -44,8 +44,9 @@ maintained independently.
 ### FMA, DFMA, HFMA, DHFMA, HIMA, HOMA
 
 - **Source**: the direct-scan and heap-based macroitem algorithms for
-  directed forests developed for the PCKP/LP paper's computational study
-  (arXiv v1, `PAPER_MARCO/macroitems_v1_with_appendix.tex`).
+  directed forests developed for the manuscript's own computational study,
+  "On parametric Maximum Closure Problems over precedence forests" (Dose,
+  Furini, Locatelli, arXiv v1), maintained in a separate repository.
 - **Destination**: `src/fma.cpp`, `src/dfma.cpp`, `src/hfma.cpp`,
   `src/dhfma.cpp`, `src/hima.cpp`, `src/homa.cpp`.
 - **Transfer date**: 2026-08-28 (prior to the audit that produced this file;
@@ -79,11 +80,11 @@ maintained independently.
   `tools/generate_structured_instances.py`, `tools/pcf_families.py`.
 - **Transformation**: coefficients are **not** reproduced from the legacy
   generators. They are regenerated from scratch under the six
-  closure-specific affine families defined in
-  `docs/PIANO_PARTE_COMPUTAZIONALE.md` section 8.3 (`independent-positive`,
-  `independent-signed`, `correlated`, `anti-correlated`, `near-ties`,
-  `exact-ties`), motivated only by the shape of the resulting `p/w` ratios,
-  with no reference to knapsack correlation classes. See "Instance migration
+  closure-specific affine families defined in `tools/pcf_families.py`
+  (`independent-positive`, `independent-signed`, `correlated`,
+  `anti-correlated`, `near-ties`, `exact-ties`), motivated only by the shape
+  of the resulting `p/w` ratios, with no reference to knapsack correlation
+  classes. See "Instance migration
   decision" below.
 
 ## Instance migration decision
