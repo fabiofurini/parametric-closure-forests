@@ -310,8 +310,8 @@ implementation.
   \item \texttt{HIPaC}/\texttt{HOPaC}: the specialized heap-based variants for
   in-forests and out-forests, respectively.
   \item \texttt{RaC}: the rake-and-compress/top-tree implementation of the
-  algorithm described in the accompanying manuscript, ported from the experimental package described in the
-  code repository's \texttt{PROVENANCE.md} and audited operation-by-operation
+  algorithm described in the accompanying manuscript, ported from an
+  experimental package and audited operation-by-operation
   against that source and against the manuscript
   (\texttt{docs/RAC\_AUDIT.md}).
   \item \texttt{BPPF}: the unmodified upstream bounded-precision parametric
@@ -663,10 +663,7 @@ analysis pipeline for this report are available at the
 the repository accompanying the precedence-constrained-knapsack paper. The
 release attaches the full instance archive (\texttt{instances.zip}) and raw
 and processed benchmark data (\texttt{results.zip}) with SHA-256 checksums.
-\texttt{PROVENANCE.md} in that repository documents which components were
-ported from the earlier codebase and how their equivalence was verified.
-The repository is currently private; it will be made public before the
-manuscript's submission. The pseudoflow oracle used for independent
+The repository is public. The pseudoflow oracle used for independent
 validation is the unmodified upstream Bounded-Precision Parametric
 Pseudoflow implementation available at
 \url{https://github.com/hochbaumGroup/Bounded-precision-simple-parametric.git}.
