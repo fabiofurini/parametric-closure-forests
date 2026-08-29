@@ -3,16 +3,14 @@
 [![C++ validation](https://github.com/fabiofurini/parametric-closure-forests/actions/workflows/ci.yml/badge.svg)](https://github.com/fabiofurini/parametric-closure-forests/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Independent C++ implementation, benchmark infrastructure, reproducible
-instances and raw results for:
+C++ implementation, benchmark infrastructure, reproducible instances and
+raw/processed results for:
 
 > **"On parametric Maximum Closure Problems over precedence forests"**
 > Valerio Dose, Fabio Furini, Marco Locatelli
 
-This repository is self-contained: code, instance generators, benchmark
-instances and raw/processed results all live here under one identity. It
-does not compile, read or depend on any other repository at build or run
-time.
+Code, instance generators, benchmark instances and results all live in
+this one repository.
 
 The notation follows the manuscript: each vertex has integral profit
 $p_i$, strictly positive integral weight $w_i$, and affine contribution
@@ -106,8 +104,7 @@ Each topic has its own page:
 
 ## Instances, data & reproducibility
 
-Unlike a typical split between a code repository and a data repository,
-**instances and results live in this same repository**:
+Instances and results live in this same repository, alongside the code:
 
 - `instances/manifests/*.json` — deterministic identifier, topology
   classification, coefficient bounds and SHA-256 checksum for every
