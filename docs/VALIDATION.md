@@ -66,10 +66,10 @@ benchmarking:
   bottom-up/top-down phases) independently of any specific source file;
 - `docs/RAC_AUDIT.md` checks the ported `src/rac.cpp` line-by-line against
   both that contract and the recovered legacy source, covering all twelve
-  required correspondence items plus a numerical/overflow/robustness audit;
-- `PROVENANCE.md` records the exact diff between the legacy source and the
-  ported file (two cosmetic renames and one precision-improving change; no
-  logic differs).
+  required correspondence items plus a numerical/overflow/robustness audit,
+  and records the exact diff between the legacy source and the ported file
+  (two cosmetic renames and one precision-improving change; no logic
+  differs).
 
 ## Numerical exactness
 

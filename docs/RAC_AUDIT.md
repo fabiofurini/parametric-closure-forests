@@ -11,8 +11,8 @@ legacy source.
 `MACROITEMS_PAPER/LLMs/CONTROPROSTA_DI_CHAT/TESTS_CHAT/top_tree_cpp_experiment_package.zip`
 (inside `LLM_PROPOSTE_SEPARAZIONI_PAPERI.tar.gz`), file `code/algo_top_tree.cpp`
 (518 lines), ported into `src/rac.cpp`. A full line-by-line `diff` between the
-two files is reproducible from the extracted archive and is summarized in
-`PROVENANCE.md`; the only differences are two cosmetic renames (namespace and
+two files is reproducible from the extracted archive; the only differences
+are two cosmetic renames (namespace and
 one struct field) and the removal of a `long double` round-trip with a
 `1e-9` tolerance at the public entry point, replaced by direct use of the
 instance's native `std::int64_t` profits and weights. No cluster, envelope or

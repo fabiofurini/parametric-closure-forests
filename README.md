@@ -12,12 +12,11 @@ instances and raw results for:
 This repository is self-contained: code, instance generators, benchmark
 instances and raw/processed results all live here under one identity. It
 does not compile, read or depend on any other repository at build or run
-time (see [`PROVENANCE.md`](PROVENANCE.md)).
+time.
 
 The notation follows the manuscript: each vertex has integral profit
 $p_i$, strictly positive integral weight $w_i$, and affine contribution
-$p_i-\lambda w_i$. A directed arc `(u,v)` means `x_u <= x_v`. There is no
-capacity anywhere in this repository.
+$p_i-\lambda w_i$. A directed arc `(u,v)` means `x_u <= x_v`.
 
 ---
 
@@ -53,7 +52,7 @@ ctest --test-dir build --output-on-failure
 build/pcf_solve --instance instances/mixed_tree.pcf --algorithm rac
 ```
 
-**Input format** (`.pcf`, one-based vertex ids, no capacity field — full
+**Input format** (`.pcf`, one-based vertex ids — full
 grammar in [`docs/INSTANCE_FORMAT.md`](docs/INSTANCE_FORMAT.md)):
 
 ```text
@@ -102,7 +101,6 @@ Each topic has its own page:
 | [`docs/RAC_SPECIFICATION.md`](docs/RAC_SPECIFICATION.md) | `RaC`'s implementation contract, frozen against the manuscript |
 | [`docs/RAC_AUDIT.md`](docs/RAC_AUDIT.md) | Line-by-line audit of the ported `RaC` source against that contract |
 | [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) | Regenerating instances, rebuilding tables, the clean-clone independence checklist, release contents |
-| [`PROVENANCE.md`](PROVENANCE.md) | What was ported from the legacy PCKP codebase, and how equivalence was verified |
 
 ---
 

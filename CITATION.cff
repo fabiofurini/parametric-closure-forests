@@ -17,7 +17,7 @@ abstract: >
   benchmark/aggregation pipeline. This repository accompanies a forthcoming
   paper on the parametric closure problem; it is independent from, and does
   not depend on, the precedence-constrained knapsack (PCKP) codebase and
-  arXiv paper it was ported from (see PROVENANCE.md).
+  arXiv paper it was ported from.
 preferred-citation:
   type: article
   title: "Parametric maximum closure on directed forests: exact algorithms and computational study"
