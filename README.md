@@ -1,41 +1,60 @@
-# Parametric Closure — computational project
+# Parametric Closure on Forests — Source Code, Instances & Results
 
-This is the independent C++ codebase for the computational part of the
-parametric maximum-closure paper on directed forests.  It does not compile,
-read or depend on the historical PCKP project (see `PROVENANCE.md`).
+[![C++ validation](https://github.com/fabiofurini/parametric-closure-forests/actions/workflows/ci.yml/badge.svg)](https://github.com/fabiofurini/parametric-closure-forests/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-The notation follows the manuscript: each item has integral profit \(p_i\),
-strictly positive integral weight \(w_i\), and affine contribution
-\(p_i-\lambda w_i\).  A directed arc `(u,v)` means `x_u <= x_v`.
+Independent C++ implementation, benchmark infrastructure, reproducible
+instances and raw results for:
 
-## Layout
+> **"On parametric Maximum Closure Problems over precedence forests"**
+> Valerio Dose, Fabio Furini, Marco Locatelli
 
-- `include/`, `src/`: C++ library and command-line solver/benchmark;
-- `tests/`: CTest differential and structural checks;
-- `instances/`: closure-format instances (bulk archives are generated, not
-  committed — see `docs/REPRODUCIBILITY.md`; `instances/tiny/` and
-  `instances/mixed_tree.pcf` are small committed fixtures);
-- `instances/manifests/`: deterministic instance metadata and SHA-256 checksums;
-- `tools/`: instance generators, the benchmark runner, the BPPF (Oracle 2)
-  converter/verifier, and the aggregation/reporting/packaging pipeline;
-- `third_party/bppf/`: unmodified upstream bounded-precision parametric
-  pseudoflow source, used only as an independent max-flow oracle and
-  optional baseline;
-- `docs/`: architecture, instance format, validation methodology, RaC audit
-  and specification, experimental protocol, and reproducibility instructions;
-- `results/`: raw and processed campaign data, LaTeX table fragments;
-- `PROVENANCE.md`: what was ported from the legacy PCKP codebase and how it
-  was verified; `docs/RAC_AUDIT.md`: the line-by-line audit of the RaC port.
+This repository is self-contained: code, instance generators, benchmark
+instances and raw/processed results all live here under one identity. It
+does not compile, read or depend on any other repository at build or run
+time (see [`PROVENANCE.md`](PROVENANCE.md)).
 
-## Build and test
+The notation follows the manuscript: each vertex has integral profit
+$p_i$, strictly positive integral weight $w_i$, and affine contribution
+$p_i-\lambda w_i$. A directed arc `(u,v)` means `x_u <= x_v`. There is no
+capacity anywhere in this repository.
+
+---
+
+## Algorithms
+
+| Flag | Name | Description | Complexity |
+|---|---|---|---|
+| `pac` | **PaC** | Peel-and-Contract — direct-scan reference algorithm, arbitrary forest orientation | $O(n^2)$ |
+| `dpac` | **DPaC** | Dual of `pac` (increasing ratio order) | $O(n^2)$ |
+| `hpac` | **HPaC** | Heap-based Peel-and-Contract | $O(n^2\log n)$ worst case, $O(n\log n)$ typical |
+| `dhpac` | **DHPaC** | Dual of `hpac` | as `hpac` |
+| `hipac` | **HIPaC** | Heap-based In-tree Peel-and-Contract (in-forests only) | $O(n\log n)$ |
+| `hopac` | **HOPaC** | Heap-based Out-tree Peel-and-Contract (out-forests only) | $O(n\log n)$ |
+| `rac` | **RaC** | Rake-and-Compress / top-tree algorithm, any tree | $O(n\log n)$ |
+| — | **BPPF** | Bounded-Precision Parametric Pseudoflow (Hochbaum et al.), third-party independent oracle | — |
+
+`PaC`'s two moves (peel the current best final vertices, contract an arc)
+are the same pair as `RaC`'s own rake/compress, under a direct-scan or
+lazy-heap schedule instead of balanced top-tree rounds. Every algorithm
+returns the same object: the ordered sequence of closure layers with exact
+rational thresholds, computed with exact integer/rational arithmetic
+throughout — no floating point in any decision path.
+
+---
+
+## Quick start
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ctest --test-dir build --output-on-failure
+
+build/pcf_solve --instance instances/mixed_tree.pcf --algorithm rac
 ```
 
-## Input format
+**Input format** (`.pcf`, one-based vertex ids, no capacity field — full
+grammar in [`docs/INSTANCE_FORMAT.md`](docs/INSTANCE_FORMAT.md)):
 
 ```text
 pcf 1
@@ -48,67 +67,73 @@ arcs 3
 4 3
 ```
 
-Node identifiers in files are one-based. The solver is invoked as:
+---
 
-```bash
-build/pcf_solve --instance instances/mixed_tree.pcf --algorithm rac
+## Repository structure
+
+```text
+include/, src/     C++ library, CLI solver (pcf_solve) and benchmark runner (pcf_benchmark)
+tests/             CTest suite (pcf_tests) — exhaustive oracle + differential checks
+tools/             instance generators, benchmark runner, BPPF converter/verifier,
+                   aggregation/reporting/packaging pipeline (Python + shell)
+third_party/bppf/  unmodified upstream BPPF source — independent max-flow oracle
+instances/         committed small fixtures + manifests; bulk archives are
+                   generated, not committed (see docs/REPRODUCIBILITY.md)
+results/           raw and processed campaign data, LaTeX table fragments
+report/            standalone technical report (companion to the manuscript)
+docs/              full documentation — see below
 ```
 
-Algorithms `pac`, `dpac`, `hpac`, `dhpac`, `hipac`, `hopac` and `rac` are C++.
-`dhpac` is the dual heap-based Peel-and-Contract for general directed forests.
-`hopac` is the specialized dual heap method for out-forests, called
-Heap-based Out-tree Peel-and-Contract in the manuscript. Python, when added, is reserved for
-reproducible utility scripts and never implements an algorithm. HPaC and DHPaC
-use lazy heaps with exact ratio comparisons.
+For the full module-by-module breakdown, see
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-## Current validation
+---
 
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how the codebase is
-structured and [`docs/VALIDATION.md`](docs/VALIDATION.md) for the full
-correctness methodology. Summary:
+## Documentation
 
-`pcf_tests` checks PaC/DPaC/HPaC/DHPaC/RaC agreement on a mixed tree,
-exhaustively on every directed forest with at most four items over a finite
-coefficient grid, and on deterministic random forests. It uses an independent
-closure-enumeration oracle on all small cases, verifies HOPaC on out-forests,
-and checks partition, strict ratio ordering and closure-prefix invariants.
+Each topic has its own page:
 
-RaC is specified against the manuscript in
-[`docs/RAC_SPECIFICATION.md`](docs/RAC_SPECIFICATION.md) and audited
-line-by-line against the recovered legacy source in
-[`docs/RAC_AUDIT.md`](docs/RAC_AUDIT.md). It must continue to pass these
-checks before it is used in a benchmark campaign.
+| Page | Covers |
+|---|---|
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Code layout, algorithm signatures, data model, executables, analysis pipeline |
+| [`docs/VALIDATION.md`](docs/VALIDATION.md) | The three independent correctness layers (exhaustive oracle, BPPF max-flow oracle, cross-algorithm differential testing), sanitizers, CI |
+| [`docs/INSTANCE_FORMAT.md`](docs/INSTANCE_FORMAT.md) | The `.pcf` file grammar |
+| [`docs/EXPERIMENTAL_PROTOCOL.md`](docs/EXPERIMENTAL_PROTOCOL.md) | Measurement protocol, statistics, and the official campaign design (A–F) |
+| [`docs/RAC_SPECIFICATION.md`](docs/RAC_SPECIFICATION.md) | `RaC`'s implementation contract, frozen against the manuscript |
+| [`docs/RAC_AUDIT.md`](docs/RAC_AUDIT.md) | Line-by-line audit of the ported `RaC` source against that contract |
+| [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) | Regenerating instances, rebuilding tables, the clean-clone independence checklist, release contents |
+| [`PROVENANCE.md`](PROVENANCE.md) | What was ported from the legacy PCKP codebase, and how equivalence was verified |
 
-`tools/verify_with_bppf.py` implements the independent max-flow oracle: it
-recomputes the maximum closure at a fixed rational lambda with
-`third_party/bppf`, an unrelated third-party max-flow/min-cut solver, and
-checks agreement with this repository's own algorithms.
+---
 
-## Instance manifests
+## Instances, data & reproducibility
 
-Build or verify a deterministic manifest for one instance directory with:
+Unlike a typical split between a code repository and a data repository,
+**instances and results live in this same repository**:
 
-```bash
-python3 tools/build_instance_manifest.py --instances instances/tiny --output /tmp/tiny.json
-python3 tools/build_instance_manifest.py --instances instances/tiny --verify /tmp/tiny.json
-```
+- `instances/manifests/*.json` — deterministic identifier, topology
+  classification, coefficient bounds and SHA-256 checksum for every
+  instance, so any regenerated or downloaded archive can be verified
+  byte-for-byte (`docs/REPRODUCIBILITY.md`).
+- `results/raw/*.csv` — one immutable row per (instance, algorithm,
+  repetition), produced by `pcf_benchmark`.
+- `results/processed/` and `results/tables/*.tex` — aggregated medians/IQRs
+  and the exact LaTeX table fragments used in the manuscript and the
+  technical report; regenerated from raw data by `tools/build_report.sh`,
+  never hand-typed.
 
-The committed manifests record the stable identifier, topology classification,
-coefficient bounds, component count, seed when encoded in the filename, and
-the SHA-256 checksum of every `.pcf` file.
+Bulk instance archives (up to $n=100\,000$) and the matching raw/processed
+results are attached to
+[**GitHub releases**](https://github.com/fabiofurini/parametric-closure-forests/releases)
+rather than committed to git history. See
+[`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) for the exact
+regeneration commands, the full campaign pipeline
+(`tools/run_official_campaigns.sh`, `tools/run_bppf_campaign.py`,
+`tools/build_report.sh`, `tools/package_release.sh`), and the release
+contents.
 
-## Official benchmark campaigns
+---
 
-```bash
-tools/run_official_campaigns.sh          # campaigns B, C, D, E
-python3 tools/run_bppf_campaign.py \
-  --pcf-solve build/pcf_solve --pcf-benchmark build/pcf_benchmark \
-  --pcf-bppf-oracle build/pcf_bppf_oracle --instances instances/campaign_f \
-  --output results/raw/campaign_f_bppf.csv                     # campaign F, scope-limited
-tools/build_report.sh                    # validate, aggregate, emit tables
-tools/package_release.sh                 # zip instances/ and results/ for a release
-```
+## Citation
 
-See `docs/EXPERIMENTAL_PROTOCOL.md` for the full campaign design, measurement
-protocol and documented scope limitations, and `docs/REPRODUCIBILITY.md` for
-the clean-clone independence checklist.
+See [`CITATION.cff`](CITATION.cff).
