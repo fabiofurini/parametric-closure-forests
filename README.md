@@ -38,6 +38,30 @@ returns the same object: the ordered sequence of closure layers with exact
 rational thresholds, computed with exact integer/rational arithmetic
 throughout — no floating point in any decision path.
 
+### Diagnostic HPaC variants (not part of the algorithm family above)
+
+`HPaC`'s heap uses push-only lazy deletion: every time a node's closure sum
+changes, all incident edges are re-pushed rather than updated in place, so
+stale entries only get discarded lazily. This is $O(n)$ space on typical
+inputs, but on a high-degree hub (e.g. the `star-mixed` structured family)
+the hub is touched repeatedly and each touch re-pushes one entry per
+incident edge, so heap size can grow well past $O(n)$ — confirmed to exhaust
+an 8 GB ceiling by `n=20000` on the star class. Two variants exist purely to
+diagnose and bound this, and are not used anywhere in the paper's main
+computational study:
+
+| Flag | Name | Description |
+|---|---|---|
+| `hpac_eager` | **HPaC-Eager** | Same algorithm as `hpac`, but the two priority structures are `std::set`-indexed with an erase-then-insert update on every touch, so at most one live entry per edge/node ever exists. |
+| `hpac_bounded` | **HPaC-Bounded** | Same lazy heap as `hpac`, but fully rebuilt (stale entries dropped) whenever its size exceeds a constant factor of the live candidate count. |
+
+Both keep `hpac`'s worst-case time bound and are covered by every existing
+exhaustive-oracle and differential-testing check in `pcf_tests`. A local
+pilot run keeps memory within a few tens of MB on star instances up to
+`n=20000`, where plain `hpac` already fails an 8 GB ceiling; the full
+star-class campaign confirming this at every size is still pending (see
+`docs/EXPERIMENTAL_PROTOCOL.md` once it is run).
+
 ---
 
 ## Quick start

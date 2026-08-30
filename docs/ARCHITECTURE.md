@@ -11,11 +11,16 @@ include/parametric_closure/   public C++ headers
   model.hpp                   Rational, node/arc types shared by everything
   instance.hpp                Instance, validate_instance
   algorithms.hpp               compute_pac/dpac/hpac/dhpac/hipac/hopac/rac
+                                (plus diagnostic compute_hpac_eager/_bounded)
   rational.hpp                 exact rational arithmetic (128-bit products)
   pcf.hpp                      .pcf format reader/writer
 src/                          implementation, one algorithm per file
   pac.cpp / dpac.cpp           direct-scan reference algorithm and its dual
   hpac.cpp / dhpac.cpp         heap-based variant and its dual
+  hpac_eager.cpp                diagnostic: hpac with an update-in-place
+                                 std::set instead of a lazy-deletion heap
+  hpac_bounded.cpp               diagnostic: hpac whose lazy heap is
+                                 periodically rebuilt once past a size bound
   hipac.cpp / hopac.cpp          specialized heap variants (in-forests/out-forests)
   rac.cpp                      rake-and-compress / top-tree algorithm
   instance.cpp                 instance validation, canonicalization
@@ -50,10 +55,22 @@ rational threshold and member nodes, in non-increasing ratio order.
 | `compute_hipac` | in-forests only | $O(n\log n)$ | $O(n)$ | requires out-degree $\le 1$ |
 | `compute_hopac` | out-forests only | $O(n\log n)$ | $O(n)$ | requires in-degree $\le 1$ |
 | `compute_rac` | any tree | $O(n\log n)$ | $O(n\log n)$ | rake-and-compress / top-tree |
+| `compute_hpac_eager` | any forest | as `hpac` | $O(n)$ (not just typical) | diagnostic, see below |
+| `compute_hpac_bounded` | any forest | as `hpac` (amortized) | $O(n)$ (not just typical) | diagnostic, see below |
 
 `HIPaC`/`HOPaC` assume their required orientation and do not validate it at
 runtime; passing a mixed-orientation forest to either is a caller error, not
 a checked precondition.
+
+`compute_hpac_eager`/`compute_hpac_bounded` are not part of the paper's
+algorithm family and are not used in the main computational study. `hpac`'s
+lazy-deletion heap re-pushes one entry per incident edge every time a node's
+closure sum changes without removing the stale one, which stays $O(n)$ on
+typical inputs but can grow past it on a high-degree hub (the `star-mixed`
+family). Both diagnostic variants bound heap memory to $O(n)$ instead —
+`hpac_eager` via an update-in-place `std::set`, `hpac_bounded` via periodic
+full rebuilds of the same lazy heap once it outgrows a constant factor of
+the live candidate count.
 
 ## Data model
 
@@ -73,7 +90,7 @@ a checked precondition.
 
 ## Executables
 
-- `pcf_solve --instance FILE --algorithm <pac|dpac|hpac|dhpac|hipac|hopac|rac>`:
+- `pcf_solve --instance FILE --algorithm <pac|dpac|hpac|hpac_eager|hpac_bounded|dhpac|hipac|hopac|rac>`:
   prints the full closure layer sequence for one instance.
 - `pcf_benchmark`: times one (instance, algorithm) pair per invocation,
   emitting one CSV row per repetition (`elapsed_ns`, `peak_rss_kib`,
