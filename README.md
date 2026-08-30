@@ -80,6 +80,27 @@ throughout, as validated on the full official campaigns); use them directly
 whenever an input can have a high-degree hub and `hpac`'s memory growth is
 a concern.
 
+### Two ways to compare against BPPF
+
+BPPF (`third_party/bppf/`) is used two different ways in this repository,
+for two different questions, and neither is a substitute for the other:
+
+| | Correctness | Native speed |
+|---|---|---|
+| Scripts | `tools/convert_to_bppf.py`, `tools/verify_with_bppf.py`, `tools/run_bppf_campaign.py` | `tools/convert_to_bppf_sequence.py`, `tools/validate_bppf_sequence.py`, `tools/run_bppf_native_campaign.py` |
+| Question answered | Do our algorithms and BPPF agree? | How fast is BPPF itself, natively, compared to `hpac`? |
+| Encoding | One exact lambda baked into fixed integer arc capacities per call — exact, no precision limit | A whole probe sequence in one call, using BPPF's native affine (two-numbers-per-arc) capacity format |
+| BPPF invocations | One `pcf_bppf_oracle` process **per breakpoint** | One `pcf_bppf`/`pcf_bppf_oracle` process **per instance** |
+| Precision | Exact (integer arithmetic throughout) | Bounded by a `prec` parameter (BPPF's own fixed-point arithmetic) and by instance size — see the overflow guard in `convert_to_bppf_sequence.py` |
+| Timing meaning | Not meaningful as a speed number — dominated by process-spawn overhead repeated once per breakpoint | A genuine one-process-per-instance comparison, native BPPF sweep vs `hpac`'s single in-process call |
+
+Both are necessary: the correctness check alone doesn't tell you which
+algorithm is faster, and a speed number without an independent correctness
+check first would be meaningless if the two encodings ever disagreed. The
+native-speed encoding was derived from, and validated against, the
+already-trusted single-lambda encoding — see the module docstrings for the
+exact monotonicity/sign constraints BPPF's parametric solver imposes on it.
+
 ---
 
 ## Quick start

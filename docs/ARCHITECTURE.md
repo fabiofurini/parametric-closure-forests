@@ -99,8 +99,16 @@ high-degree hub and `hpac`'s memory growth is a concern.
   operation counters for `rac`, `git_commit`, `timestamp_utc`); driven by
   `tools/run_benchmark.py` for a full campaign.
 - `pcf_bppf_oracle` / `pcf_bppf`: the unmodified upstream BPPF binaries
-  (`third_party/bppf/`), invoked by `tools/verify_with_bppf.py` and
-  `tools/run_bppf_campaign.py`.
+  (`third_party/bppf/`), built with and without `-DBREAKPOINTS`
+  respectively, invoked two different ways for two different questions
+  (see README's "Two ways to compare against BPPF"): `pcf_bppf_oracle`
+  alone, once per breakpoint with one exact lambda baked in per call, by
+  `tools/verify_with_bppf.py` / `tools/run_bppf_campaign.py` (correctness);
+  both binaries, once per instance with a whole probe sequence in BPPF's
+  native affine encoding, by `tools/convert_to_bppf_sequence.py` /
+  `tools/validate_bppf_sequence.py` / `tools/run_bppf_native_campaign.py`
+  (native speed, `pcf_bppf_oracle` used only for the one-off agreement
+  check outside the timed region, `pcf_bppf` for the actual timing).
 
 ## Analysis pipeline
 
