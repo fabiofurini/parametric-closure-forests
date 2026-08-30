@@ -38,7 +38,7 @@ returns the same object: the ordered sequence of closure layers with exact
 rational thresholds, computed with exact integer/rational arithmetic
 throughout — no floating point in any decision path.
 
-### Diagnostic HPaC variants (not part of the algorithm family above)
+### Memory-bounded HPaC variants, for high-degree inputs
 
 `HPaC`'s heap uses push-only lazy deletion: every time a node's closure sum
 changes, all incident edges are re-pushed rather than updated in place, so
@@ -46,9 +46,8 @@ stale entries only get discarded lazily. This is $O(n)$ space on typical
 inputs, but on a high-degree hub (e.g. the `star-mixed` structured family)
 the hub is touched repeatedly and each touch re-pushes one entry per
 incident edge, so heap size can grow well past $O(n)$ — confirmed to exhaust
-an 8 GB ceiling by `n=20000` on the star class. Two variants exist purely to
-diagnose and bound this, and are not used anywhere in the paper's main
-computational study:
+an 8 GB ceiling by `n=20000` on the star class. These two variants solve
+exactly that case, each with a different fix for the same root cause:
 
 | Flag | Name | Description |
 |---|---|---|
@@ -60,7 +59,11 @@ exhaustive-oracle and differential-testing check in `pcf_tests`. A local
 pilot run keeps memory within a few tens of MB on star instances up to
 `n=20000`, where plain `hpac` already fails an 8 GB ceiling; the full
 star-class campaign confirming this at every size is still pending (see
-`docs/EXPERIMENTAL_PROTOCOL.md` once it is run).
+`docs/EXPERIMENTAL_PROTOCOL.md` once it is run). They are not part of the
+main computational study reported in the paper (which uses `hpac`
+throughout, as validated on the full official campaigns); use them directly
+whenever an input can have a high-degree hub and `hpac`'s memory growth is
+a concern.
 
 ---
 
