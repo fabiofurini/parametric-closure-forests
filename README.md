@@ -16,6 +16,21 @@ The notation follows the manuscript: each vertex has integral profit
 $p_i$, strictly positive integral weight $w_i$, and affine contribution
 $p_i-\lambda w_i$. A directed arc `(u,v)` means `x_u <= x_v`.
 
+<p align="center">
+  <img src="docs/images/closure_layers_example.png" alt="Optimal parametric closure on a 7-vertex example" width="520">
+</p>
+
+Each node shows $p_i \mid w_i$, with the small number beside it the vertex
+index. For $\lambda$ above 2 the optimal closed set is empty; as $\lambda$
+falls past each breakpoint $\lambda_1=2$, $\lambda_2=\tfrac23$,
+$\lambda_3=\tfrac12$, one more closure layer becomes worth including, and
+the optimal solution only ever grows: $\mathcal M_1=\{1,5\}$, then
+$\mathcal M_2=\mathcal M_1\cup\{2,4,7\}$, then
+$\mathcal M_3=\mathcal M_2\cup\{3,6\}=\mathcal I$. Every algorithm in this
+repository computes this whole nested sequence — all breakpoints and all
+closure layers — in one call, rather than solving the plain (non-parametric)
+closure problem separately at each $\lambda$.
+
 ---
 
 ## Algorithms
