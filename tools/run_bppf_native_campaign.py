@@ -18,6 +18,15 @@ BPPF's own fixed-point arithmetic (precision `prec`, default 1e-6, same as
 v1's methodology) can merge two HPaC breakpoints closer together than
 10**-prec into one -- expected and reported per-instance via
 n_breakpoints_bppf < n_breakpoints_hpac, never silently dropped.
+
+Scope: unlike the single-lambda encoding, the native multi-lambda encoding's
+exactness is bounded by instance SIZE, not just precision choice -- every
+number gets multiplied by 10**prec inside BPPF before being stored as a
+64-bit integer, so large instances (via convert_to_bppf_sequence.py's `big`
+infinity-arc capacity) and/or a high `prec` (needed to resolve closely
+spaced breakpoints) can together exceed exact double-precision integer
+range. Instance/prec pairs past that bound are skipped with a printed
+reason, not silently timed as if they were in scope.
 """
 from __future__ import annotations
 
@@ -84,7 +93,11 @@ def main() -> None:
 
         with tempfile.TemporaryDirectory() as tmp:
             dimacs_path = Path(tmp) / "instance.dimacs"
-            convert_sequence(instance, lambdas, arguments.prec, dimacs_path)
+            try:
+                convert_sequence(instance, lambdas, arguments.prec, dimacs_path)
+            except ValueError as error:
+                print(f"skip {instance.name}: {error}")
+                continue
 
             agrees, distinct_bppf = check_agreement(
                 arguments.pcf_solve, arguments.pcf_bppf_oracle, instance, ratios, lambdas, dimacs_path, n,

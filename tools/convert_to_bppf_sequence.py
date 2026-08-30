@@ -89,6 +89,30 @@ def convert_sequence(instance_path: Path, lambdas: list[Fraction], prec: int, ou
     for tail, head in arcs:
         arc_lines.append(f"a {tail + 2} {head + 2} {big}")
 
+    # Every number in this file, including `big`, gets multiplied by
+    # APP_VAL=10**prec inside pseudopar.c before it is stored as a 64-bit
+    # integer (ac->wt/ac->cst = llround(value * APP_VAL)); tools/convert_to_bppf.py's
+    # single-lambda encoding never pays this because it always uses prec=0
+    # (one exact point, capacities baked in directly). This is therefore a
+    # genuine SIZE limit of the native multi-lambda encoding that grows both
+    # with the instance (via `big`) and with how much precision the probe
+    # sequence needs (via `prec`, raised to resolve closely-spaced
+    # breakpoints) -- not a matter of the encoding being "wrong" for large
+    # instances, but of it running out of exactly-representable integer
+    # range (double-precision: 2**53) for them. Instances/precisions past
+    # this bound are out of scope for the native-speed comparison and must
+    # be reported as skipped, the same way tools/convert_to_bppf.py already
+    # does for its own (different, prec-independent) overflow condition --
+    # never silently truncated.
+    if big * (10 ** prec) >= 2 ** 53:
+        raise ValueError(
+            f"{instance_path}: scaled coefficients too large for BPPF's double-precision "
+            f"capacity parsing at prec={prec} (need big*10**prec < 2**53, got "
+            f"big={big}, big*10**prec={big * (10 ** prec)}); this instance/precision pair is "
+            "out of scope for the native-speed comparison (see docs/EXPERIMENTAL_PROTOCOL.md "
+            "once written up, and tools/convert_to_bppf.py's own analogous guard)."
+        )
+
     lambda_tokens = " ".join(f"{float(lam):.{prec}f}" for lam in lambdas)
     lines = [
         f"p sequence {n + 2} {len(arc_lines)} {prec} {len(lambdas)} {lambda_tokens}",

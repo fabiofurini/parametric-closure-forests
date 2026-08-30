@@ -27,19 +27,26 @@ from convert_to_bppf_sequence import convert_sequence, closures_from_sequence_ou
 from run_bppf_campaign import hpac_breakpoints, midpoints, closure_from_hpac
 
 
-def validate_instance(pcf_solve: Path, pcf_bppf_oracle: Path, instance: Path, prec: int) -> tuple[int, int, int]:
-    """Returns (n_probes, tolerance_mismatches, genuine_mismatches)."""
+def validate_instance(pcf_solve: Path, pcf_bppf_oracle: Path, instance: Path, prec: int) -> tuple[int, int, int, str | None]:
+    """Returns (n_probes, tolerance_mismatches, genuine_mismatches, skip_reason).
+    skip_reason is not None when the instance/prec pair is out of scope for the
+    native encoding (see convert_to_bppf_sequence.py's overflow guard) -- the
+    other three fields are 0 in that case and must not be interpreted as
+    "validated clean", only as "not attempted"."""
     from convert_to_bppf import read_pcf
     n, _, _, _ = read_pcf(instance)
 
     ratios = hpac_breakpoints(pcf_solve, instance)
     lambdas = midpoints(ratios)
     if not lambdas:
-        return 0, 0, 0
+        return 0, 0, 0, None
 
     with tempfile.TemporaryDirectory() as tmp:
         dimacs_path = Path(tmp) / "instance.dimacs"
-        convert_sequence(instance, lambdas, prec, dimacs_path)
+        try:
+            convert_sequence(instance, lambdas, prec, dimacs_path)
+        except ValueError as error:
+            return 0, 0, 0, str(error)
         completed = subprocess.run(
             [str(pcf_bppf_oracle)], stdin=dimacs_path.open("r", encoding="utf-8"),
             check=True, text=True, capture_output=True,
@@ -67,7 +74,7 @@ def validate_instance(pcf_solve: Path, pcf_bppf_oracle: Path, instance: Path, pr
             genuine_mismatches += 1
             print(f"  GENUINE mismatch on {instance.name} at probe {j} (lambda={lam}): "
                   f"expected {sorted(expected)}, got {sorted(actual)}")
-    return len(lambdas), tolerance_mismatches, genuine_mismatches
+    return len(lambdas), tolerance_mismatches, genuine_mismatches, None
 
 
 def main() -> None:
@@ -78,11 +85,15 @@ def main() -> None:
     parser.add_argument("--prec", type=int, default=6)
     arguments = parser.parse_args()
 
-    total_probes = total_tolerance = total_genuine = 0
+    total_probes = total_tolerance = total_genuine = total_skipped = 0
     instances_with_genuine = 0
     for instance in sorted(arguments.instances.glob("*.pcf")):
-        probes, tolerance, genuine = validate_instance(
+        probes, tolerance, genuine, skip_reason = validate_instance(
             arguments.pcf_solve, arguments.pcf_bppf_oracle, instance, arguments.prec)
+        if skip_reason is not None:
+            total_skipped += 1
+            print(f"{instance.name}: SKIPPED (out of scope for prec={arguments.prec}): {skip_reason}")
+            continue
         total_probes += probes
         total_tolerance += tolerance
         total_genuine += genuine
@@ -93,7 +104,8 @@ def main() -> None:
 
     print()
     print(f"TOTAL: probes={total_probes} tolerance_merges={total_tolerance} "
-          f"genuine_mismatches={total_genuine} instances_with_genuine={instances_with_genuine}")
+          f"genuine_mismatches={total_genuine} instances_with_genuine={instances_with_genuine} "
+          f"skipped_out_of_scope={total_skipped}")
     if total_genuine:
         raise SystemExit(1)
 
