@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
                 if (flag == "--instance") instance_path = value;
                 else algorithm = value;
             } else {
-                throw std::invalid_argument("usage: pcf_solve --instance FILE --algorithm pac|dpac|hpac|hipac|dhpac|hopac|rac");
+                throw std::invalid_argument("usage: pcf_solve --instance FILE --algorithm pac|dpac|hpac|hpac_eager|hpac_bounded|hipac|dhpac|hopac|rac");
             }
         }
         if (instance_path.empty() || algorithm.empty()) throw std::invalid_argument("missing required option");
@@ -24,6 +24,8 @@ int main(int argc, char* argv[]) {
         if (algorithm == "pac") result = pcf::compute_pac(instance);
         else if (algorithm == "dpac") result = pcf::compute_dpac(instance);
         else if (algorithm == "hpac") result = pcf::compute_hpac(instance);
+        else if (algorithm == "hpac_eager") result = pcf::compute_hpac_eager(instance);
+        else if (algorithm == "hpac_bounded") result = pcf::compute_hpac_bounded(instance);
         else if (algorithm == "hipac") result = pcf::compute_hipac(instance);
         else if (algorithm == "dhpac") result = pcf::compute_dhpac(instance);
         else if (algorithm == "hopac") result = pcf::compute_hopac(instance);

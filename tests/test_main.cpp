@@ -142,15 +142,21 @@ void test_rac_differential() {
             const auto pac = pcf::compute_pac(instance);
             const auto dpac = pcf::compute_dpac(instance);
             const auto hpac = pcf::compute_hpac(instance);
+            const auto hpac_eager = pcf::compute_hpac_eager(instance);
+            const auto hpac_bounded = pcf::compute_hpac_bounded(instance);
             const auto dhpac = pcf::compute_dhpac(instance);
             const auto rac = pcf::compute_rac(instance);
             require_well_formed(instance, pac);
             require_well_formed(instance, dpac);
             require_well_formed(instance, hpac);
+            require_well_formed(instance, hpac_eager);
+            require_well_formed(instance, hpac_bounded);
             require_well_formed(instance, dhpac);
             require_well_formed(instance, rac);
             require(same_sequence(pac, dpac), "PaC and DPaC differ on random forest");
             require(same_sequence(pac, hpac), "PaC and HPaC differ on random forest");
+            require(same_sequence(pac, hpac_eager), "PaC and HPaC-Eager differ on random forest");
+            require(same_sequence(pac, hpac_bounded), "PaC and HPaC-Bounded differ on random forest");
             require(same_sequence(dhpac, hpac), "DHPaC and HPaC differ on random forest");
             require(same_sequence(pac, rac), "PaC and RaC differ on random forest");
         }
@@ -165,21 +171,29 @@ void test_rac_small_random_enumeration() {
         const auto pac = pcf::compute_pac(instance);
         const auto dpac = pcf::compute_dpac(instance);
         const auto hpac = pcf::compute_hpac(instance);
+        const auto hpac_eager = pcf::compute_hpac_eager(instance);
+        const auto hpac_bounded = pcf::compute_hpac_bounded(instance);
         const auto dhpac = pcf::compute_dhpac(instance);
         const auto rac = pcf::compute_rac(instance);
         require_well_formed(instance, pac);
         require_well_formed(instance, dpac);
         require_well_formed(instance, hpac);
+        require_well_formed(instance, hpac_eager);
+        require_well_formed(instance, hpac_bounded);
         require_well_formed(instance, dhpac);
         require_well_formed(instance, rac);
         require_matches_enumeration(instance, pac);
         require_matches_enumeration(instance, dpac);
         require_matches_enumeration(instance, hpac);
+        require_matches_enumeration(instance, hpac_eager);
+        require_matches_enumeration(instance, hpac_bounded);
         require_matches_enumeration(instance, dhpac);
         require_matches_enumeration(instance, rac);
         require(same_sequence(dhpac, hpac), "DHPaC and HPaC differ on enumerated random forest");
         require(same_sequence(dpac, hpac), "DPaC and HPaC differ on enumerated random forest");
         require(same_sequence(pac, hpac), "PaC and HPaC differ on enumerated random forest");
+        require(same_sequence(pac, hpac_eager), "PaC and HPaC-Eager differ on enumerated random forest");
+        require(same_sequence(pac, hpac_bounded), "PaC and HPaC-Bounded differ on enumerated random forest");
         require(same_sequence(pac, rac), "PaC and RaC differ on enumerated random forest");
     }
 }
@@ -234,16 +248,22 @@ void test_structured_rac_differential() {
             const auto pac = pcf::compute_pac(instance);
             const auto dpac = pcf::compute_dpac(instance);
             const auto hpac = pcf::compute_hpac(instance);
+            const auto hpac_eager = pcf::compute_hpac_eager(instance);
+            const auto hpac_bounded = pcf::compute_hpac_bounded(instance);
             const auto dhpac = pcf::compute_dhpac(instance);
             const auto rac = pcf::compute_rac(instance);
             require_well_formed(instance, pac);
             require_well_formed(instance, dpac);
             require_well_formed(instance, hpac);
+            require_well_formed(instance, hpac_eager);
+            require_well_formed(instance, hpac_bounded);
             require_well_formed(instance, dhpac);
             require_well_formed(instance, rac);
             require(same_sequence(dpac, hpac), "DPaC and HPaC differ on structured tree");
             require(same_sequence(dhpac, hpac), "DHPaC and HPaC differ on structured tree");
             require(same_sequence(pac, hpac), "PaC and HPaC differ on structured tree");
+            require(same_sequence(pac, hpac_eager), "PaC and HPaC-Eager differ on structured tree");
+            require(same_sequence(pac, hpac_bounded), "PaC and HPaC-Bounded differ on structured tree");
             require(same_sequence(pac, rac), "PaC and RaC differ on structured tree");
         }
     }
@@ -285,21 +305,29 @@ void test_rac_exhaustive_small() {
                         const auto pac = pcf::compute_pac(instance);
                         const auto dpac = pcf::compute_dpac(instance);
                         const auto hpac = pcf::compute_hpac(instance);
+                        const auto hpac_eager = pcf::compute_hpac_eager(instance);
+                        const auto hpac_bounded = pcf::compute_hpac_bounded(instance);
                         const auto dhpac = pcf::compute_dhpac(instance);
                         const auto rac = pcf::compute_rac(instance);
                         require_well_formed(instance, pac);
                         require_well_formed(instance, dpac);
                         require_well_formed(instance, hpac);
+                        require_well_formed(instance, hpac_eager);
+                        require_well_formed(instance, hpac_bounded);
                         require_well_formed(instance, dhpac);
                         require_well_formed(instance, rac);
                         require_matches_enumeration(instance, pac);
                         require_matches_enumeration(instance, dpac);
                         require_matches_enumeration(instance, hpac);
+                        require_matches_enumeration(instance, hpac_eager);
+                        require_matches_enumeration(instance, hpac_bounded);
                         require_matches_enumeration(instance, dhpac);
                         require_matches_enumeration(instance, rac);
                         require(same_sequence(dpac, hpac), "DPaC and HPaC differ on exhaustive small forest");
                         require(same_sequence(dhpac, hpac), "DHPaC and HPaC differ on exhaustive small forest");
                         require(same_sequence(pac, hpac), "PaC and HPaC differ on exhaustive small forest");
+                        require(same_sequence(pac, hpac_eager), "PaC and HPaC-Eager differ on exhaustive small forest");
+                        require(same_sequence(pac, hpac_bounded), "PaC and HPaC-Bounded differ on exhaustive small forest");
                         require(same_sequence(pac, rac), "PaC and RaC differ on exhaustive small forest");
                     }
                 }
@@ -319,10 +347,14 @@ int main() {
         const auto pac = pcf::compute_pac(instance);
         const auto dpac = pcf::compute_dpac(instance);
         const auto hpac = pcf::compute_hpac(instance);
+        const auto hpac_eager = pcf::compute_hpac_eager(instance);
+        const auto hpac_bounded = pcf::compute_hpac_bounded(instance);
         const auto dhpac = pcf::compute_dhpac(instance);
         const auto hipac = pcf::compute_hipac(instance);
         const auto rac = pcf::compute_rac(instance);
         require(same_sequence(pac, hpac), "PaC and HPaC differ");
+        require(same_sequence(pac, hpac_eager), "PaC and HPaC-Eager differ");
+        require(same_sequence(pac, hpac_bounded), "PaC and HPaC-Bounded differ");
         require(same_sequence(pac, dpac), "PaC and DPaC differ");
         require(same_sequence(hpac, dhpac), "HPaC and DHPaC differ");
         require(same_sequence(pac, hipac), "PaC and HIPaC differ");

@@ -12,6 +12,8 @@ add_library(pcf
     src/pac.cpp
     src/dpac.cpp
     src/hpac.cpp
+    src/hpac_eager.cpp
+    src/hpac_bounded.cpp
     src/dhpac.cpp
     src/hipac.cpp
     src/hopac.cpp
