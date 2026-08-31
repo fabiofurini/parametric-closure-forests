@@ -81,6 +81,12 @@ campaign_d() {
     run "${dir}" hpac,rac 3 campaign_d_${shape} 3
 
     if [ "${shape}" = star ]; then
+      # Run both O(n)-space heap variants on the complete star matrix. They
+      # use the same instances, repetitions, shuffle seed, timeout and memory
+      # ceiling as the HPaC/RaC comparison above.
+      run "${dir}" hpac_eager 3 campaign_d_star 3
+      run "${dir}" hpac_bounded 3 campaign_d_star 3
+
       # HPaC is known to exhaust the memory ceiling on large mixed-star
       # instances (docs/EXPERIMENTAL_PROTOCOL.md). Since hpac and rac run in
       # the same process above, an HPaC memory failure also loses RaC's
@@ -112,7 +118,13 @@ campaign_e() {
     local dir=instances/campaign_e_${topo}
     [ -d "${dir}" ] || ${GEN_RANDOM} --output "${dir}" \
       --sizes 100,200,300,400,500,600,700,800,900,1000,10000,20000,30000,40000,50000,60000,70000,80000,90000,100000 \
-      --densities 0.6,1.0 --topology "${topo}" --seeds 5
+      --densities 0.3,0.6,0.9,1.0 --topology "${topo}" --seeds 10
+    local count
+    count=$(find "${dir}" -maxdepth 1 -type f -name '*.pcf' -printf . | wc -c)
+    if [ "${count}" -ne 4800 ]; then
+      echo "campaign E ${topo}: expected 4,800 instances in ${dir}, found ${count}; refusing a partial run" >&2
+      return 1
+    fi
     local specialized=hipac
     [ "${topo}" = out ] && specialized=hopac
     run "${dir}" "hpac,${specialized},rac" 3 "campaign_e_${topo}" 4

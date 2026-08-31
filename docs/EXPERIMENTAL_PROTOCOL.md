@@ -168,15 +168,16 @@ coefficient families, sizes, seeds, algorithms) are as follows:
   those instances even though RaC alone is unaffected, so a RaC-only
   recovery pass is run on exactly that size/topology subset
   (`instances/campaign_d_star_large_only`, see `tools/run_official_campaigns.sh`).
+  The same complete star matrix is also run with the `hpac_eager` and
+  `hpac_bounded` O(n)-space implementations, separately from the lazy-heap
+  HPaC/RaC pass.
 - **E — specialized orientations**: `in-forest` (HPaC vs HIPaC vs RaC) and
   `out-forest` (HPaC vs HOPaC vs RaC), `n∈{100,...,1000}∪{10000,...,100000}`
-  (20 sizes), `rho∈{0.6,1.0}` (a reduced density set relative to campaigns B
-  and C, since in-/out-forest structure is already the primary variable
-  under study here), 6 coefficient families, 5 seeds: 1200 instances per
-  orientation, 2400 total. This reduced matrix (vs. B/C's 4 densities and 10
-  seeds) is a preregistered scoping choice to keep the campaign tractable
-  once extended across two orientations and the full size range up to
-  n=100000, not an ad hoc reduction after the fact.
+  (20 sizes), `rho∈{0.3,0.6,0.9,1.0}`, 6 coefficient families and 10 seeds:
+  4,800 instances per orientation, 9,600 total. This is the same density and
+  seed matrix used by campaigns B/C and by the corresponding experiment in
+  the v1 manuscript; it avoids confounding the comparison of the specialized
+  algorithms with a change in density coverage.
 - **F — BPPF baseline (optional, scope-limited)**: `n∈{100,200,500,1000}`,
   `mixed-forest`, `rho=0.6`, all 6 coefficient families, 3 seeds (72
   instances), 3 repetitions (`tools/run_bppf_campaign.py`). BPPF is used as

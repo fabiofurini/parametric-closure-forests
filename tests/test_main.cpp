@@ -133,6 +133,27 @@ pcf::Instance random_out_forest(int n, std::mt19937& generator) {
     return instance;
 }
 
+pcf::Instance random_in_forest(int n, std::mt19937& generator) {
+    std::uniform_int_distribution<int> profit(-12, 17);
+    std::uniform_int_distribution<int> weight(1, 9);
+    std::bernoulli_distribution link(0.78);
+    pcf::Instance instance;
+    instance.n = n;
+    instance.profit.resize(n);
+    instance.weight.resize(n);
+    for (int v = 0; v < n; ++v) {
+        instance.profit[v] = profit(generator);
+        instance.weight[v] = weight(generator);
+    }
+    for (int u = 0; u + 1 < n; ++u) {
+        if (link(generator)) {
+            std::uniform_int_distribution<int> child(u + 1, n - 1);
+            instance.arcs.push_back({u, child(generator)});
+        }
+    }
+    return instance;
+}
+
 void test_rac_differential() {
     std::mt19937 generator(20260828);
     for (int n = 1; n <= 100; ++n) {
@@ -221,6 +242,33 @@ void test_dhpac_against_hpac() {
             const auto dhpac = pcf::compute_dhpac(instance);
             require_well_formed(instance, dhpac);
             require(same_sequence(dhpac, hpac), "DHPaC and HPaC differ on large out-forest");
+        }
+    }
+}
+
+void test_hipac_against_hpac() {
+    std::mt19937 generator(29082026);
+    std::uniform_int_distribution<int> small_size(2, 11);
+    for (int repetition = 0; repetition < 6000; ++repetition) {
+        const auto instance = random_in_forest(small_size(generator), generator);
+        require(pcf::is_in_forest(instance), "generated instance must be an in-forest");
+        const auto dpac = pcf::compute_dpac(instance);
+        const auto hpac = pcf::compute_hpac(instance);
+        const auto dhpac = pcf::compute_dhpac(instance);
+        const auto hipac = pcf::compute_hipac(instance);
+        require_well_formed(instance, hipac);
+        require_matches_enumeration(instance, hipac);
+        require(same_sequence(dpac, hpac), "DPaC and HPaC differ on enumerated in-forest");
+        require(same_sequence(dhpac, hpac), "DHPaC and HPaC differ on enumerated in-forest");
+        require(same_sequence(hipac, hpac), "HIPaC and HPaC differ on enumerated in-forest");
+    }
+    for (int n = 1; n <= 500; ++n) {
+        for (int repetition = 0; repetition < 4; ++repetition) {
+            const auto instance = random_in_forest(n, generator);
+            const auto hpac = pcf::compute_hpac(instance);
+            const auto hipac = pcf::compute_hipac(instance);
+            require_well_formed(instance, hipac);
+            require(same_sequence(hipac, hpac), "HIPaC and HPaC differ on large in-forest");
         }
     }
 }
@@ -364,6 +412,7 @@ int main() {
         test_rac_exhaustive_small();
         test_rac_small_random_enumeration();
         test_dhpac_against_hpac();
+        test_hipac_against_hpac();
         test_rac_differential();
         test_structured_rac_differential();
         std::cout << "pcf tests passed\n";

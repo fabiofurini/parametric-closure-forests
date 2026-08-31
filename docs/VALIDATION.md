@@ -21,8 +21,9 @@ under test. Coverage:
   affine-coefficient grid, exhaustively;
 - 10,000 deterministic random directed forests up to 11 items;
 - mixed-orientation path, balanced binary and star trees up to 257 items;
-- 6,000 deterministic out-forest instances, plus 2,000 larger ones, checked
-  against the oracle and cross-checked with `HPaC`/`DHPaC`/`HOPaC`;
+- 6,000 deterministic in-forest and 6,000 deterministic out-forest instances,
+  plus 2,000 larger instances for each orientation, checked against the oracle
+  and cross-checked with `HPaC`/`DHPaC`/`HIPaC`/`HOPaC` as applicable;
 - closure layer partition, strict ratio ordering, and closure-prefix invariants.
 
 ### 2. Independent max-flow oracle (BPPF)
