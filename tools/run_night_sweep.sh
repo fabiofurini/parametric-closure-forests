@@ -44,7 +44,8 @@ for shape in path binary star; do
     --shape ${shape} --sizes 100,200,500,1000,2000,5000,10000,20000,50000,100000 --seeds 10
 done
 for topo in in out; do
-  count=$(find "instances/campaign_e_${topo}" -maxdepth 1 -type f -name '*.pcf' -printf . 2>/dev/null | wc -c)
+  mkdir -p "instances/campaign_e_${topo}"   # find on a missing dir would trip pipefail
+  count=$(find "instances/campaign_e_${topo}" -maxdepth 1 -type f -name '*.pcf' -printf . | wc -c)
   if [ "${count}" -ne 4800 ]; then
     # deterministic generator: rerunning completes a partial directory
     ${GEN_RANDOM} --output instances/campaign_e_${topo} \
