@@ -25,6 +25,7 @@ pcf::ClosureLayerSequence run(const pcf::Instance& instance, const std::string& 
     if (algorithm == "pac") return pcf::compute_pac(instance);
     if (algorithm == "dpac") return pcf::compute_dpac(instance);
     if (algorithm == "hpac") return pcf::compute_hpac(instance);
+    if (algorithm == "hpac_lazy") return pcf::compute_hpac_lazy(instance);
     if (algorithm == "hpac_eager") return pcf::compute_hpac_eager(instance);
     if (algorithm == "hpac_bounded") return pcf::compute_hpac_bounded(instance);
     if (algorithm == "hipac") return pcf::compute_hipac(instance);

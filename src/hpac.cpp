@@ -163,7 +163,15 @@ void collect_reverse_reachable(
 
 }  // namespace
 
-ClosureLayerSequence compute_hpac(const Instance& instance) {
+// NOTE (2026-08-31, plan V3 decision #4): this push-only lazy-deletion
+// implementation is kept as an internal reference under the name
+// `hpac_lazy`. The official HPaC is the bounded-rebuild implementation in
+// hpac_bounded.cpp (`compute_hpac`), which keeps the heap within a constant
+// factor of the live candidates — genuinely O(n) space, and measured faster
+// than this lazy version on every topology tested (see
+// docs/EXPERIMENTAL_PLAN_V3.md §2bis). This file's heap can grow to
+// Θ(n²) entries on high-degree hubs (star graphs).
+ClosureLayerSequence compute_hpac_lazy(const Instance& instance) {
     validate_instance(instance);
     // -----------------------------------------------------------------------
     // Initialise one working node per original node.  During the algorithm nodes

@@ -182,7 +182,12 @@ constexpr int kRebuildFactor = 4;
 
 }  // namespace
 
-ClosureLayerSequence compute_hpac_bounded(const Instance& instance) {
+// NOTE (2026-08-31, plan V3 decision #4): this bounded-rebuild
+// implementation IS the official HPaC (`compute_hpac`). The push-only
+// lazy-deletion variant it derives from is kept as `compute_hpac_lazy`
+// (src/hpac.cpp) for reference; `compute_hpac_bounded` remains as an alias
+// so existing callers and scripts keep working.
+ClosureLayerSequence compute_hpac(const Instance& instance) {
     validate_instance(instance);
     std::vector<FastNode> g(instance.n);
     std::vector<int> next_original(instance.n, -1);
@@ -435,6 +440,10 @@ ClosureLayerSequence compute_hpac_bounded(const Instance& instance) {
         }
     }
     return sequence;
+}
+
+ClosureLayerSequence compute_hpac_bounded(const Instance& instance) {
+    return compute_hpac(instance);
 }
 
 }  // namespace pcf

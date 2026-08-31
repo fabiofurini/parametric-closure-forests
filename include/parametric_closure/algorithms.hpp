@@ -28,18 +28,24 @@ struct RaCStats {
 
 ClosureLayerSequence compute_pac(const Instance& instance);
 ClosureLayerSequence compute_dpac(const Instance& instance);
+// Official HPaC (since 2026-08-31, plan V3 decision #4): heap-based PaC
+// whose lazy-deletion heaps are periodically rebuilt once they grow past a
+// constant factor of the live candidate count, so memory stays O(n).
+// Implemented in src/hpac_bounded.cpp.
 ClosureLayerSequence compute_hpac(const Instance& instance);
+// Internal reference: the original push-only lazy-deletion implementation.
+// Heap size is bounded only by the number of touch operations — Θ(n²)
+// entries on high-degree hubs (stars). See src/hpac.cpp.
+ClosureLayerSequence compute_hpac_lazy(const Instance& instance);
 // HPaC variant with an eager (erase-then-insert) update-in-place priority
-// structure instead of HPaC's push-only lazy-deletion heap: memory is always
-// O(n), never O(number of touch operations). See src/hpac_eager.cpp.
+// structure instead of a lazy-deletion heap: memory is always O(n), never
+// O(number of touch operations). See src/hpac_eager.cpp.
 ClosureLayerSequence compute_hpac_eager(const Instance& instance);
-// HPaC variant that keeps HPaC's lazy-deletion heap but periodically rebuilds
-// it once it grows past a constant factor of the live candidate count, so
-// memory stays O(n) at the cost of an amortized rebuild. See
-// src/hpac_bounded.cpp.
+// Alias of compute_hpac, kept so existing callers and scripts keep working.
 ClosureLayerSequence compute_hpac_bounded(const Instance& instance);
 ClosureLayerSequence compute_hipac(const Instance& instance);
-// Dual heap-based PaC for a general directed forest.
+// Dual heap-based PaC for a general directed forest; same bounded-rebuild
+// heap policy as the official HPaC.
 ClosureLayerSequence compute_dhpac(const Instance& instance);
 // Specialized dual heap algorithm for out-forests, called HOPaC in the manuscript.
 ClosureLayerSequence compute_hopac(const Instance& instance);

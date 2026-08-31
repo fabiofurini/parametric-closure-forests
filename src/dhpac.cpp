@@ -1,10 +1,18 @@
 #include "parametric_closure/algorithms.hpp"
 #include "parametric_closure/instance.hpp"
 
+#include <algorithm>
 #include <queue>
 #include <stdexcept>
 #include <utility>
 #include <vector>
+
+// DHPaC, dual of HPaC. Since 2026-08-31 (plan V3 decision #4) this file
+// uses the same bounded-rebuild heap policy as the official HPaC
+// (src/hpac_bounded.cpp): each lazy-deletion heap is fully rebuilt once its
+// size exceeds a constant factor of the live candidates, so heap memory is
+// O(n) instead of O(total touches) — the latter blows up to Θ(n²) on
+// high-degree hubs (star graphs).
 
 namespace pcf {
 namespace {
@@ -142,6 +150,10 @@ void collect_forward_reachable(
     }
 }
 
+// Rebuild threshold: same policy and factor as the official HPaC
+// (src/hpac_bounded.cpp).
+constexpr int kRebuildFactor = 4;
+
 }  // namespace
 
 ClosureLayerSequence compute_dhpac(const Instance& instance) {
@@ -179,14 +191,19 @@ ClosureLayerSequence compute_dhpac(const Instance& instance) {
 
     std::vector<int> node_version(instance.n, 0);
     struct InitialEntry { Ratio ratio; int node = -1; int version = 0; };
-    const auto initial_compare = [](const InitialEntry& lhs, const InitialEntry& rhs) {
+    auto initial_compare = [](const InitialEntry& lhs, const InitialEntry& rhs) {
         const int result = compare(lhs.ratio, rhs.ratio);
         return result != 0 ? result > 0 : lhs.node > rhs.node;
     };
-    std::priority_queue<InitialEntry, std::vector<InitialEntry>, decltype(initial_compare)> initial_heap(initial_compare);
+    using InitialHeap = std::priority_queue<InitialEntry, std::vector<InitialEntry>, decltype(initial_compare)>;
+    InitialHeap initial_heap(initial_compare);
     const auto push_initial = [&](int u) {
         if (graph[u].alive && graph[u].first_in == -1)
             initial_heap.push({{graph[u].p, graph[u].w}, u, node_version[u]});
+    };
+    const auto rebuild_initial_heap = [&]() {
+        initial_heap = InitialHeap(initial_compare);
+        for (const int u : active) push_initial(u);
     };
     const auto discard_stale_initials = [&]() {
         while (!initial_heap.empty()) {
@@ -198,11 +215,12 @@ ClosureLayerSequence compute_dhpac(const Instance& instance) {
     for (int v = 0; v < instance.n; ++v) push_initial(v);
 
     std::vector<int> edge_version(edges.size(), 0);
-    const auto fin_compare = [](const FinEntry& lhs, const FinEntry& rhs) {
+    auto fin_compare = [](const FinEntry& lhs, const FinEntry& rhs) {
         const int result = compare(lhs.ratio, rhs.ratio);
         return result != 0 ? result > 0 : lhs.edge > rhs.edge;
     };
-    std::priority_queue<FinEntry, std::vector<FinEntry>, decltype(fin_compare)> fin_heap(fin_compare);
+    using FinHeap = std::priority_queue<FinEntry, std::vector<FinEntry>, decltype(fin_compare)>;
+    FinHeap fin_heap(fin_compare);
     const auto current_fin_ratio = [&](int edge) {
         const int u = edges[edge].from;
         const int v = edges[edge].to;
@@ -229,7 +247,20 @@ ClosureLayerSequence compute_dhpac(const Instance& instance) {
             fin_heap.pop();
         }
     };
+    const auto rebuild_fin_heap = [&]() {
+        fin_heap = FinHeap(fin_compare);
+        for (int edge = 0; edge < static_cast<int>(edges.size()); ++edge) push_fin(edge);
+    };
     for (int edge = 0; edge < static_cast<int>(edges.size()); ++edge) push_fin(edge);
+
+    int alive_edges = static_cast<int>(edges.size());
+    // Mark an edge dead and account for it in the live-edge counter used by
+    // the rebuild trigger below.
+    const auto retire_edge = [&](int edge) {
+        edges[edge].alive = false;
+        ++edge_version[edge];
+        --alive_edges;
+    };
 
     std::vector<int> mark(instance.n, 0), selected_initial(instance.n, 0), stack, reached_u, reached_v, affected;
     int stamp = 1;
@@ -237,10 +268,15 @@ ClosureLayerSequence compute_dhpac(const Instance& instance) {
     std::vector<ClosureLayer> increasing;
 
     while (!active.empty()) {
+        if (static_cast<int>(fin_heap.size()) > kRebuildFactor * std::max(alive_edges, 1))
+            rebuild_fin_heap();
         discard_stale_fins();
         const bool has_fin = !fin_heap.empty();
         const int best_edge = has_fin ? fin_heap.top().edge : -1;
         const Ratio best_fin = has_fin ? fin_heap.top().ratio : Ratio{0, 1};
+        if (static_cast<int>(initial_heap.size()) >
+            kRebuildFactor * std::max(static_cast<int>(active.size()), 1))
+            rebuild_initial_heap();
         discard_stale_initials();
         if (initial_heap.empty()) throw std::runtime_error("working graph has no initial node");
         const Ratio best_initial = initial_heap.top().ratio;
@@ -282,8 +318,7 @@ ClosureLayerSequence compute_dhpac(const Instance& instance) {
                     const int successor = edges[edge].to;
                     detach_out(graph, edges, edge);
                     detach_in(graph, edges, edge);
-                    edges[edge].alive = false;
-                    ++edge_version[edge];
+                    retire_edge(edge);
                     new_initials.push_back(successor);
                 }
                 remove_active(u);
@@ -318,8 +353,7 @@ ClosureLayerSequence compute_dhpac(const Instance& instance) {
                     attach_in(graph, edges, u, edge);
                     touch_edge(edge);
                 } else {
-                    edges[edge].alive = false;
-                    ++edge_version[edge];
+                    retire_edge(edge);
                 }
             }
             while (graph[v].first_out != -1) {
