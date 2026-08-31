@@ -48,7 +48,26 @@ import argparse
 from fractions import Fraction
 from pathlib import Path
 
-from convert_to_bppf import read_pcf
+def read_pcf(path: Path) -> tuple[int, list[int], list[int], list[tuple[int, int]]]:
+    tokens = path.read_text(encoding="utf-8").split()
+    cursor = 0
+
+    def take(expected: str) -> None:
+        nonlocal cursor
+        assert tokens[cursor] == expected, f"expected {expected!r}, got {tokens[cursor]!r}"
+        cursor += 1
+
+    take("pcf"); take("1")
+    take("n"); n = int(tokens[cursor]); cursor += 1
+    take("profits"); profit = [int(v) for v in tokens[cursor:cursor + n]]; cursor += n
+    take("weights"); weight = [int(v) for v in tokens[cursor:cursor + n]]; cursor += n
+    take("arcs"); m = int(tokens[cursor]); cursor += 1
+    arcs = []
+    for _ in range(m):
+        tail, head = int(tokens[cursor]) - 1, int(tokens[cursor + 1]) - 1
+        cursor += 2
+        arcs.append((tail, head))
+    return n, profit, weight, arcs
 
 
 def convert_sequence(instance_path: Path, lambdas: list[Fraction], prec: int, output_path: Path) -> None:

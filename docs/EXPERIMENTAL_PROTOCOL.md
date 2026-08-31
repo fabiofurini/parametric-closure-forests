@@ -91,24 +91,15 @@ its results report, not per row:
 
 ## Correctness verification
 
-Two independent oracles are used, plus cross-algorithm differential checks:
+One independent oracle is used, plus cross-algorithm differential checks
+(`docs/VALIDATION.md`; BPPF plays no verification role — it appears only
+as the timed comparison baseline of campaign G):
 
 1. **Exhaustive enumeration** (`pcf_tests`, `tests/test_main.cpp`): every
    directed forest with at most four items over a finite coefficient grid,
    thousands of random forests up to `n=11`, and every one of the six
    coefficient families crossed with mixed/in/out topologies.
-2. **Maximum closure at fixed lambda, via an independent max-flow engine**
-   (`tools/verify_with_bppf.py`): converts the instance and one exact
-   rational lambda into BPPF's DIMACS input (`tools/convert_to_bppf.py`),
-   runs the unmodified upstream `third_party/bppf/pseudopar.c` compiled with
-   `-DBREAKPOINTS` (target `pcf_bppf_oracle`), and compares the returned
-   minimum-cut closure against our own algorithm's closure at that lambda.
-   This is genuinely independent: BPPF is a third-party pseudoflow
-   implementation unrelated to PaC/HPaC/RaC. It was validated on 481
-   breakpoint-midpoint checks spanning random/path/star topologies and all
-   six coefficient families with zero disagreements before being trusted
-   for campaign F.
-3. **Cross-algorithm differential agreement**: `tools/aggregate_results.py`
+2. **Cross-algorithm differential agreement**: `tools/aggregate_results.py`
    computes `correctness_status` for every (campaign, instance) group as
    `"agreed"` if every algorithm benchmarked together on that instance
    produced the same `sequence_hash`, else `"mismatch"` (listed in
@@ -178,19 +169,18 @@ coefficient families, sizes, seeds, algorithms) are as follows:
   seed matrix used by campaigns B/C and by the corresponding experiment in
   the v1 manuscript; it avoids confounding the comparison of the specialized
   algorithms with a change in density coverage.
-- **F — BPPF baseline (optional, scope-limited)**: `n∈{100,200,500,1000}`,
-  `mixed-forest`, `rho=0.6`, all 6 coefficient families, 3 seeds (72
-  instances), 3 repetitions (`tools/run_bppf_campaign.py`). BPPF is used as
-  Oracle 2 (above) at arbitrary scale, since a single fixed-lambda min-cut
-  call is cheap and scale-independent in principle. Using it as a *timed
-  baseline* across a full parametric sweep is scoped to small/medium
-  instances only, because `tools/convert_to_bppf.py` bakes one exact lambda
-  into integer arc capacities per call and requires the scaled coefficients
-  to stay under `2**53` (double-precision-safe) with one BPPF process
-  invocation per breakpoint — correct at any scale, but too many process
-  spawns to be a fair wall-clock comparison once an instance has many
-  thousands of breakpoints. This scope limitation is a direct instance of
-  the "transparent handling of limited precision" the plan requires for this
-  campaign (section 9.6); the resulting total time is 91x-1270x HPaC's
-  in-process time on the same instance, reported only as evidence BPPF is a
-  correct oracle at this scale, never as a native-speed baseline.
+- **G — BPPF native comparison (v1-style)**: the full campaign-B test bed
+  (2,400 `mixed-forest` instances, `n∈{100,...,1000}`), 5 repetitions,
+  `prec=1e-6` (`tools/run_bppf_native_campaign.py`). One `pcf_bppf`
+  process per instance sweeps the k+1 probe values bracketing all k
+  breakpoints in BPPF's native affine encoding — the same methodology as
+  the v1 manuscript, and the most favorable setting for BPPF, since it is
+  spared the search for the breakpoints. Timing compares BPPF's own
+  cumulative solve timer against `hpac`'s in-process time on the same
+  instance. Outside the timed region, one `pcf_bppf_oracle` run per
+  instance checks closure agreement at every probe; deviations are
+  classified as fixed-point tolerance artifacts (reported as a count) or
+  genuine disagreements (which invalidate that instance's timing).
+  Instances rejected by the encoding's `2**53` representation guard are
+  skipped with a printed reason and counted per size/family. See
+  `docs/EXPERIMENTAL_PLAN_V3.md` for the full preregistered design.

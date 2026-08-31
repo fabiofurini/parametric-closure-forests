@@ -73,7 +73,7 @@ acceptance tests in `docs/RAC_SPECIFICATION.md`.
 | Differential comparison with PaC/HPaC/DHPaC | Deterministic random forests, plus the six coefficient families crossed with mixed/in/out topologies (see the smoke sweep referenced in `results/TEST_REPORT_2026-08-28.md`, extended by campaigns A-D). |
 | Sanitizer build | AddressSanitizer/UndefinedBehaviorSanitizer CTest configuration in `.github/workflows/ci.yml`. |
 | No hidden fallback to PaC/HPaC | `compute_rac` (`src/rac.cpp`) never calls `compute_pac`/`compute_hpac`/any other algorithm; its only external dependency is `validate_instance`. |
-| Independent max-flow cross-check | `tools/verify_with_bppf.py` (Oracle 2, section 7.2) recomputes the closure at a fixed lambda with BPPF, an unrelated third-party min-cut solver; agreement is verified at every breakpoint midpoint reported by HPaC on a spread of random/path/star instances across all six coefficient families before RaC is trusted for benchmarking (481/481 agreements in the validation sweep run for this repository; see `docs/EXPERIMENTAL_PROTOCOL.md`). |
+| Independent max-flow cross-check (historical; tooling since removed with the BPPF-oracle role) | `tools/verify_with_bppf.py` recomputed the closure at a fixed lambda with BPPF, an unrelated third-party min-cut solver; agreement is verified at every breakpoint midpoint reported by HPaC on a spread of random/path/star instances across all six coefficient families before RaC is trusted for benchmarking (481/481 agreements in the validation sweep run for this repository; see `docs/EXPERIMENTAL_PROTOCOL.md`). |
 
 ## Conclusion
 

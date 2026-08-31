@@ -20,15 +20,16 @@ section at the bottom before the affected campaign is (re)run.
 1. **Full clean rerun.** All campaigns rerun from scratch from one frozen
    commit, on one machine, in one sweep. No mixing of raw CSVs across
    commits or dates.
-2. **BPPF comparison = the v1-style comparison, restored.** The two
-   algorithms are compared **on the same problem**: BPPF runs its own
-   native parametric sweep (it receives only the instance and finds all
-   breakpoints itself, bounded precision, `prec = 1e-6` as in v1), one
-   process per instance, against HPaC's single in-process sweep. The
-   current per-breakpoint measurement — where BPPF is *handed* HPaC's
-   breakpoints — is removed from the paper as a comparison (it is a
-   useless speed test by construction); it survives only as an internal
-   correctness oracle in the validation layer (`docs/VALIDATION.md`).
+2. **BPPF comparison = the v1-style comparison, restored — and BPPF's
+   verifier role removed entirely** (from the paper, the validation
+   docs, AND the repository: the per-breakpoint oracle scripts and the
+   72-instance campaign F are deleted). BPPF appears in exactly one
+   place: campaign G, one `pcf_bppf` process per instance sweeping the
+   k+1 probe values that bracket all k breakpoints (`prec = 1e-6`, the
+   v1 methodology — see Deviations), timed against HPaC's single
+   in-process sweep on the same instance. Correctness of our algorithms
+   rests on the exhaustive enumeration oracle plus cross-algorithm
+   differential agreement alone.
 3. **BPPF precision issues get at most a comment.** Where BPPF's
    fixed-point arithmetic merges close breakpoints / misses the optimal
    layer split on some instances, the paper reports it v1-style: a short
@@ -138,7 +139,8 @@ Binding for every campaign below:
 
 Code work needed by the new decisions, then freeze:
 
-- [ ] **T1 — BPPF autonomous-sweep driver (v1-style).** Adapt the native
+- [x] **T1 — BPPF v1-style driver. DONE 2026-08-31** (see Deviations for
+      the corrected design).** Original task text kept for the record:** Adapt the native
       pipeline so that the *timed* BPPF run receives **only the instance**
       (affine two-number capacities + a λ interval, `p interval` header)
       and discovers every breakpoint itself, exactly like the v1
@@ -150,13 +152,11 @@ Code work needed by the new decisions, then freeze:
       port its conversion/interval/precision choices verbatim into
       `tools/run_bppf_native_campaign.py` (reworked), with a module
       docstring stating the equal-problem guarantee.
-- [ ] **T2 — BPPF agreement checker (tolerance-aware).** Post-run,
-      untimed: compare BPPF's returned breakpoints/closures against
-      HPaC's, classifying every deviation as (a) tolerance merge
-      (< 10^-prec gap) or (b) genuine disagreement. Genuine disagreement
-      on any instance stops the campaign (it would mean our encoding is
-      wrong). Output: per-instance flags feeding the paper's one-comment
-      count.
+- [x] **T2 — BPPF agreement checker (tolerance-aware). DONE 2026-08-31**,
+      built into `tools/run_bppf_native_campaign.py` (per-instance,
+      untimed): every deviation classified as tolerance merge or genuine
+      disagreement; smoke-tested across five coefficient families with
+      zero genuine disagreements.
 - [x] **T3 — Star memory diagnostic. DONE 2026-08-31 (see §2bis).**
       Root cause confirmed in code and measurement; led to decision #4.
 - [ ] **T5 — Bounded heap becomes official.** (i) Wire `pcf_benchmark`/
@@ -220,7 +220,6 @@ deterministic; existing directories are verified rather than regenerated).
 | `instances/campaign_d_{shape}_pac_subset` | symlinks, n ≤ 2,000 | 300 each |
 | `instances/campaign_d_star_large_only` | symlinks, n ∈ {20k, 50k, 100k} | 180 |
 | `instances/campaign_e_{in,out}` | in/out, 20 sizes, ρ∈{.3,.6,.9,1}, 10 seeds | 4,800 each |
-| `instances/campaign_f` | BPPF validation subset (n∈{100,200,500,1000}, ρ=0.6, 3 seeds) | 72 |
 
 - [ ] Complete `campaign_e_in` (currently 4,699/4,800; generator is
       idempotent) and generate `campaign_e_out`.
@@ -241,18 +240,20 @@ driver (T1). Every launch logged under `results/logs/` with a dated name.
 | **C** | campaign_c (2,400) | hpac,rac (3); dhpac (3); pac n=10k (2) / n=20k (3); dpac idem | 2; 6 | Fig. 6; **per-density RaC/HPaC table + ρ=1.0 crossover check** |
 | **D** | campaign_d path/binary/star (600 each) | path/binary: hpac,rac (3), dhpac (3), pac,dpac n≤2,000 (3); **star:** rac full range (3), hpac,dhpac n≤20,000 (3, cutoff 5bis), **pac full range (3)** | 3; 7 | end of §4.2 (instance-classes focus): path/binary ratios; **rebuilt star table = PaC / HPaC / RaC** (decision #4); trend + ratios only |
 | **E** | campaign_e_in / _out (4,800 each) | hpac,hipac,rac / hpac,hopac,rac (3); dhpac (3) | 4; 8 | §4.3 (HIPaC/HOPaC ratios, full v1-aligned matrix) |
-| **F** | campaign_f (72) | per-breakpoint exact BPPF oracle (validation ONLY — produces no paper number) | — | `docs/VALIDATION.md` layer 2; gate for G's encoding |
-| **G** | campaign_b (2,400) | **BPPF native autonomous sweep (v1-style)** vs hpac, 5 reps, `prec=1e-6` | — | §4.4 (the restored v1 comparison) + Conclusion claim |
+| **G** | campaign_b (2,400) | **BPPF native sweep (v1-style probes)** vs hpac, 5 reps, `prec=1e-6` | — | §4.4 (the restored v1 comparison) + Conclusion claim |
 
 Campaign G rules (the restored v1 comparison):
 
-- **Equal problem:** both solvers compute the *full parametric solution*
-  of the same instance. HPaC: one in-process call. BPPF: one process,
-  autonomous sweep, no breakpoint list supplied (T1). Timed regions
-  exclude conversion and I/O for both.
-- **Gate before timing:** T2 agreement check on the campaign-F subset
-  must classify every deviation as a tolerance artifact
-  (`genuine_mismatches = 0`); one genuine mismatch stops the campaign.
+- **Same deliverable:** both solvers produce the full parametric
+  solution of the same instance. HPaC: one in-process call. BPPF: one
+  process, k+1 probes (its most favorable setting — see Deviations);
+  its timing is BPPF's own cumulative solve timer, so conversion,
+  process spawn and input parsing are excluded for both sides.
+- **Per-instance agreement check (T2, built into the driver, untimed):**
+  one `pcf_bppf_oracle` run per instance compares BPPF's closure at every
+  probe with HPaC's; every deviation must be classified as a fixed-point
+  tolerance artifact, else that instance's timing is invalid and the
+  campaign stops for investigation.
 - **Precision/scope accounting:** instances where BPPF (fixed-point,
   `prec=1e-6`) merges close breakpoints or where the encoding's 2^53
   representation guard rejects the instance are counted per size/family
@@ -273,7 +274,7 @@ small-footprint passes, on a 32 GiB machine). Assignment:
 |---|---|---|
 | 0 | B official (pac,hpac,rac) → C official (hpac,rac + pac subsets) | ~5 h |
 | 1 | B duals → C duals (dhpac, dpac subsets) → E duals (dhpac in+out) | ~7 h |
-| 2 | D path + D binary (all passes) → F (validation) → **G** (after T2 gate) | ~5 h |
+| 2 | D path + D binary (all passes) → **G** (BPPF native, campaign_b) | ~5 h |
 | 3 | D star: rac full; hpac,dhpac n≤20k; **pac full range** | ~3 h |
 | 4 | E in (hpac,hipac,rac) | ~6 h |
 | 5 | E out (hpac,hopac,rac) | ~6 h |
@@ -377,11 +378,23 @@ journal choice. The sweep contributes only the empirical growth fits.
 |---|---|
 | §4.2 note: per-density RaC/HPaC, ρ=1.0 crossover | Campaign C per-density (T4) + Phase 4 sentence |
 | §4.2.1 note: Eager/Bounded lack the star matrix; ">8 GB" rows vs O(n)-space theorem | T3 diagnostic + campaign D star passes + rebuilt table + explanation paragraph |
-| §4.4 + Conclusion notes: BPPF comparison not meaningful | Campaign G (v1-style autonomous sweep) replacing §4.4; per-breakpoint test demoted to validation |
+| §4.4 + Conclusion notes: BPPF comparison not meaningful | Campaign G (v1-style native sweep) replacing §4.4; BPPF's verifier role removed everywhere (repo included) |
 | Report note: campaign E from reduced matrix | Campaign E full 4×10 matrix |
 | App. D: Θ/Ω claims, journal | Not computational — needs Marco |
 
 ## Deviations
 
-*(none yet — record any deviation here, dated, before rerunning the
-affected campaign)*
+- **2026-08-31, campaign G ("autonomous sweep") corrected before any run.**
+  Upstream BPPF has no autonomous breakpoint-discovery mode: it evaluates
+  min cuts only at user-supplied parameter values (SEQUENCE list or
+  INTERVAL grid — see `third_party/bppf/UPSTREAM_README.md`). The v1
+  comparison itself (legacy `hpf_compare.py`) drove one BPPF process per
+  instance with probe values at the midpoints between the breakpoints
+  found by our algorithm. Campaign G therefore restores **exactly the v1
+  methodology**: one `pcf_bppf` process per instance, probing the k+1
+  values that bracket all k breakpoints, `prec = 1e-6` — i.e., BPPF in
+  its most favorable setting (it is spared the search for the
+  breakpoints). This is stated in one sentence in the paper; every
+  resulting speed claim is conservative in BPPF's favor. The
+  per-breakpoint one-process-per-λ measurement remains excluded from the
+  paper (validation only).

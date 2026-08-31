@@ -51,7 +51,7 @@ add_executable(pcf_bppf third_party/bppf/pseudopar.c)
 target_link_libraries(pcf_bppf PRIVATE m)
 
 # Same unmodified upstream source, built with node-breakpoint diagnostics
-# enabled: tools/verify_with_bppf.py reads its "n <id> <breakpoint>" output
+# enabled: tools/run_bppf_native_campaign.py reads its "n <id> <breakpoint>" output
 # to recover which nodes are on the source side of the minimum cut (see
 # docs/EXPERIMENTAL_PROTOCOL.md, "Oracle 2").
 add_executable(pcf_bppf_oracle third_party/bppf/pseudopar.c)

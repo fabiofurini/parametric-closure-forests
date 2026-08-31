@@ -65,8 +65,12 @@ jobs:
           python3 tools/emit_latex_tables.py --mode correctness --processed-dir /tmp/ci_processed --output /tmp/ci_correctness.tex
           python3 tools/emit_latex_tables.py --mode ratio --processed-dir /tmp/ci_processed --output /tmp/ci_ratio.tex \
             --campaign-id ci_smoke --baseline hpac --candidate rac --group-by n_nodes
-      - name: Oracle 2 cross-check against BPPF on one small instance
+      - name: BPPF comparison driver smoke test (one small instance)
         run: |
-          cmake --build build --target pcf_bppf_oracle --parallel 2
-          python3 tools/verify_with_bppf.py --pcf-solve build/pcf_solve --pcf-bppf-oracle build/pcf_bppf_oracle \
-            --instance instances/mixed_tree.pcf --algorithm hpac --lambda-num 7 --lambda-den 2
+          cmake --build build --target pcf_bppf pcf_bppf_oracle --parallel 2
+          mkdir -p /tmp/ci_bppf && cp instances/mixed_tree.pcf /tmp/ci_bppf/
+          python3 tools/run_bppf_native_campaign.py --pcf-solve build/pcf_solve \
+            --pcf-benchmark build/pcf_benchmark --pcf-bppf build/pcf_bppf \
+            --pcf-bppf-oracle build/pcf_bppf_oracle --instances /tmp/ci_bppf \
+            --output /tmp/ci_bppf/out.csv --repetitions 2 --prec 6
+          test "$(grep -c ',False,' /tmp/ci_bppf/out.csv || true)" = "0"

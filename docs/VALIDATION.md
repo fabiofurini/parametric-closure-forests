@@ -7,7 +7,7 @@ across `docs/RAC_AUDIT.md`, `docs/EXPERIMENTAL_PROTOCOL.md` and CI into one
 reference. For the measurement protocol (timing, repetitions, statistics),
 see `docs/EXPERIMENTAL_PROTOCOL.md`.
 
-## Three independent layers
+## Two independent layers
 
 ### 1. Exhaustive enumeration oracle
 
@@ -26,26 +26,7 @@ under test. Coverage:
   and cross-checked with `HPaC`/`DHPaC`/`HIPaC`/`HOPaC` as applicable;
 - closure layer partition, strict ratio ordering, and closure-prefix invariants.
 
-### 2. Independent max-flow oracle (BPPF)
-
-`tools/verify_with_bppf.py` reduces the instance and one exact rational
-`lambda` to the standard maximum-weight-closure network and solves it with
-`third_party/bppf` (`pcf_bppf_oracle`) — the unmodified upstream
-Bounded-Precision Parametric Pseudoflow implementation, a third-party
-solver unrelated to `PaC`/`HPaC`/`RaC`/etc. Its minimum-cut closure at that
-`lambda` is compared against this repository's own algorithms' closure at
-the same `lambda`. This was run at every breakpoint midpoint across
-random/path/star topologies and all six coefficient families before BPPF
-was trusted as an oracle for campaign F: 481/481 agreements, zero
-mismatches.
-
-Because each call is driven with one exact rational `lambda` converted to
-exact integer arc capacities (`tools/convert_to_bppf.py`), this check has no
-decimal-tolerance free parameter — unlike letting BPPF sweep and detect
-breakpoints on its own, which is a fundamentally different (and
-precision-sensitive) mode not used for oracle purposes here.
-
-### 3. Cross-algorithm differential agreement
+### 2. Cross-algorithm differential agreement
 
 Every official benchmark campaign (`docs/EXPERIMENTAL_PROTOCOL.md`) runs
 multiple algorithms on the same instance and compares their returned

@@ -44,7 +44,7 @@ closure problem separately at each $\lambda$.
 | `hipac` | **HIPaC** | Heap-based In-tree Peel-and-Contract (in-forests only) | $O(n\log n)$ |
 | `hopac` | **HOPaC** | Heap-based Out-tree Peel-and-Contract (out-forests only) | $O(n\log n)$ |
 | `rac` | **RaC** | Rake-and-Compress / top-tree algorithm, any tree | $O(n\log n)$ |
-| — | **BPPF** | Bounded-Precision Parametric Pseudoflow (Hochbaum et al.), third-party independent oracle | — |
+| — | **BPPF** | Bounded-Precision Parametric Pseudoflow (Hochbaum et al.), third-party comparison baseline | — |
 
 `PaC`'s two moves (peel the current best final vertices, contract an arc)
 are the same pair as `RaC`'s own rake/compress, under a direct-scan or
@@ -53,53 +53,40 @@ returns the same object: the ordered sequence of closure layers with exact
 rational thresholds, computed with exact integer/rational arithmetic
 throughout — no floating point in any decision path.
 
-### Memory-bounded HPaC variants, for high-degree inputs
+### HPaC's heap policy (why space is genuinely O(n))
 
-`HPaC`'s heap uses push-only lazy deletion: every time a node's closure sum
-changes, all incident edges are re-pushed rather than updated in place, so
-stale entries only get discarded lazily. This is $O(n)$ space on typical
-inputs, but on a high-degree hub (e.g. the `star-mixed` structured family)
-the hub is touched repeatedly and each touch re-pushes one entry per
-incident edge, so heap size can grow well past $O(n)$ — confirmed to exhaust
-an 8 GB ceiling by `n=20000` on the star class. These two variants solve
-exactly that case, each with a different fix for the same root cause:
+`hpac` (and its dual `dhpac`) keep their candidate heaps within a constant
+factor of the live candidate count by a periodic full rebuild that drops
+stale lazy-deletion entries. This is what makes the implementation's space
+bound match the algorithm's $O(n)$ space theorem on *every* input,
+including high-degree hubs: a push-only lazy-deletion heap (kept as
+`hpac_lazy`, internal reference) re-pushes one entry per incident edge at
+every hub touch and grows to $\Theta(n^2)$ entries on the `star-mixed`
+family — measured RSS grows ×100 for n ×10, exhausting an 8 GB ceiling by
+`n=20000`. The rebuild policy is also measured *faster* than the lazy heap
+(~2× on large random forests, ~4× on stars), with bit-identical output on
+every instance tested. `hpac_eager` (an update-in-place `std::set`
+variant, also $O(n)$ space) and `hpac_bounded` (an alias of `hpac`) remain
+available; all variants are covered by every exhaustive-oracle and
+differential-testing check in `pcf_tests`.
 
-| Flag | Name | Description |
-|---|---|---|
-| `hpac_eager` | **HPaC-Eager** | Same algorithm as `hpac`, but the two priority structures are `std::set`-indexed with an erase-then-insert update on every touch, so at most one live entry per edge/node ever exists. |
-| `hpac_bounded` | **HPaC-Bounded** | Same lazy heap as `hpac`, but fully rebuilt (stale entries dropped) whenever its size exceeds a constant factor of the live candidate count. |
+### The BPPF comparison
 
-Both keep `hpac`'s worst-case time bound and are covered by every existing
-exhaustive-oracle and differential-testing check in `pcf_tests`. A local
-pilot run keeps memory within a few tens of MB on star instances up to
-`n=20000`, where plain `hpac` already fails an 8 GB ceiling; the full
-star-class campaign confirming this at every size is still pending (see
-`docs/EXPERIMENTAL_PROTOCOL.md` once it is run). They are not part of the
-main computational study reported in the paper (which uses `hpac`
-throughout, as validated on the full official campaigns); use them directly
-whenever an input can have a high-degree hub and `hpac`'s memory growth is
-a concern.
-
-### Two ways to compare against BPPF
-
-BPPF (`third_party/bppf/`) is used two different ways in this repository,
-for two different questions, and neither is a substitute for the other:
-
-| | Correctness | Native speed |
-|---|---|---|
-| Scripts | `tools/convert_to_bppf.py`, `tools/verify_with_bppf.py`, `tools/run_bppf_campaign.py` | `tools/convert_to_bppf_sequence.py`, `tools/validate_bppf_sequence.py`, `tools/run_bppf_native_campaign.py` |
-| Question answered | Do our algorithms and BPPF agree? | How fast is BPPF itself, natively, compared to `hpac`? |
-| Encoding | One exact lambda baked into fixed integer arc capacities per call — exact, no precision limit | A whole probe sequence in one call, using BPPF's native affine (two-numbers-per-arc) capacity format |
-| BPPF invocations | One `pcf_bppf_oracle` process **per breakpoint** | One `pcf_bppf`/`pcf_bppf_oracle` process **per instance** |
-| Precision | Exact (integer arithmetic throughout) | Bounded by a `prec` parameter (BPPF's own fixed-point arithmetic) and by instance size — see the overflow guard in `convert_to_bppf_sequence.py` |
-| Timing meaning | Not meaningful as a speed number — dominated by process-spawn overhead repeated once per breakpoint | A genuine one-process-per-instance comparison, native BPPF sweep vs `hpac`'s single in-process call |
-
-Both are necessary: the correctness check alone doesn't tell you which
-algorithm is faster, and a speed number without an independent correctness
-check first would be meaningless if the two encodings ever disagreed. The
-native-speed encoding was derived from, and validated against, the
-already-trusted single-lambda encoding — see the module docstrings for the
-exact monotonicity/sign constraints BPPF's parametric solver imposes on it.
+BPPF (`third_party/bppf/`) is used for exactly one purpose in this
+repository: the timed comparison of `tools/run_bppf_native_campaign.py`.
+One `pcf_bppf` process per instance sweeps, in BPPF's native affine
+(two-numbers-per-arc) capacity format, the k+1 parameter values that
+bracket all k breakpoints — the same methodology as the v1 manuscript,
+and the most favorable setting for BPPF, since it is spared the search
+for the breakpoints (upstream BPPF evaluates min cuts only at
+user-supplied parameter values). Outside the timed region, one
+`pcf_bppf_oracle` run per instance checks that BPPF's closures agree with
+`hpac`'s at every probe, classifying any deviation as a fixed-point
+tolerance artifact (`prec`, default 1e-6) or a genuine disagreement; a
+genuine disagreement invalidates that instance's timing. Correctness of
+the algorithms in this repository is established independently of BPPF
+(`docs/VALIDATION.md`: exhaustive enumeration oracle plus cross-algorithm
+differential agreement).
 
 ---
 
@@ -136,7 +123,7 @@ include/, src/     C++ library, CLI solver (pcf_solve) and benchmark runner (pcf
 tests/             CTest suite (pcf_tests) — exhaustive oracle + differential checks
 tools/             instance generators, benchmark runner, BPPF converter/verifier,
                    aggregation/reporting/packaging pipeline (Python + shell)
-third_party/bppf/  unmodified upstream BPPF source — independent max-flow oracle
+third_party/bppf/  unmodified upstream BPPF source — comparison baseline
 instances/         committed small fixtures + manifests; bulk archives are
                    generated, not committed (see docs/REPRODUCIBILITY.md)
 results/           raw and processed campaign data, LaTeX table fragments
@@ -156,7 +143,7 @@ Each topic has its own page:
 | Page | Covers |
 |---|---|
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Code layout, algorithm signatures, data model, executables, analysis pipeline |
-| [`docs/VALIDATION.md`](docs/VALIDATION.md) | The three independent correctness layers (exhaustive oracle, BPPF max-flow oracle, cross-algorithm differential testing), sanitizers, CI |
+| [`docs/VALIDATION.md`](docs/VALIDATION.md) | The two independent correctness layers (exhaustive enumeration oracle, cross-algorithm differential testing), sanitizers, CI |
 | [`docs/INSTANCE_FORMAT.md`](docs/INSTANCE_FORMAT.md) | The `.pcf` file grammar |
 | [`docs/INSTANCE_GENERATION.md`](docs/INSTANCE_GENERATION.md) | The six topology families and six affine-coefficient families, and how each is built |
 | [`docs/EXPERIMENTAL_PROTOCOL.md`](docs/EXPERIMENTAL_PROTOCOL.md) | Measurement protocol, statistics, and the official campaign design (A–F) |
@@ -187,7 +174,7 @@ results are attached to
 rather than committed to git history. See
 [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) for the exact
 regeneration commands, the full campaign pipeline
-(`tools/run_official_campaigns.sh`, `tools/run_bppf_campaign.py`,
+(`tools/run_official_campaigns.sh`, `tools/run_bppf_native_campaign.py`,
 `tools/build_report.sh`, `tools/package_release.sh`), and the release
 contents.
 

@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# One-shot analysis pipeline (plan section 13): raw CSVs -> validated ->
-# aggregated -> LaTeX table fragments + results_summary.json. Run after
+# One-shot analysis pipeline: raw CSVs -> validated -> aggregated -> LaTeX
+# table fragments + results_summary.json. Run after
 # tools/run_official_campaigns.sh, tools/run_dual_variant_campaigns.sh and
-# tools/run_bppf_campaign.py have produced results/raw/*.csv. Reproduces
-# every number and table cited in
-# Parametric_Closure/PAPER_MARCO/computational_section_v2.tex from raw data.
+# tools/run_bppf_native_campaign.py have produced results/raw/*.csv.
+# Reproduces every number and table cited in the manuscript from raw data.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 mkdir -p results/processed results/tables
 
-# campaign_f_bppf.csv (tools/run_bppf_campaign.py) and *.failures.csv use a
-# different schema than pcf_benchmark's CSV and are handled separately below.
+# campaign_g_bppf_native.csv (tools/run_bppf_native_campaign.py) and
+# *.failures.csv use a different schema than pcf_benchmark's CSV and are
+# handled separately below.
 mapfile -t STANDARD_RAW < <(ls results/raw/campaign_{b,c,d_path,d_binary,d_star,e_in,e_out}_*.csv 2>/dev/null \
   | grep -v '\.failures\.csv$')
 
@@ -55,15 +55,19 @@ emit_ratio campaign_e_in hpac rac
 emit_ratio campaign_e_out hpac hopac
 emit_ratio campaign_e_out hpac rac
 
-echo "=== campaign F (BPPF baseline) summary ==="
+echo "=== campaign G (BPPF native comparison) summary ==="
+if [ -f results/raw/campaign_g_bppf_native.csv ]; then
 python3 - <<'EOF'
-import csv
-rows = list(csv.DictReader(open("results/raw/campaign_f_bppf.csv")))
-mismatches = sum(int(r["bppf_mismatches"]) for r in rows)
-ratios = sorted(float(r["bppf_median_total_ns"]) / float(r["hpac_median_ns"]) for r in rows)
-print(f"instances={len(rows)} mismatches={mismatches} "
-      f"bppf_total/hpac ratio range=[{ratios[0]:.1f}, {ratios[-1]:.1f}]")
+import csv, statistics
+rows = list(csv.DictReader(open("results/raw/campaign_g_bppf_native.csv")))
+bad = [r for r in rows if r["agrees_or_tolerance_explained"] != "True"]
+ratios = sorted(float(r["bppf_internal_median_ns"]) / float(r["hpac_median_ns"]) for r in rows)
+print(f"instances={len(rows)} genuine_disagreements={len(bad)} "
+      f"bppf_internal/hpac median={statistics.median(ratios):.1f} range=[{ratios[0]:.1f}, {ratios[-1]:.1f}]")
 EOF
+else
+  echo "campaign_g_bppf_native.csv not present, skipping"
+fi
 
 echo "=== done: results/processed/results_summary.json, results/tables/*.tex ==="
 cat results/processed/results_summary.json

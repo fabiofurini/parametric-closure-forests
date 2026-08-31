@@ -29,10 +29,10 @@ src/                          implementation, one algorithm per file
   internal/work_graph.hpp      shared internal graph-contraction helper
 tests/test_main.cpp           CTest suite (pcf_tests) — see docs/VALIDATION.md
 third_party/bppf/             unmodified upstream Bounded-Precision
-                               Parametric Pseudoflow source (independent
-                               max-flow oracle and optional baseline)
+                               Parametric Pseudoflow source (third-party
+                               comparison baseline)
 tools/                        Python: instance generators, benchmark runner,
-                               BPPF converter/verifier, aggregation/reporting
+                               BPPF comparison driver, aggregation/reporting
 instances/                    committed small fixtures + manifests;
                                bulk archives are generated, not committed
 results/                      raw and processed campaign data, LaTeX tables
@@ -98,17 +98,15 @@ high-degree hub and `hpac`'s memory growth is a concern.
   emitting one CSV row per repetition (`elapsed_ns`, `peak_rss_kib`,
   operation counters for `rac`, `git_commit`, `timestamp_utc`); driven by
   `tools/run_benchmark.py` for a full campaign.
-- `pcf_bppf_oracle` / `pcf_bppf`: the unmodified upstream BPPF binaries
-  (`third_party/bppf/`), built with and without `-DBREAKPOINTS`
-  respectively, invoked two different ways for two different questions
-  (see README's "Two ways to compare against BPPF"): `pcf_bppf_oracle`
-  alone, once per breakpoint with one exact lambda baked in per call, by
-  `tools/verify_with_bppf.py` / `tools/run_bppf_campaign.py` (correctness);
-  both binaries, once per instance with a whole probe sequence in BPPF's
-  native affine encoding, by `tools/convert_to_bppf_sequence.py` /
-  `tools/validate_bppf_sequence.py` / `tools/run_bppf_native_campaign.py`
-  (native speed, `pcf_bppf_oracle` used only for the one-off agreement
-  check outside the timed region, `pcf_bppf` for the actual timing).
+- `pcf_bppf` / `pcf_bppf_oracle`: the unmodified upstream BPPF binaries
+  (`third_party/bppf/`), built without and with `-DBREAKPOINTS`
+  respectively, used only by the timed comparison
+  `tools/run_bppf_native_campaign.py` (see README's "The BPPF
+  comparison"): one `pcf_bppf` process per instance sweeps a whole probe
+  sequence in BPPF's native affine encoding
+  (`tools/convert_to_bppf_sequence.py`) inside the timed region, and one
+  `pcf_bppf_oracle` run per instance checks closure agreement with `hpac`
+  outside it.
 
 ## Analysis pipeline
 

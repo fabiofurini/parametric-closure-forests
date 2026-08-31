@@ -40,12 +40,76 @@ from pathlib import Path
 
 from fractions import Fraction
 
-from convert_to_bppf import read_pcf
-from convert_to_bppf_sequence import convert_sequence, closures_from_sequence_output
-from run_bppf_campaign import hpac_breakpoints, midpoints, closure_from_hpac, time_ns
+import re
+
+from convert_to_bppf_sequence import convert_sequence, closures_from_sequence_output, read_pcf
 
 
-def check_agreement(pcf_solve: Path, pcf_bppf_oracle: Path, instance: Path,
+def hpac_layers(pcf_solve: Path, instance: Path) -> list:
+    """Run HPaC once and parse its full layer sequence: a list of
+    (ratio: Fraction, nodes: set[int]) in decreasing ratio order. Everything
+    downstream (probes, per-probe reference closures) derives from this one
+    parse — no repeated pcf_solve invocations."""
+    completed = subprocess.run([str(pcf_solve), "--instance", str(instance), "--algorithm", "hpac"],
+                                check=True, text=True, capture_output=True)
+    layers = []
+    for line in completed.stdout.splitlines():
+        if not line.startswith("layer "):
+            continue
+        parts = line.split()
+        p, w = parts[3].split("/")
+        nodes = {int(token) - 1 for token in parts[parts.index("nodes") + 1:]}
+        layers.append((Fraction(int(p), int(w)), nodes))
+    return layers
+
+
+def closure_at(layers: list, lam: Fraction) -> set:
+    closure: set = set()
+    for ratio, nodes in layers:
+        if ratio > lam:
+            closure.update(nodes)
+    return closure
+
+
+def time_ns(pcf_benchmark: Path, instance: Path, algorithm: str, repetitions: int,
+            campaign_id: str) -> list[int]:
+    completed = subprocess.run(
+        [str(pcf_benchmark), "--instance", str(instance), "--algorithms", algorithm,
+         "--repetitions", str(repetitions), "--campaign-id", campaign_id],
+        check=True, text=True, capture_output=True,
+    )
+    return [int(row["elapsed_ns"]) for row in csv.DictReader(completed.stdout.splitlines())]
+
+
+def v1_probes(ratios: list) -> list:
+    """The v1 probe set (legacy hpf_compare.py, probe_parameters): one value
+    below the smallest breakpoint, the midpoint of every consecutive pair,
+    and one value above the largest — k+1 probes for k breakpoints, so the
+    whole parametric solution (empty and full closure included) is
+    certified in ONE BPPF process. Probes are returned in DECREASING order,
+    matching the decreasing order of hpac_breakpoints' ratios: with this
+    encoding's source-arc capacities max(0, p_i - lambda*w_i), a decreasing
+    lambda sequence is what keeps source capacities non-decreasing, which
+    BPPF's simple-parametric solver requires."""
+    decreasing = sorted(ratios, reverse=True)
+    gap_high = max(Fraction(1), abs(decreasing[0]) + 1)
+    gap_low = max(Fraction(1), abs(decreasing[-1]) + 1)
+    probes = [decreasing[0] + gap_high]
+    probes += [(decreasing[i] + decreasing[i + 1]) / 2 for i in range(len(decreasing) - 1)]
+    probes.append(decreasing[-1] - gap_low)
+    return probes
+
+
+def bppf_internal_ns(stdout: str) -> int:
+    """BPPF's own cumulative solve timer: it prints 'Elapsed time: X' after
+    each parameter, measured from one fixed start after input reading, so
+    the maximum is the total native solve time (input parsing excluded) —
+    the same quantity the v1 pipeline parsed."""
+    elapsed = [float(m.group(1)) for m in re.finditer(r"Elapsed time:\s*([0-9.]+)", stdout)]
+    return int(max(elapsed) * 1e9) if elapsed else -1
+
+
+def check_agreement(layers: list, pcf_bppf_oracle: Path, instance: Path,
                      ratios: list, lambdas: list, dimacs_path: Path, n: int, prec: int) -> tuple[bool, int]:
     """Returns (agrees_or_only_tolerance_explained_mismatches, n_distinct_breakpoints_bppf_saw).
     Same tolerance-vs-genuine classification as tools/validate_bppf_sequence.py:
@@ -59,11 +123,15 @@ def check_agreement(pcf_solve: Path, pcf_bppf_oracle: Path, instance: Path,
     distinct = len({frozenset(c) for c in bppf_closures})
     tolerance_gap = Fraction(1, 10 ** prec)
     for j, lam in enumerate(lambdas):
-        if bppf_closures[j] == closure_from_hpac(pcf_solve, instance, lam):
+        if bppf_closures[j] == closure_at(layers, lam):
             continue
+        # Probe j=0 sits above every breakpoint and probe j=k below every
+        # one; probe j (1 <= j <= k-1) is the midpoint between the
+        # decreasing ratios r_{j-1} and r_j, so the gaps that can explain a
+        # tolerance merge at probe j are (j-1, j-1+1) and its neighbours.
         nearby = any(
             abs(ratios[i] - ratios[i + 1]) < tolerance_gap
-            for i in (j, j + 1) if 0 <= i < len(ratios) - 1
+            for i in (j - 1, j) if 0 <= i < len(ratios) - 1
         )
         if not nearby:
             return False, distinct
@@ -85,11 +153,12 @@ def main() -> None:
     rows: list[dict[str, object]] = []
     for instance in sorted(arguments.instances.glob("*.pcf")):
         n, _, _, _ = read_pcf(instance)
-        ratios = hpac_breakpoints(arguments.pcf_solve, instance)
-        lambdas = midpoints(ratios)
-        if not lambdas:
-            print(f"skip {instance.name}: fewer than 2 layers, nothing to probe")
+        layers = hpac_layers(arguments.pcf_solve, instance)
+        ratios = [ratio for ratio, _ in layers]
+        if not ratios:
+            print(f"skip {instance.name}: no layers")
             continue
+        lambdas = v1_probes(ratios)
 
         with tempfile.TemporaryDirectory() as tmp:
             dimacs_path = Path(tmp) / "instance.dimacs"
@@ -100,15 +169,17 @@ def main() -> None:
                 continue
 
             agrees, distinct_bppf = check_agreement(
-                arguments.pcf_solve, arguments.pcf_bppf_oracle, instance, ratios, lambdas, dimacs_path, n,
+                layers, arguments.pcf_bppf_oracle, instance, ratios, lambdas, dimacs_path, n,
                 arguments.prec)
 
             bppf_times = []
+            bppf_internal_times = []
             for _ in range(arguments.repetitions):
                 started = time.perf_counter_ns()
-                subprocess.run([str(arguments.pcf_bppf)], stdin=dimacs_path.open("r", encoding="utf-8"),
-                                check=True, text=True, capture_output=True)
+                timed = subprocess.run([str(arguments.pcf_bppf)], stdin=dimacs_path.open("r", encoding="utf-8"),
+                                        check=True, text=True, capture_output=True)
                 bppf_times.append(time.perf_counter_ns() - started)
+                bppf_internal_times.append(bppf_internal_ns(timed.stdout))
 
         hpac_times = time_ns(arguments.pcf_benchmark, instance, "hpac", arguments.repetitions,
                               "campaign_f_native")
@@ -121,17 +192,20 @@ def main() -> None:
             "n_breakpoints_bppf_distinct": distinct_bppf,
             "agrees_or_tolerance_explained": agrees,
             "hpac_median_ns": statistics.median(hpac_times),
-            "bppf_native_median_ns": statistics.median(bppf_times),
+            "bppf_internal_median_ns": statistics.median(bppf_internal_times),
+            "bppf_wall_median_ns": statistics.median(bppf_times),
         }
         rows.append(row)
         flag = "" if agrees else "  ** GENUINE DISAGREEMENT (not tolerance-explained), discard this row **"
         print(f"{instance.name}: n={n} hpac_breakpoints={len(ratios)} bppf_distinct={distinct_bppf} "
-              f"hpac={row['hpac_median_ns']}ns bppf_native={row['bppf_native_median_ns']}ns{flag}")
+              f"hpac={row['hpac_median_ns']}ns bppf_internal={row['bppf_internal_median_ns']}ns "
+              f"bppf_wall={row['bppf_wall_median_ns']}ns{flag}")
 
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = list(rows[0].keys()) if rows else [
         "instance", "n_nodes", "n_breakpoints_hpac", "n_probes", "n_breakpoints_bppf_distinct",
-        "agrees_or_tolerance_explained", "hpac_median_ns", "bppf_native_median_ns",
+        "agrees_or_tolerance_explained", "hpac_median_ns", "bppf_internal_median_ns",
+        "bppf_wall_median_ns",
     ]
     with arguments.output.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
