@@ -19,7 +19,7 @@ echo "=== night sweep ${STAMP}: environment snapshot ==="
 {
   echo "date_utc=$(date -u +%FT%TZ)"
   echo "git_commit=$(git rev-parse HEAD)"
-  echo "git_status=$(git status --porcelain | wc -l) dirty files (must be 0)"
+  echo "git_status=$(git status --porcelain -uno | wc -l) modified tracked files (must be 0)"
   uname -a
   grep -m1 "model name" /proc/cpuinfo
   grep MemTotal /proc/meminfo
@@ -27,8 +27,10 @@ echo "=== night sweep ${STAMP}: environment snapshot ==="
   cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || true
 } | tee "${LOGDIR}/night_env_${STAMP}.log"
 
-if [ "$(git status --porcelain | wc -l)" -ne 0 ]; then
-  echo "refusing to start: working tree is dirty (the freeze commit must be exact)" >&2
+# Untracked files (night logs, raw CSVs) are expected during the sweep;
+# the freeze requirement is that no TRACKED file is modified.
+if [ "$(git status --porcelain -uno | wc -l)" -ne 0 ]; then
+  echo "refusing to start: tracked files are modified (the freeze commit must be exact)" >&2
   exit 1
 fi
 
