@@ -16,11 +16,14 @@ include/parametric_closure/   public C++ headers
   pcf.hpp                      .pcf format reader/writer
 src/                          implementation, one algorithm per file
   pac.cpp / dpac.cpp           direct-scan reference algorithm and its dual
-  hpac.cpp / dhpac.cpp         heap-based variant and its dual
+  hpac_bounded.cpp              the official heap-based HPaC (compute_hpac):
+                                 lazy heap periodically rebuilt once past a
+                                 size bound, so space is O(n) on every input
+  dhpac.cpp                     dual of hpac, same bounded-rebuild policy
+  hpac.cpp                      compute_hpac_lazy: the original push-only
+                                 lazy-deletion heap, internal reference
   hpac_eager.cpp                hpac with an update-in-place std::set
                                  instead of a lazy-deletion heap
-  hpac_bounded.cpp               hpac whose lazy heap is periodically
-                                 rebuilt once past a size bound
   hipac.cpp / hopac.cpp          specialized heap variants (in-forests/out-forests)
   rac.cpp                      rake-and-compress / top-tree algorithm
   instance.cpp                 instance validation, canonicalization
@@ -50,29 +53,28 @@ rational threshold and member nodes, in non-increasing ratio order.
 |---|---|---|---|---|
 | `compute_pac` | any forest | $O(n^2)$ | $O(n)$ | direct-scan reference |
 | `compute_dpac` | any forest | $O(n^2)$ | $O(n)$ | dual of `pac` (increasing order) |
-| `compute_hpac` | any forest | $O(n^2\log n)$ worst case, $O(n\log n)$ typical | $O(n)$ | heap-based |
-| `compute_dhpac` | any forest | as `hpac` | $O(n)$ | dual of `hpac` |
+| `compute_hpac` | any forest | $O(n^2\log n)$ worst case, $O(n\log n)$ typical | $O(n)$ | heap-based, bounded-rebuild heap (official) |
+| `compute_dhpac` | any forest | as `hpac` | $O(n)$ | dual of `hpac`, same rebuild policy |
 | `compute_hipac` | in-forests only | $O(n\log n)$ | $O(n)$ | requires out-degree $\le 1$ |
 | `compute_hopac` | out-forests only | $O(n\log n)$ | $O(n)$ | requires in-degree $\le 1$ |
 | `compute_rac` | any tree | $O(n\log n)$ | $O(n\log n)$ | rake-and-compress / top-tree |
-| `compute_hpac_eager` | any forest | as `hpac` | $O(n)$ (not just typical) | memory-bounded, see below |
-| `compute_hpac_bounded` | any forest | as `hpac` (amortized) | $O(n)$ (not just typical) | memory-bounded, see below |
+| `compute_hpac_lazy` | any forest | as `hpac` | $O(\text{touches})$ — $\Theta(n^2)$ on stars | internal reference, see below |
+| `compute_hpac_eager` | any forest | as `hpac` | $O(n)$ | `std::set` update-in-place variant |
+| `compute_hpac_bounded` | any forest | as `hpac` | $O(n)$ | alias of `compute_hpac` |
 
 `HIPaC`/`HOPaC` assume their required orientation and do not validate it at
 runtime; passing a mixed-orientation forest to either is a caller error, not
 a checked precondition.
 
-`hpac`'s lazy-deletion heap re-pushes one entry per incident edge every time
-a node's closure sum changes without removing the stale one, which stays
-$O(n)$ on typical inputs but can grow past it on a high-degree hub (the
-`star-mixed` family). `compute_hpac_eager`/`compute_hpac_bounded` solve
-exactly that case — `hpac_eager` via an update-in-place `std::set` (at most
-one live entry per edge/node ever), `hpac_bounded` via periodic full
-rebuilds of the same lazy heap once it outgrows a constant factor of the
-live candidate count — both keeping `hpac`'s worst-case time bound. They are
-not part of the main computational study reported in the paper (which uses
-`hpac` throughout); reach for them directly whenever an input can have a
-high-degree hub and `hpac`'s memory growth is a concern.
+The official `hpac`/`dhpac` keep their lazy-deletion heaps within a
+constant factor of the live candidate count by periodic full rebuilds, so
+space is genuinely $O(n)$ on every input — matching the manuscript's space
+theorem — and measured faster than the pure lazy policy on every topology
+tested (docs/EXPERIMENTAL_PLAN_V3.md §2bis). `compute_hpac_lazy` preserves
+the original push-only lazy-deletion implementation for reference: it
+re-pushes one entry per incident edge at every hub touch without removing
+stale ones, which grows to $\Theta(n^2)$ heap entries on a high-degree hub
+(the `star-mixed` family).
 
 ## Data model
 

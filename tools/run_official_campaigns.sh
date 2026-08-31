@@ -22,7 +22,7 @@ GEN_STRUCT="python3 tools/generate_structured_instances.py"
 RUN="python3 tools/run_benchmark.py"
 MEM_LIMIT_KIB=8000000     # 8 GiB safety ceiling; see docs/EXPERIMENTAL_PROTOCOL.md
 TIMEOUT_S=300
-CORE=0
+CORE=${PCF_CORE:-0}       # override per lane in tools/run_night_sweep.sh
 TASKSET=""
 if command -v taskset >/dev/null 2>&1; then TASKSET="taskset -c ${CORE}"; fi
 
@@ -78,30 +78,34 @@ campaign_d() {
     local dir=instances/campaign_d_${shape}
     [ -d "${dir}" ] || ${GEN_STRUCT} --output "${dir}" --shape "${shape}" \
       --sizes 100,200,500,1000,2000,5000,10000,20000,50000,100000 --seeds 10
-    run "${dir}" hpac,rac 3 campaign_d_${shape} 3
 
     if [ "${shape}" = star ]; then
-      # Run both O(n)-space heap variants on the complete star matrix. They
-      # use the same instances, repetitions, shuffle seed, timeout and memory
-      # ceiling as the HPaC/RaC comparison above.
-      run "${dir}" hpac_eager 3 campaign_d_star 3
-      run "${dir}" hpac_bounded 3 campaign_d_star 3
-
-      # HPaC is known to exhaust the memory ceiling on large mixed-star
-      # instances (docs/EXPERIMENTAL_PROTOCOL.md). Since hpac and rac run in
-      # the same process above, an HPaC memory failure also loses RaC's
-      # result for that instance even though RaC alone is unaffected. Recover
-      # it with a RaC-only pass restricted to the sizes where this happens.
+      # Star design per docs/EXPERIMENTAL_PLAN_V3.md (decisions #4 and 5bis):
+      # HPaC (bounded heap) runs up to the preregistered n<=20000 cutoff —
+      # its n^2 time trend is established there and larger sizes would only
+      # burn the 300 s cap; RaC runs the full range; PaC runs the full range
+      # too (it is cheap on stars: ~70 s at n=100000).
+      local star_small=instances/campaign_d_star_small
+      if [ ! -d "${star_small}" ]; then
+        mkdir -p "${star_small}"
+        for n in 100 200 500 1000 2000 5000 10000 20000; do
+          find "${dir}" -name "star_n${n}_*" -exec ln -sf "$(pwd)/{}" "${star_small}/" \;
+        done
+      fi
+      run "${star_small}" hpac,rac 3 campaign_d_star 3
       local large_only=instances/campaign_d_star_large_only
-      if [ ! -d "${large_only}" ]; then
-        mkdir -p "${large_only}"
-        for n in 20000 50000 100000; do
+      if [ ! -d "${large_only}" ] || compgen -G "${large_only}/star_n20000_*" > /dev/null; then
+        rm -rf "${large_only}"; mkdir -p "${large_only}"
+        for n in 50000 100000; do
           find "${dir}" -name "star_n${n}_*" -exec ln -sf "$(pwd)/{}" "${large_only}/" \;
         done
       fi
       run "${large_only}" rac 3 campaign_d_star 3
+      run "${dir}" pac 3 campaign_d_star 3
+      continue
     fi
 
+    run "${dir}" hpac,rac 3 campaign_d_${shape} 3
     local pac_subset=instances/campaign_d_${shape}_pac_subset
     if [ ! -d "${pac_subset}" ]; then
       mkdir -p "${pac_subset}"
@@ -113,23 +117,26 @@ campaign_d() {
   done
 }
 
-campaign_e() {
-  for topo in in out; do
-    local dir=instances/campaign_e_${topo}
-    [ -d "${dir}" ] || ${GEN_RANDOM} --output "${dir}" \
-      --sizes 100,200,300,400,500,600,700,800,900,1000,10000,20000,30000,40000,50000,60000,70000,80000,90000,100000 \
-      --densities 0.3,0.6,0.9,1.0 --topology "${topo}" --seeds 10
-    local count
-    count=$(find "${dir}" -maxdepth 1 -type f -name '*.pcf' -printf . | wc -c)
-    if [ "${count}" -ne 4800 ]; then
-      echo "campaign E ${topo}: expected 4,800 instances in ${dir}, found ${count}; refusing a partial run" >&2
-      return 1
-    fi
-    local specialized=hipac
-    [ "${topo}" = out ] && specialized=hopac
-    run "${dir}" "hpac,${specialized},rac" 3 "campaign_e_${topo}" 4
-  done
+campaign_e_topo() {
+  local topo=$1
+  local dir=instances/campaign_e_${topo}
+  [ -d "${dir}" ] || ${GEN_RANDOM} --output "${dir}" \
+    --sizes 100,200,300,400,500,600,700,800,900,1000,10000,20000,30000,40000,50000,60000,70000,80000,90000,100000 \
+    --densities 0.3,0.6,0.9,1.0 --topology "${topo}" --seeds 10
+  local count
+  count=$(find "${dir}" -maxdepth 1 -type f -name '*.pcf' -printf . | wc -c)
+  if [ "${count}" -ne 4800 ]; then
+    echo "campaign E ${topo}: expected 4,800 instances in ${dir}, found ${count}; refusing a partial run" >&2
+    return 1
+  fi
+  local specialized=hipac
+  [ "${topo}" = out ] && specialized=hopac
+  run "${dir}" "hpac,${specialized},rac" 3 "campaign_e_${topo}" 4
 }
+
+campaign_e_in()  { campaign_e_topo in; }
+campaign_e_out() { campaign_e_topo out; }
+campaign_e()     { campaign_e_in; campaign_e_out; }
 
 mkdir -p results/raw
 targets=("$@")

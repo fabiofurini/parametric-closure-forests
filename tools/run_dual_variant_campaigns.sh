@@ -19,7 +19,7 @@ BIN=build/pcf_benchmark
 RUN="python3 tools/run_benchmark.py"
 MEM_LIMIT_KIB=8000000
 TIMEOUT_S=300
-CORE=1
+CORE=${PCF_CORE:-1}       # override per lane in tools/run_night_sweep.sh
 TASKSET=""
 if command -v taskset >/dev/null 2>&1; then TASKSET="taskset -c ${CORE}"; fi
 
@@ -52,19 +52,21 @@ campaign_c()  {
 }
 
 campaign_d()  {
-  for shape in path binary star; do
+  for shape in path binary; do
     wait_for_dir "instances/campaign_d_${shape}"
     run "instances/campaign_d_${shape}" dhpac 3 "campaign_d_${shape}" 7
     run "instances/campaign_d_${shape}_pac_subset" dpac 3 "campaign_d_${shape}" 7
   done
+  # Star: DHPaC obeys the same preregistered n<=20000 cutoff as HPaC
+  # (docs/EXPERIMENTAL_PLAN_V3.md, decision 5bis); no dual star pass beyond
+  # that, and no DPaC star pass (the rebuilt star table reports PaC/HPaC/RaC).
+  wait_for_dir "instances/campaign_d_star_small"
+  run "instances/campaign_d_star_small" dhpac 3 "campaign_d_star" 7
 }
 
-campaign_e() {
-  for topo in in out; do
-    wait_for_dir "instances/campaign_e_${topo}"
-    run "instances/campaign_e_${topo}" dhpac 3 "campaign_e_${topo}" 8
-  done
-}
+campaign_e_in()  { wait_for_dir "instances/campaign_e_in";  run "instances/campaign_e_in"  dhpac 3 "campaign_e_in" 8; }
+campaign_e_out() { wait_for_dir "instances/campaign_e_out"; run "instances/campaign_e_out" dhpac 3 "campaign_e_out" 8; }
+campaign_e()     { campaign_e_in; campaign_e_out; }
 
 mkdir -p results/raw
 targets=("$@")

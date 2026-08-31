@@ -45,11 +45,19 @@ emit_ratio campaign_b hpac pac
 emit_ratio campaign_b hpac dhpac
 emit_ratio campaign_c hpac rac
 emit_ratio campaign_c hpac dhpac
+# Per-density view of the same campaign-C pairing (plan V3 decision #6:
+# the rho=1.0 crossover check). The output name needs the _by_rho suffix,
+# so this one is spelled out rather than routed through emit_ratio.
+python3 tools/emit_latex_tables.py --mode ratio --processed-dir results/processed \
+  --output results/tables/campaign_c_rac_over_hpac_by_rho.tex \
+  --campaign-id campaign_c --baseline hpac --candidate rac --group-by rho \
+  || echo "  (skipped: no paired rows for campaign_c rac/hpac by rho)"
 emit_ratio campaign_d_path hpac rac
 emit_ratio campaign_d_binary hpac rac
 emit_ratio campaign_d_star hpac rac
 emit_ratio campaign_d_star hpac dhpac
 emit_ratio campaign_d_star pac hpac
+emit_ratio campaign_d_star pac rac
 emit_ratio campaign_e_in hpac hipac
 emit_ratio campaign_e_in hpac rac
 emit_ratio campaign_e_out hpac hopac
