@@ -399,23 +399,25 @@ count shown here, since a censored run produces no sequence to compare.}
 \subsection{PaC versus HPaC}\label{subsec:v2_fma_vs_hfma}
 
 On mixed-orientation random forests (campaign B, $n\in\{100,\dots,1000\}$,
-2\,400 instances), \texttt{HPaC} is faster than \texttt{PaC} in the median at
-every size, consistently with the manuscript's theoretical prediction that a heap
-cannot improve \texttt{HPaC}'s worst-case complexity but should help in
-practice, and the gap widens quickly with $n$: median
-\texttt{PaC}/\texttt{HPaC} grows from $2.45\times$ at $n=100$ to
-$18.4\times$ at $n=1\,000$ (\texttt{campaign\_b\_fma\_over\_hfma.tex}),
-consistent with \texttt{PaC}'s scan-based construction paying a growing cost
-per breakpoint as $n$ increases while \texttt{HPaC}'s heap does not.
+2\,400 instances), \texttt{HPaC} and \texttt{PaC} are comparable at small
+$n$ and \texttt{HPaC} pulls ahead only as $n$ grows, consistently with the
+manuscript's theoretical prediction that a heap cannot improve
+\texttt{HPaC}'s worst-case complexity but should help in practice: median
+\texttt{PaC}/\texttt{HPaC} is $0.78$ at $n=100$ (\texttt{PaC} is in fact
+marginally faster here, where heap-maintenance overhead outweighs its
+benefit), crosses $1$ around $n\approx 400$, and reaches $1.72\times$ at
+$n=1\,000$ (\texttt{campaign\_b\_pac\_over\_hpac.tex}), consistent with
+\texttt{PaC}'s scan-based construction paying a growing cost per breakpoint
+as $n$ increases while \texttt{HPaC}'s heap does not.
 \texttt{DPaC} tracks \texttt{PaC} closely, as expected from sharing its scan
 structure, and opens no separate storyline.
 
 The countercase anticipated by the manuscript is confirmed quantitatively on
 mixed-orientation stars (campaign D, PaC-eligible subset,
-$n\in\{100,\dots,2000\}$): \texttt{HPaC} is \emph{slower} than \texttt{PaC}
-by a median factor of $2.3$--$2.8\times$ at every size tested
-(\cref{tab:v2_star_fma}), growing from $2.31\times$ at $n=100$ to $2.84\times$
-at $n=2\,000$. The operational reason is structural, not incidental: every
+$n\in\{100,\dots,2000\}$): \texttt{HPaC} is \emph{dramatically slower} than
+\texttt{PaC} at every size tested (\cref{tab:v2_star_fma}), by a median
+factor growing from $17.2\times$ at $n=100$ to $48.4\times$ at $n=2\,000$.
+The operational reason is structural, not incidental: every
 update to the central node's cumulative closure sum invalidates the
 candidate ratio of a large fraction of the remaining leaves at once, and
 \texttt{HPaC}'s lazy heap must absorb that many stale entries before it can
@@ -443,7 +445,7 @@ under a second at $n=100\,000$ in the same runs used for
 \texttt{DHPaC}, the dual general heap-based algorithm, is consistently
 slower than \texttt{HPaC} on this campaign -- median
 \texttt{DHPaC}/\texttt{HPaC} $\approx 1.6$--$1.7\times$, stable across every
-size from $n=10\,000$ to $n=100\,000$ (\texttt{campaign\_c\_dhfma\_over\_hfma.tex}),
+size from $n=10\,000$ to $n=100\,000$ (\texttt{campaign\_c\_dhpac\_over\_hpac.tex}),
 close to the $\approx 1.4$--$1.55\times$ already observed on the medium
 campaign B. The two never swap places and neither changes which algorithm
 family (heap-based general vs.\ \texttt{RaC}) is preferable; the gap is
@@ -475,10 +477,10 @@ the gain eroding at scale.
 On the same in-forest instances, \texttt{RaC} loses ground to \texttt{HPaC}
 as $n$ grows: median \texttt{RaC}/\texttt{HPaC} rises from
 $\approx 1.9$--$2.8\times$ on the medium range to $8.5\times$ at
-$n=100\,000$ (\texttt{campaign\_e\_in\_rac\_over\_hfma.tex}),
+$n=100\,000$ (\texttt{campaign\_e\_in\_rac\_over\_hpac.tex}),
 mirroring the trend already seen on general mixed forests in
 \cref{subsec:v2_hfma_vs_rac}. The out-forest picture
-(\texttt{campaign\_e\_out\_rac\_over\_hfma.tex}) is
+(\texttt{campaign\_e\_out\_rac\_over\_hpac.tex}) is
 qualitatively the same.
 
 \subsection{General parametric-flow baseline}\label{subsec:v2_bppf}
