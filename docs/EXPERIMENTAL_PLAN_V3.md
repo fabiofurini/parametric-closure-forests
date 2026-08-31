@@ -346,6 +346,14 @@ every edit in `\rev{...}`/red, per the project's red-marking rule):
 - [ ] Align wording where the paper says "mean" but the pipeline reports
       medians (Fig. 5/6 captions, §4.1–4.2 text).
 - [ ] "Code and Data Availability": release v0.3.0 + new commit hash.
+- [ ] **Instance-description appendix aligned** (`app:instance_generation`):
+      the "Campaigns" paragraph must match this plan exactly — campaign E
+      full 4×10 matrix; star cutoffs (HPaC/DHPaC n ≤ 20,000; PaC full
+      range on stars); PaC/DPaC random subsets at n ∈ {10k, 20k}; the
+      BPPF campaign described as the native autonomous sweep on the full
+      2,400-instance medium bed (drop the per-breakpoint description and
+      its 72-instance scoping rationale). Topologies and coefficient
+      families are unchanged; only the campaign usage text moves.
 - [ ] Delete the `\Fabio{}` boxes closed by the above.
 
 **Out of scope of the campaigns** (tracked, needs Marco): Θ(n log n)
