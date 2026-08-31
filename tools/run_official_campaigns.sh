@@ -27,9 +27,12 @@ TASKSET=""
 if command -v taskset >/dev/null 2>&1; then TASKSET="taskset -c ${CORE}"; fi
 
 run() {
-  # run <instances-dir> <algorithms> <repetitions> <campaign-id> <shuffle-seed>
-  local dir=$1 algs=$2 reps=$3 cid=$4 seed=$5
-  local out=results/raw/${cid}_${algs//,/-}.csv
+  # run <instances-dir> <algorithms> <repetitions> <campaign-id> <shuffle-seed> [output-tag]
+  # output-tag distinguishes several passes that share a campaign id and an
+  # algorithm list but run on different instance subsets (e.g. PaC at
+  # n=10000 and at n=20000 within campaign C).
+  local dir=$1 algs=$2 reps=$3 cid=$4 seed=$5 tag=${6:-}
+  local out=results/raw/${cid}${tag:+_${tag}}_${algs//,/-}.csv
   echo "=== ${cid} :: ${algs} (${reps} reps) on ${dir} -> ${out} ==="
   ${TASKSET} ${RUN} --binary "${BIN}" --instances "${dir}" --output "${out}" \
     --algorithms "${algs}" --repetitions "${reps}" --campaign-id "${cid}" \
@@ -51,14 +54,23 @@ campaign_c() {
     --densities 0.3,0.6,0.9,1.0 --topology gen --seeds 10
   run "${dir}" hpac,rac 3 campaign_c 2
 
-  local pac_subset=instances/campaign_c_n20000_subset
-  if [ ! -d "${pac_subset}" ]; then
-    mkdir -p "${pac_subset}"
-    find "${dir}" -name 'gen_n20000_*' -exec ln -sf "$(pwd)/{}" "${pac_subset}/" \;
+  # PaC is affordable only at the two smallest sizes of this test bed; it is
+  # run there as a reference baseline (see the size cutoff note at the top of
+  # this file). DPaC is run on the same two subsets by
+  # tools/run_dual_variant_campaigns.sh, which reuses these directories.
+  local n10k_subset=instances/campaign_c_n10000_subset
+  if [ ! -d "${n10k_subset}" ]; then
+    mkdir -p "${n10k_subset}"
+    find "${dir}" -name 'gen_n10000_*' -exec ln -sf "$(pwd)/{}" "${n10k_subset}/" \;
   fi
-  # dpac at this size is run separately by
-  # tools/run_dual_variant_campaigns.sh, reusing this same subset directory.
-  run "${pac_subset}" pac 3 campaign_c 2
+  run "${n10k_subset}" pac 2 campaign_c 2 n10000
+
+  local n20k_subset=instances/campaign_c_n20000_subset
+  if [ ! -d "${n20k_subset}" ]; then
+    mkdir -p "${n20k_subset}"
+    find "${dir}" -name 'gen_n20000_*' -exec ln -sf "$(pwd)/{}" "${n20k_subset}/" \;
+  fi
+  run "${n20k_subset}" pac 3 campaign_c 2 n20000
 }
 
 campaign_d() {

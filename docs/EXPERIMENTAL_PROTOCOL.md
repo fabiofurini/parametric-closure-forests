@@ -150,13 +150,14 @@ coefficient families, sizes, seeds, algorithms) are as follows:
   and RaC on every instance, paired sequence verification.
 - **C — large random**: `n∈{10000,...,100000}`, same structural/coefficient
   matrix as B, HPaC and RaC on every instance; PaC and DPaC restricted to
-  `n=20000` only (`instances/campaign_c_n20000_subset`, 3 repetitions),
-  since they are a reference baseline, not the headline comparison, and
-  already take on the order of a second per instance at that size (measured
-  after fixing the `PaC`/`DPaC` performance regression of commit
-  `461fea9`; an earlier, narrower `n=10000`-only scoping was measured under
-  that regression and has been superseded). DHPaC is run on the full
-  `n∈{10000,...,100000}` range like HPaC.
+  the two smallest sizes of this test bed, `n=10000`
+  (`instances/campaign_c_n10000_subset`, 2 repetitions) and `n=20000`
+  (`instances/campaign_c_n20000_subset`, 3 repetitions), since they are a
+  reference baseline, not the headline comparison, and already take
+  hundreds of milliseconds (`n=10000`) to over a second (`n=20000`) per
+  instance — measured after fixing the `PaC`/`DPaC` performance regression
+  of commit `461fea9`. DHPaC is run on the full `n∈{10000,...,100000}`
+  range like HPaC.
 - **D — structured stress**: `path-mixed`, `binary-mixed`, `star-mixed`,
   `n∈{100,200,500,1000,2000,5000,10000,20000,50000,100000}`, 6 families, 10
   seeds (600 instances per topology), HPaC vs RaC paired; PaC restricted to

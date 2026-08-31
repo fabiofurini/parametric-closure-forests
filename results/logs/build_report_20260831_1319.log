@@ -1,0 +1,79 @@
+=== validating standard-schema raw CSVs ===
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+validated 1 raw file(s): no schema violations
+=== aggregating ===
+wrote results/processed/processed.csv (36600 rows), results/processed/mismatches.csv (0 mismatches), and results_summary.json
+=== emitting tables ===
+wrote results/tables/correctness.tex
+wrote results/tables/campaign_b_rac_over_hpac.tex (10 groups)
+wrote results/tables/campaign_b_pac_over_hpac.tex (10 groups)
+wrote results/tables/campaign_b_dhpac_over_hpac.tex (10 groups)
+wrote results/tables/campaign_c_rac_over_hpac.tex (10 groups)
+wrote results/tables/campaign_c_dhpac_over_hpac.tex (10 groups)
+wrote results/tables/campaign_d_path_rac_over_hpac.tex (10 groups)
+wrote results/tables/campaign_d_binary_rac_over_hpac.tex (10 groups)
+wrote results/tables/campaign_d_star_rac_over_hpac.tex (7 groups)
+wrote results/tables/campaign_d_star_dhpac_over_hpac.tex (7 groups)
+wrote results/tables/campaign_d_star_hpac_over_pac.tex (5 groups)
+wrote results/tables/campaign_e_in_hipac_over_hpac.tex (20 groups)
+wrote results/tables/campaign_e_in_rac_over_hpac.tex (20 groups)
+wrote results/tables/campaign_e_out_hopac_over_hpac.tex (20 groups)
+wrote results/tables/campaign_e_out_rac_over_hpac.tex (20 groups)
+=== campaign F (BPPF baseline) summary ===
+instances=72 mismatches=0 bppf_total/hpac ratio range=[91.5, 1270.2]
+=== done: results/processed/results_summary.json, results/tables/*.tex ===
+{
+  "algorithms": [
+    "dhpac",
+    "dpac",
+    "hipac",
+    "hopac",
+    "hpac",
+    "pac",
+    "rac"
+  ],
+  "campaigns": [
+    "campaign_b",
+    "campaign_c",
+    "campaign_d_binary",
+    "campaign_d_path",
+    "campaign_d_star",
+    "campaign_e_in",
+    "campaign_e_out"
+  ],
+  "n_instances": 9000,
+  "n_mismatched_instances": 0,
+  "n_raw_rows": 205320,
+  "runs_per_algorithm": {
+    "dhpac": 45660,
+    "dpac": 30300,
+    "hipac": 3600,
+    "hopac": 3600,
+    "hpac": 45660,
+    "pac": 30300,
+    "rac": 46200
+  }
+}

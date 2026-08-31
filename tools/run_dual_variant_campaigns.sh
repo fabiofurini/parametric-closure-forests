@@ -24,8 +24,9 @@ TASKSET=""
 if command -v taskset >/dev/null 2>&1; then TASKSET="taskset -c ${CORE}"; fi
 
 run() {
-  local dir=$1 algs=$2 reps=$3 cid=$4 seed=$5
-  local out=results/raw/${cid}_${algs//,/-}.csv
+  # run <instances-dir> <algorithms> <repetitions> <campaign-id> <shuffle-seed> [output-tag]
+  local dir=$1 algs=$2 reps=$3 cid=$4 seed=$5 tag=${6:-}
+  local out=results/raw/${cid}${tag:+_${tag}}_${algs//,/-}.csv
   echo "=== ${cid} :: ${algs} (${reps} reps) on ${dir} -> ${out} ==="
   ${TASKSET} ${RUN} --binary "${BIN}" --instances "${dir}" --output "${out}" \
     --algorithms "${algs}" --repetitions "${reps}" --campaign-id "${cid}" \
@@ -44,8 +45,10 @@ campaign_b()  { run instances/campaign_b dpac,dhpac 11 campaign_b 5; }
 
 campaign_c()  {
   run instances/campaign_c dhpac 3 campaign_c 6
+  wait_for_dir "instances/campaign_c_n10000_subset"
+  run instances/campaign_c_n10000_subset dpac 2 campaign_c 6 n10000
   wait_for_dir "instances/campaign_c_n20000_subset"
-  run instances/campaign_c_n20000_subset dpac 3 campaign_c 6
+  run instances/campaign_c_n20000_subset dpac 3 campaign_c 6 n20000
 }
 
 campaign_d()  {
