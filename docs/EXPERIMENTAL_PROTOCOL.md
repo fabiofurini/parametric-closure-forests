@@ -149,11 +149,14 @@ coefficient families, sizes, seeds, algorithms) are as follows:
   `rho∈{0.3,0.6,0.9,1.0}`, 6 families, 10 seeds (2400 instances), PaC, HPaC
   and RaC on every instance, paired sequence verification.
 - **C — large random**: `n∈{10000,...,100000}`, same structural/coefficient
-  matrix as B, HPaC and RaC on every instance; PaC restricted to `n=10000`
-  only (2 repetitions instead of the campaign's usual 3, since it is a
-  reference baseline, not the headline comparison), preregistered from the
-  timing calibration in "Known measurement limitation" above (PaC already
-  takes tens of seconds per instance at `n=20000`).
+  matrix as B, HPaC and RaC on every instance; PaC and DPaC restricted to
+  `n=20000` only (`instances/campaign_c_n20000_subset`, 3 repetitions),
+  since they are a reference baseline, not the headline comparison, and
+  already take on the order of a second per instance at that size (measured
+  after fixing the `PaC`/`DPaC` performance regression of commit
+  `461fea9`; an earlier, narrower `n=10000`-only scoping was measured under
+  that regression and has been superseded). DHPaC is run on the full
+  `n∈{10000,...,100000}` range like HPaC.
 - **D — structured stress**: `path-mixed`, `binary-mixed`, `star-mixed`,
   `n∈{100,200,500,1000,2000,5000,10000,20000,50000,100000}`, 6 families, 10
   seeds (600 instances per topology), HPaC vs RaC paired; PaC restricted to

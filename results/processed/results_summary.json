@@ -19,14 +19,14 @@
   ],
   "n_instances": 9000,
   "n_mismatched_instances": 0,
-  "n_raw_rows": 206760,
+  "n_raw_rows": 204360,
   "runs_per_algorithm": {
-    "dhpac": 46380,
-    "dpac": 30300,
+    "dhpac": 45660,
+    "dpac": 29820,
     "hipac": 3600,
     "hopac": 3600,
-    "hpac": 46380,
-    "pac": 30300,
+    "hpac": 45660,
+    "pac": 29820,
     "rac": 46200
   }
 }

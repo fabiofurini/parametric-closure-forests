@@ -51,12 +51,14 @@ campaign_c() {
     --densities 0.3,0.6,0.9,1.0 --topology gen --seeds 10
   run "${dir}" hpac,rac 3 campaign_c 2
 
-  local pac_subset=instances/campaign_c_pac_subset
+  local pac_subset=instances/campaign_c_n20000_subset
   if [ ! -d "${pac_subset}" ]; then
     mkdir -p "${pac_subset}"
-    find "${dir}" -name 'gen_n10000_*' -exec ln -sf "$(pwd)/{}" "${pac_subset}/" \;
+    find "${dir}" -name 'gen_n20000_*' -exec ln -sf "$(pwd)/{}" "${pac_subset}/" \;
   fi
-  run "${pac_subset}" pac 2 campaign_c 2
+  # dpac at this size is run separately by
+  # tools/run_dual_variant_campaigns.sh, reusing this same subset directory.
+  run "${pac_subset}" pac 3 campaign_c 2
 }
 
 campaign_d() {

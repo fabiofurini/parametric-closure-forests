@@ -44,7 +44,8 @@ campaign_b()  { run instances/campaign_b dpac,dhpac 11 campaign_b 5; }
 
 campaign_c()  {
   run instances/campaign_c dhpac 3 campaign_c 6
-  run instances/campaign_c_pac_subset dpac 2 campaign_c 6
+  wait_for_dir "instances/campaign_c_n20000_subset"
+  run instances/campaign_c_n20000_subset dpac 3 campaign_c 6
 }
 
 campaign_d()  {
