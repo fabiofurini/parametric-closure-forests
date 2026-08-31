@@ -338,6 +338,14 @@ every edit in `\rev{...}`/red, per the project's red-marking rule):
       contradiction between the space theorem and the old ">8 GB" rows).
 - [ ] §4.2: per-density sentence for the ρ=1.0 crossover (or per-density
       range if not confirmed).
+- [ ] **Heap-implementation note (explicit request by FF, 2026-08-31):**
+      in the computational section, **in §4.1 (PaC vs HPaC), right where
+      HPaC is tested and shown faster than PaC**: one concise red sentence
+      stating how the HPaC/DHPaC heaps are engineered — candidate heaps
+      kept within a constant factor of the live candidates by periodic
+      rebuilds — so the implementation attains the theorem's O(n) space
+      bound on every input, with the amortized O(log n) cost per
+      operation unchanged.
 - [ ] §4.4: **replace entirely** with the restored v1-style comparison
       (campaign G): CPU-time table+plot HPaC vs native BPPF sweep, plus
       the single precision comment (decision #3). The per-breakpoint

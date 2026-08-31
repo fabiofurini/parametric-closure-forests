@@ -34,6 +34,23 @@ if [ "$(git status --porcelain -uno | wc -l)" -ne 0 ]; then
   exit 1
 fi
 
+# The git commit recorded in every raw CSV row is captured at CMake
+# configure time, so reconfigure+rebuild here to guarantee the binaries
+# embed exactly HEAD (an incremental rebuild: seconds when up to date).
+echo "=== phase 0bis: rebuild at HEAD so pcf_benchmark embeds the freeze commit ==="
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release > /dev/null
+cmake --build build -j > /dev/null
+embedded=$(./build/pcf_benchmark --instance instances/mixed_tree.pcf --algorithms pac \
+             --repetitions 1 --campaign-id hashcheck 2>/dev/null | tail -1 | cut -d, -f11)
+head_short=$(git rev-parse --short=12 HEAD)
+if [ "${embedded}" != "${head_short}" ]; then
+  echo "refusing to start: pcf_benchmark embeds ${embedded}, HEAD is ${head_short}" >&2
+  exit 1
+fi
+echo "binaries embed ${embedded} = HEAD, ok"
+./build/pcf_tests
+
+
 echo "=== phase 1: instances ==="
 [ -d instances/campaign_b ] || ${GEN_RANDOM} --output instances/campaign_b \
   --sizes 100,200,300,400,500,600,700,800,900,1000 --densities 0.3,0.6,0.9,1.0 --topology gen --seeds 10
