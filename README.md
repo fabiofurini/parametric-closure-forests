@@ -12,6 +12,10 @@ raw/processed results for:
 Code, instance generators, benchmark instances and results all live in
 this one repository.
 
+**→ [Browse the computational report](docs/report/)** — every table, plot and
+observation of the experimental study, as navigable pages (the same content as
+[`report/computational_report.pdf`](report/computational_report.pdf)).
+
 The notation follows the manuscript: each vertex has integral profit
 $p_i$, strictly positive integral weight $w_i$, and affine contribution
 $p_i-\lambda w_i$. A directed arc `(u,v)` means `x_u <= x_v`.
@@ -152,6 +156,7 @@ Each topic has its own page:
 | [`docs/RAC_SPECIFICATION.md`](docs/RAC_SPECIFICATION.md) | `RaC`'s implementation contract, frozen against the manuscript |
 | [`docs/RAC_AUDIT.md`](docs/RAC_AUDIT.md) | Line-by-line audit of the ported `RaC` source against that contract |
 | [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) | Regenerating instances, rebuilding tables, the clean-clone independence checklist, release contents |
+| [`docs/report/`](docs/report/) | The full computational report, one page per section: results, tables, plots and the reading of each figure |
 
 ---
 

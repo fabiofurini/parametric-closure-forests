@@ -124,5 +124,10 @@ else
   echo "campaign_g_bppf_native.csv not present, skipping"
 fi
 
-echo "=== done: results/processed/results_summary.json, results/tables/*.tex ==="
+# the browsable Markdown edition under docs/report/ (needs the PDF's LaTeX
+# source only; pass --no-plots to skip the 40 plot images)
+echo "=== emitting the Markdown edition (docs/report/) ==="
+python3 tools/emit_markdown_report.py "$@"
+
+echo "=== done: results/processed/results_summary.json, results/tables/*.tex, docs/report/ ==="
 cat results/processed/results_summary.json
