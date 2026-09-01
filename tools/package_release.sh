@@ -8,15 +8,22 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 mkdir -p dist
-echo "=== zipping instances (campaign_* directories + manifests) ==="
-zip -rq -X dist/instances.zip \
-  instances/campaign_b instances/campaign_c \
+# GitHub caps release assets at 2 GiB each, so the instance archive is
+# split: one zip for the medium/structured campaigns plus manifests and
+# fixtures, and one zip per large campaign (C, E-in, E-out).
+echo "=== zipping instances (split archives, 2 GiB asset cap) ==="
+rm -f dist/instances*.zip dist/instances*.sha256
+zip -rq -X dist/instances_b_d_fixtures.zip \
+  instances/campaign_b \
   instances/campaign_d_path instances/campaign_d_binary instances/campaign_d_star \
-  instances/campaign_e_in instances/campaign_e_out \
-  instances/manifests instances/tiny instances/mixed_tree.pcf \
-  -x '*.failures.csv' -x '*_pac_subset/*' -x '*_large_only/*' -x '*_star_small/*'
-sha256sum dist/instances.zip > dist/instances.zip.sha256
-echo "instances.zip: $(du -h dist/instances.zip | cut -f1)"
+  instances/manifests instances/tiny instances/mixed_tree.pcf
+zip -rq -X dist/instances_c.zip instances/campaign_c
+zip -rq -X dist/instances_e_in.zip instances/campaign_e_in
+zip -rq -X dist/instances_e_out.zip instances/campaign_e_out
+for z in dist/instances_*.zip; do
+  sha256sum "$z" > "$z.sha256"
+  echo "$z: $(du -h "$z" | cut -f1)"
+done
 
 echo "=== zipping raw + processed results ==="
 zip -rq -X dist/results.zip results/raw results/processed results/tables results/logs
