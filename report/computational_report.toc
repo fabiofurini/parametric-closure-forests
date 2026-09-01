@@ -1,31 +1,34 @@
+\contentsline {paragraph}{How to read the figures.}{1}{section*.1}%
 \contentsline {section}{\numberline {1}Summary}{2}{section.1}%
-\contentsline {section}{\numberline {2}The algorithms, in one page}{2}{section.2}%
+\contentsline {section}{\numberline {2}The algorithms, in one page}{3}{section.2}%
 \contentsline {section}{\numberline {3}Definitions and conventions}{4}{section.3}%
-\contentsline {section}{\numberline {4}Setup}{4}{section.4}%
-\contentsline {paragraph}{Machine and build.}{4}{section*.2}%
-\contentsline {paragraph}{What is timed.}{4}{section*.3}%
-\contentsline {paragraph}{Memory, and what ``peak RSS'' means.}{4}{section*.4}%
-\contentsline {paragraph}{Statistics.}{5}{section*.5}%
+\contentsline {section}{\numberline {4}Setup}{5}{section.4}%
+\contentsline {paragraph}{Machine and build.}{5}{section*.3}%
+\contentsline {paragraph}{What is timed.}{5}{section*.4}%
+\contentsline {paragraph}{Memory, and what ``peak RSS'' means.}{5}{section*.5}%
+\contentsline {paragraph}{Statistics.}{5}{section*.6}%
 \contentsline {section}{\numberline {5}Instances}{5}{section.5}%
-\contentsline {paragraph}{Coefficient families (six).}{5}{section*.6}%
-\contentsline {paragraph}{Topologies (six).}{5}{section*.7}%
-\contentsline {paragraph}{Sizes and counts.}{6}{section*.8}%
-\contentsline {subsection}{\numberline {5.1}How big are the closure layers?}{6}{subsection.5.1}%
-\contentsline {section}{\numberline {6}Validation}{8}{section.6}%
-\contentsline {section}{\numberline {7}The campaigns}{8}{section.7}%
-\contentsline {section}{\numberline {8}Random forests}{9}{section.8}%
-\contentsline {subsection}{\numberline {8.1}Medium sizes: direct scan versus heap}{9}{subsection.8.1}%
-\contentsline {subsection}{\numberline {8.2}Large sizes, and the effect of density}{9}{subsection.8.2}%
-\contentsline {subsection}{\numberline {8.3}What the random campaigns say}{12}{subsection.8.3}%
-\contentsline {section}{\numberline {9}Structured classes}{14}{section.9}%
-\contentsline {subsection}{\numberline {9.1}What the structured classes say}{14}{subsection.9.1}%
-\contentsline {section}{\numberline {10}Single orientations}{17}{section.10}%
-\contentsline {paragraph}{Note on the comparison with the first version of the manuscript.}{17}{section*.9}%
-\contentsline {subsection}{\numberline {10.1}What the oriented classes say}{17}{subsection.10.1}%
-\contentsline {section}{\numberline {11}Implementation note: heap policy}{21}{section.11}%
-\contentsline {section}{\numberline {12}Comparison with parametric pseudoflow}{21}{section.12}%
-\contentsline {paragraph}{Agreement and precision.}{21}{section*.10}%
-\contentsline {paragraph}{Discarded variant.}{22}{section*.11}%
-\contentsline {section}{\numberline {13}Dispersion of the measurements}{22}{section.13}%
-\contentsline {section}{\numberline {A}Per-family detail at every size}{23}{appendix.A}%
-\contentsline {section}{\numberline {B}Reproducing this report}{23}{appendix.B}%
+\contentsline {paragraph}{Coefficient families (six).}{6}{section*.7}%
+\contentsline {paragraph}{Topologies (six).}{6}{section*.8}%
+\contentsline {paragraph}{Sizes and counts.}{6}{section*.9}%
+\contentsline {subsection}{\numberline {5.1}How many trees, and how big?}{6}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}How many closure layers?}{7}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}How big are the closure layers?}{7}{subsection.5.3}%
+\contentsline {section}{\numberline {6}Validation}{7}{section.6}%
+\contentsline {section}{\numberline {7}The campaigns}{7}{section.7}%
+\contentsline {section}{\numberline {8}Random forests}{12}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Medium sizes: direct scan versus heap}{12}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Large sizes, and the effect of density}{13}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}What the random campaigns say}{18}{subsection.8.3}%
+\contentsline {section}{\numberline {9}Structured classes}{18}{section.9}%
+\contentsline {subsection}{\numberline {9.1}What the structured classes say}{18}{subsection.9.1}%
+\contentsline {section}{\numberline {10}Single orientations}{22}{section.10}%
+\contentsline {paragraph}{Note on the comparison with the first version of the manuscript.}{22}{section*.10}%
+\contentsline {subsection}{\numberline {10.1}What the oriented classes say}{22}{subsection.10.1}%
+\contentsline {section}{\numberline {11}Implementation note: heap policy}{27}{section.11}%
+\contentsline {section}{\numberline {12}Comparison with parametric pseudoflow}{27}{section.12}%
+\contentsline {paragraph}{Agreement and precision.}{27}{section*.11}%
+\contentsline {paragraph}{Discarded variant.}{27}{section*.12}%
+\contentsline {section}{\numberline {13}Dispersion of the measurements}{29}{section.13}%
+\contentsline {section}{\numberline {A}Per-family detail at every size}{29}{appendix.A}%
+\contentsline {section}{\numberline {B}Reproducing this report}{29}{appendix.B}%

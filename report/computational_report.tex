@@ -44,12 +44,30 @@
   aux/.style   ={color=black!55,        mark=o,         thick},
   aux2/.style  ={color=black!35,        mark=x,         thick, dashed}}
 
+% Curves that are NOT algorithms (structural quantities of the instances, heap
+% policies, densities) never borrow an algorithm's colour: they are drawn in
+% greyscale, told apart by marker and dash pattern. q1--q3 for quantities
+% plotted together, d1--d4 for the four densities (a light-to-dark ramp).
+\pgfplotsset{
+  q1/.style ={color=black,     mark=square*,   thick},
+  q2/.style ={color=black!45,  mark=o,         thick, dashed},
+  q3/.style ={color=black!70,  mark=triangle*, thick, dotted, line width=1pt},
+  d1/.style ={color=black!55, mark=square*,   mark repeat=6, mark phase=1,
+              thick, dashed},
+  d2/.style ={color=black!70, mark=o,          mark repeat=6, mark phase=3,
+              thick, dash dot},
+  d3/.style ={color=black!85, mark=triangle*,  mark repeat=6, mark phase=5,
+              thick, densely dotted},
+  d4/.style ={color=black,    mark=*,          mark repeat=6, mark phase=2,
+              thick}}
+
 \pgfplotsset{famaxis/.style={xmin=0.5, xmax=6.5,
   xtick={1,2,3,4,5,6},
   xticklabels={ind-pos, ind-sgn, corr, anti, near, exact},
   xticklabel style={rotate=35, anchor=east, font=\tiny}, pcfplot}}
 \pgfplotsset{rhoaxis/.style={xlabel={$\varrho$},
-  xtick={0.3,0.6,0.9,1.0}, xmin=0.25, xmax=1.05, pcfplot}}
+  xtick={0.3,0.6,0.9,1.0}, xticklabels={0.3,0.6,0.9,1.0},
+  xmin=0.25, xmax=1.05, pcfplot}}
 \pgfplotsset{sizeaxis/.style={xlabel={$n$}, pcfplot}}
 
 \newcommand{\tab}[1]{\input{../results/tables/#1.tex}}
@@ -65,6 +83,17 @@
   \setlength{\tabcolsep}{3pt}#3\end{minipage}%
   \hfill
   \begin{minipage}[c]{0.50\textwidth}\centering#4\end{minipage}
+  \caption{#2}\label{#1}
+  \end{figure}}
+
+% Same convention for the tables too wide for half a text width: the numbers on
+% top at full width, the same data plotted below them, one caption for both.
+\newcommand{\tabfigwide}[4]{%
+  \begin{figure}[htbp]
+  \centering
+  {\scriptsize\setlength{\tabcolsep}{3pt}#3}
+  \\[3mm]
+  #4
   \caption{#2}\label{#1}
   \end{figure}}
 
@@ -98,8 +127,24 @@ material the manuscript does not carry --
   and why memory is only quoted from single-algorithm runs.
 \end{itemize}
 Every table and plot is generated from the raw benchmark data by
-\texttt{tools/build\_report.sh}; no number is hand-typed. Each figure shows
-the numbers and the same data plotted, with a comment on how to read them.
+\texttt{tools/build\_report.sh}; no number is hand-typed.
+
+\paragraph{How to read the figures.} Every result in this report is presented
+in the same shape: a table of numbers on the left, a plot of \emph{the same
+numbers} on the right, and one caption below both. Every caption follows the
+same three-part order:
+\begin{enumerate}
+  \item \textbf{what is reported} -- the quantity and the statistic, spelled
+  out (for instance ``median CPU time in milliseconds, the median over
+  instances of the per-instance median over repetitions'');
+  \item \textbf{on which instances} -- the instance class, the sizes, and how
+  many instances each reported value aggregates;
+  \item \textbf{what we observe} -- the reading of the figure, and where
+  possible the mechanism behind it.
+\end{enumerate}
+Unless a caption says otherwise, every time is CPU time in milliseconds, every
+``median'' is taken over instances of the per-instance median over repetitions,
+and every ratio is a \emph{paired} per-instance ratio (\cref{sec:defs}).
 
 \tableofcontents
 \vspace{4mm}
@@ -151,52 +196,72 @@ no floating point in any decision path.
 
 \begin{table}[htbp]
 \centering
-\caption{The algorithms compared in this report. ``Time'' and ``space'' are
-worst-case bounds from the manuscript; the last column is what the experiments
-below add.}
+\caption{The algorithms compared in this report: the class of forests each one
+applies to, its worst-case time and space bounds, and how it selects the next
+candidate. Bounds are those proved in the manuscript, except \texttt{BPPF}'s,
+which is the published bound of the parametric pseudoflow method on a graph
+with $n$ vertices and $m$ arcs. A forest has $m\le n-1$, i.e.\
+$m=\mathcal O(n)$, so on \emph{our} inputs \texttt{BPPF}'s bounds specialize to
+$\mathcal O(n^2\log n)$ time and $\mathcal O(n)$ space: its time bound is worse
+than that of every algorithm above it, which is the theoretical reason a
+forest-specific method is worth having.}
 \label{tab:algos}
 \small
-\begin{tabular}{@{}llllp{4.5cm}@{}}
+\begin{tabular}{@{}lllll@{}}
 \toprule
-& Applies to & Time & Space & Idea, and what we observe \\
+& Applies to & Time & Space & Selection of the best candidate \\
 \midrule
-\texttt{PaC} & any forest & $\mathcal O(n^2)$ & $\mathcal O(n)$ &
-Peel the current best final vertices, or contract the best arc; the best
-candidate is found by a linear scan at every iteration. Slowest on random
-forests beyond $n\approx400$, but the most robust on stars. \\
-\texttt{DPaC} & any forest & $\mathcal O(n^2)$ & $\mathcal O(n)$ &
-Dual of \texttt{PaC}: builds the sequence from the lowest ratio upwards.
-Tracks \texttt{PaC} everywhere. \\
-\texttt{HPaC} & any forest & $\mathcal O(n^2\log n)$ & $\mathcal O(n)$ &
-Same two moves, but the candidates live in two heaps, so only those touched by
-the last move are refreshed. Fastest of ours on random forests, paths and
-binary trees; penalized on a high-degree hub. \\
-\texttt{DHPaC} & any forest & $\mathcal O(n^2\log n)$ & $\mathcal O(n)$ &
-Dual of \texttt{HPaC}; within $25\%$ of it everywhere. \\
-\texttt{HIPaC} & in-forests & $\mathcal O(n\log n)$ & $\mathcal O(n)$ &
-When every vertex has out-degree $\le1$ the minimal preceding set of an arc is
-a singleton, so one heap value per vertex suffices and no closure sums are
-propagated. Takes $0.52$--$0.75$ of \texttt{HPaC}'s time. \\
-\texttt{HOPaC} & out-forests & $\mathcal O(n\log n)$ & $\mathcal O(n)$ &
-The symmetric case (in-degree $\le1$): $0.57$--$0.78$ of \texttt{HPaC}. \\
-\texttt{RaC} & any tree & $\mathcal O(n\log n)$ & $\mathcal O(n\log n)$ &
-Rake-and-compress on a top tree: contracts the tree in
-$\mathcal O(\log n)$ rounds computing cluster functions, then recovers the
-thresholds top-down. The only algorithm whose cost does not depend on how
-often a single vertex is touched -- hence the winner on stars, by up to
-$250\times$. \\
+\texttt{PaC}   & any forest    & $\mathcal O(n^2)$      & $\mathcal O(n)$      & linear scan \\
+\texttt{DPaC}  & any forest    & $\mathcal O(n^2)$      & $\mathcal O(n)$      & linear scan, dual order \\
+\texttt{HPaC}  & any forest    & $\mathcal O(n^2\log n)$& $\mathcal O(n)$      & two candidate heaps \\
+\texttt{DHPaC} & any forest    & $\mathcal O(n^2\log n)$& $\mathcal O(n)$      & two heaps, dual order \\
+\texttt{HIPaC} & in-forests    & $\mathcal O(n\log n)$  & $\mathcal O(n)$      & one heap over the vertices \\
+\texttt{HOPaC} & out-forests   & $\mathcal O(n\log n)$  & $\mathcal O(n)$      & one heap, dual order \\
+\texttt{RaC}   & any tree      & $\mathcal O(n\log n)$  & $\mathcal O(n\log n)$& none: top-tree contraction \\
 \midrule
-\texttt{BPPF} & general graphs & $\mathcal O(mn\log n)$ & $\mathcal O(m)$ &
-External baseline: bounded-precision parametric pseudoflow (unmodified
-upstream), solves a strictly more general problem. The bound is for the whole
-parametric sweep on a graph with $m$ arcs; on a forest $m=\mathcal O(n)$, so it
-reads $\mathcal O(n^2\log n)$ -- worse than every algorithm above, which is the
-theoretical reason a forest-specific method is worth having. Evaluates minimum cuts at parameter values supplied by
-the caller and uses fixed-point arithmetic, hence the precision caveat of
-\cref{sec:bppf}. \\
+\texttt{BPPF}  & general graphs& $\mathcal O(mn\log n)$ & $\mathcal O(m)$      & external, parametric pseudoflow \\
+               & \emph{on a forest} & $\mathcal O(n^2\log n)$ & $\mathcal O(n)$ & \emph{since $m\le n-1$} \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\noindent
+What each one does, and what the experiments below add:
+
+\begin{itemize}
+  \item \textbf{\texttt{PaC}} peels the current best final vertices or
+  contracts the best arc, finding the best candidate by a linear scan at every
+  iteration. Slowest on random forests beyond $n\approx400$, but the most
+  robust of the three on stars, precisely because it maintains nothing.
+  \item \textbf{\texttt{DPaC}} is its dual: it builds the sequence from the
+  lowest ratio upwards. It tracks \texttt{PaC} everywhere we measured.
+  \item \textbf{\texttt{HPaC}} performs the same two moves, but keeps the
+  candidates in two heaps, so only those touched by the last move are
+  refreshed. Fastest of ours on random forests, paths and binary trees;
+  penalized on a high-degree hub, where a single move invalidates a constant
+  fraction of the candidates.
+  \item \textbf{\texttt{DHPaC}} is its dual, within $25\%$ of it everywhere.
+  \item \textbf{\texttt{HIPaC}} exploits out-degree $\le1$: the minimal
+  preceding set of an arc is then a singleton, so one heap value per vertex
+  suffices and no closure sums are propagated. Takes $0.52$--$0.75$ of
+  \texttt{HPaC}'s time. \textbf{\texttt{HOPaC}} is the symmetric case
+  (in-degree $\le1$): $0.57$--$0.78$.
+  \item \textbf{\texttt{RaC}} contracts the tree in $\mathcal O(\log n)$
+  rake-and-compress rounds, computing cluster functions, then recovers the
+  thresholds top-down. It is the only algorithm whose cost does not depend on
+  how often a single vertex is touched -- hence the winner on stars, by up to
+  $250\times$.
+  \item \textbf{\texttt{BPPF}} is the external baseline: it solves a strictly
+  more general problem, evaluates minimum cuts at parameter values supplied by
+  the caller, and uses fixed-point arithmetic -- hence the precision caveat of
+  \cref{sec:bppf}. Its $\mathcal O(mn\log n)$ bound is stated for a general
+  precedence graph; a forest has $m\le n-1$, so on the instances of this report
+  it reads $\mathcal O(n^2\log n)$: a factor $n$ above the
+  $\mathcal O(n\log n)$ of \texttt{RaC} and of the single-orientation variants,
+  and a factor $\log n$ above the $\mathcal O(n^2)$ of \texttt{PaC}. The
+  measured gap of \cref{sec:bppf} should be read against that: it is a factor
+  of a few, far smaller than the gap between the bounds.
+\end{itemize}
 
 \noindent
 Two remarks that matter for reading the results. First, \texttt{PaC} and
@@ -249,6 +314,22 @@ Terms used throughout, fixed here once.
   this study; the term appears only to state that.
   \item \textbf{Campaign.} One preregistered block of the sweep -- a set of
   instances plus the algorithms run on them (B, C, D, E, G).
+  \item \textbf{Tree of a forest, and its size.} A connected component of the
+  \emph{underlying undirected} graph, and its number of vertices. Orientations
+  are irrelevant to this notion: a forest of in-trees and a forest of mixed
+  orientations built with the same seed have the same trees. A vertex with no
+  incident arc is a tree of size 1, called \emph{isolated}
+  (\cref{sec:forestsize}).
+  \item \textbf{SHA-256 checksum.} A 256-bit fingerprint of a file, computed
+  with the standard SHA-2 hash function: any change to the file's bytes, even a
+  single one, changes the fingerprint, and no one can construct a different
+  file with the same fingerprint. We record it for every instance file
+  (\texttt{instances/manifests/*.json}) and for every archive in the data
+  release, so that a regenerated or downloaded instance can be proved
+  byte-for-byte identical to the one measured here -- a reproducibility device,
+  not a security one. It is unrelated to the 64-bit \texttt{sequence\_hash}
+  used to compare algorithm \emph{outputs} (\cref{sec:validation}), which is a
+  cheap non-cryptographic hash.
 \end{itemize}
 
 \section{Setup}\label{sec:setup}
@@ -354,8 +435,11 @@ $100$, $200$, $500$, $1\,000$, $2\,000$, $5\,000$, $10\,000$, $20\,000$,
 $50\,000$ and $100\,000$.
 
 \tabfig{fig:struct}{%
-What the density parameter actually produces (campaign C, medians). Arcs grow
-linearly in $\varrho$ and components fall accordingly, from a forest of
+Median number of arcs, of trees and of closure layers of the generated
+instances, per arc density. Instances: \texttt{mixed-forest},
+$n\in\{10\,000,\dots,100\,000\}$ pooled, 600 instances per density.
+Observations: what the density parameter actually produces. Arcs grow linearly in
+$\varrho$ and the number of trees falls accordingly, from
 $\approx38\,500$ trees at $\varrho=0.3$ to a single spanning tree at
 $\varrho=1.0$. The number of closure layers moves the other way and far less:
 connecting the forest removes only about a third of them, because precedence
@@ -364,42 +448,129 @@ is a genuine experimental factor and not a cosmetic one.}{%
 \tab{rep_struct_by_rho}}{%
 \begin{tikzpicture}
 \begin{axis}[rhoaxis, ylabel={count}, ymode=log]
-\addplot[aux]  table[x=rho, y=arcs]   {\dfile{rep_plotstruct}}; \addlegendentry{arcs}
-\addplot[aux2] table[x=rho, y=comp]   {\dfile{rep_plotstruct}}; \addlegendentry{components}
-\addplot[hpac] table[x=rho, y=layers] {\dfile{rep_plotstruct}}; \addlegendentry{layers}
+\addplot[q1] table[x=rho, y=arcs]   {\dfile{rep_plotstruct}}; \addlegendentry{arcs}
+\addplot[q2] table[x=rho, y=comp]   {\dfile{rep_plotstruct}}; \addlegendentry{trees}
+\addplot[q3] table[x=rho, y=layers] {\dfile{rep_plotstruct}}; \addlegendentry{closure layers}
 \end{axis}
 \end{tikzpicture}}
 
+\subsection{How many trees, and how big?}\label{sec:forestsize}
+
+\Cref{fig:struct} counts the trees of the generated forests; this subsection
+measures how large they are, because ``sparse forest'' can mean two very
+different structures -- many trees of comparable size, or one giant tree
+surrounded by dust -- and the two would explain \texttt{RaC}'s density
+sensitivity (\cref{sec:ccamp}) in different ways. The measurement is made
+directly on the \texttt{.pcf} files by \texttt{tools/forest\_structure\_stats.py},
+without running any algorithm: the trees are a property of the input.
+
+Two closed-form facts anchor the numbers. The generator adds each of the $n-1$
+candidate arcs independently with probability $\varrho$ and never creates a
+cycle, so a forest has $\varrho(n-1)$ arcs and therefore exactly
+$n-\varrho(n-1)$ trees in expectation: the tree count is $(1-\varrho)n$ to
+first order, and the \emph{mean} tree size is $1/(1-\varrho)$. Both are
+independent of $n$ -- so density, not size, is what sets the fragmentation, and
+the same density means the same fragmentation at $n=10^3$ and at $n=10^5$.
+
+\tabfigwide{fig:forest}{%
+Structure of the generated forests: median number of arcs, median number of
+trees, trees per vertex, then the median, mean and largest tree size, the
+largest tree as a percentage of $n$, and the percentage of trees that are
+isolated vertices. Each row aggregates 10 instances of one class, size and
+density (\texttt{independent-positive} coefficients: the topology is generated
+independently of the coefficients, so one family represents all six). Measured
+values match the closed forms above to three digits -- $(1-\varrho)n$ trees, mean
+size $1/(1-\varrho)$ -- and are the same for \texttt{mixed-forest},
+\texttt{in-forest} and \texttt{out-forest}, confirming that orientation does not
+touch the structure; \texttt{path-}, \texttt{binary-} and \texttt{star-mixed}
+are single trees by construction. The interesting column is the largest tree:
+at $\varrho=0.3$ and $\varrho=0.6$ it holds $0.1\%$ and $1.6\%$ of the vertices
+at $n=10^5$, but at $\varrho=0.9$ it holds $36\%$ -- while the median tree is
+\emph{still} a single vertex and half the trees are still isolated vertices. The
+plot below the table shows the three quantities that move with the density, at
+$n=100\,000$.}{%
+\tiny\setlength{\tabcolsep}{3pt}\tab{rep_forest_struct}}{%
+\begin{tikzpicture}
+\begin{axis}[rhoaxis, ylabel={count / size}, ymode=log, width=0.62\textwidth]
+\addplot[q1] table[x=rho, y=trees]   {\dfile{rep_plotforest}}; \addlegendentry{\#trees}
+\addplot[q2] table[x=rho, y=mean]    {\dfile{rep_plotforest}}; \addlegendentry{mean tree size}
+\addplot[q3] table[x=rho, y=largest] {\dfile{rep_plotforest}}; \addlegendentry{largest tree}
+\end{axis}
+\end{tikzpicture}}
+
+\tabfig{fig:forestccdf}{%
+Distribution of the tree size: for each size $s$, the percentage of trees with
+at least $s$ vertices, one curve and one column per density, on the 40
+\texttt{mixed-forest} instances with $n=100\,000$ (10 per density); the table
+lists the same distribution at selected sizes. The distribution is heavy-tailed
+at every density below 1: at $\varrho=0.3$, $77\%$ of the trees are single
+vertices and only $0.3\%$ reach 10 vertices, yet the largest reaches 96. At
+$\varrho=0.9$ the tail detaches completely -- $30\%$ of trees have $\ge3$
+vertices and one tree of $\approx4\cdot10^4$ vertices appears, four orders of
+magnitude above the median. This is the percolation-like transition that
+\cref{fig:c_ratio_rho} sees as a timing effect: what changes between
+$\varrho=0.6$ and $\varrho=0.9$ is not the number of trees (it falls smoothly)
+but the emergence of one giant tree, and \texttt{RaC}'s per-component overhead
+is paid on the count of trees while its contraction rounds are amortized over
+the giant one.}{%
+\tiny\setlength{\tabcolsep}{3pt}\tab{rep_forest_ccdf}}{%
+\begin{tikzpicture}
+\begin{axis}[xmode=log, ymode=log, sizeaxis, xlabel={tree size $s$},
+  ylabel={\% of trees with size $\ge s$}, legend columns=2]
+\addplot[d1] table[x=size, y=r03] {\dfile{rep_plotforestccdf}};
+\addlegendentry{$\varrho=0.3$}
+\addplot[d2] table[x=size, y=r06] {\dfile{rep_plotforestccdf}};
+\addlegendentry{$\varrho=0.6$}
+\addplot[d3] table[x=size, y=r09] {\dfile{rep_plotforestccdf}};
+\addlegendentry{$\varrho=0.9$}
+\addplot[d4] table[x=size, y=r10] {\dfile{rep_plotforestccdf}};
+\addlegendentry{$\varrho=1.0$}
+\end{axis}
+\end{tikzpicture}}
+
+\subsection{How many closure layers?}\label{sec:layercount}
+
+The number of closure layers is the number of breakpoints, hence an upper bound
+on the number of iterations of every peeling algorithm: it is the single best
+predictor of absolute running time. The two figures below report it per
+coefficient family and per size.
+
 \tabfig{fig:layersfam}{%
-How much parametric structure each coefficient family creates. This is the
-single most useful fact for reading absolute times, since the work of every
-algorithm scales with the number of breakpoints: at $n\ge10^4$ the median
-layer count ranges from $1\,222$ (\texttt{near-ties}) to $33\,183$
-(\texttt{independent-signed}), a factor of 27 at equal size. It also explains
-why the tie-stressing families are the \emph{fastest} in every timing table
-below, which would otherwise look counter-intuitive.}{%
+Median number of closure layers per coefficient family, reported separately for
+the small and the large sizes. Instances: \texttt{mixed-forest}, all four
+densities, $n\in\{100,\dots,1\,000\}$ (2\,400 instances) and
+$n\in\{10\,000,\dots,100\,000\}$ (2\,400 instances). Observations: how much
+parametric structure each family creates -- the single most useful fact for
+reading absolute times, since the work of every algorithm scales with the number
+of breakpoints. At $n\ge10^4$ the median layer count ranges from $1\,222$
+(\texttt{near-ties}) to $33\,183$ (\texttt{independent-signed}), a factor of 27 at
+equal size. This is why the tie-stressing families are the \emph{fastest} in
+every timing table below, which would otherwise look counter-intuitive.}{%
 \tab{rep_layers_by_family}}{%
 \begin{tikzpicture}
 \begin{axis}[famaxis, ylabel={\# closure layers}, ymode=log]
-\addplot[hpac, only marks] coordinates {(1,344) (2,346) (3,337) (4,342) (5,164) (6,105)};
+\addplot[q1, only marks, mark size=2.6pt] coordinates {(1,344) (2,346) (3,337) (4,342) (5,164) (6,105)};
 \addlegendentry{$n\le10^3$}
-\addplot[aux, only marks] coordinates {(1,32374) (2,33183) (3,24825) (4,30379) (5,1222) (6,7884)};
+\addplot[q3, only marks, mark size=2.6pt] coordinates {(1,32374) (2,33183) (3,24825) (4,30379) (5,1222) (6,7884)};
 \addlegendentry{$n\ge10^4$}
 \end{axis}
 \end{tikzpicture}}
 
 \tabfig{fig:layerssize}{%
-Closure layers by size over both random campaigns, with the observed spread.
-The layer-to-vertex ratio settles around $0.15$ at $n=10^5$: a
-$10^5$-vertex instance typically has of the order of $15\,000$ breakpoints to
-enumerate, and the spread between the easiest and hardest instance of one size
-is roughly a factor of three.}{%
+Median, minimum and maximum number of closure layers, per size. Instances:
+\texttt{mixed-forest}, $n$ from $100$ to $100\,000$, all four densities and six
+families, 240 instances per size. Observations: the layer-to-vertex ratio settles
+around $0.15$ at $n=10^5$, so a $10^5$-vertex instance typically has of the order
+of $15\,000$ breakpoints to enumerate. The min-max band spans roughly a factor of
+three at every size: instances of equal size can differ that much in how much
+parametric structure they carry, which is the dominant source of
+instance-to-instance variation in the timing tables.}{%
 \tab{rep_layers_by_size}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\# closure layers}]
-\addplot[hpac] table[x=n, y=median] {\dfile{rep_plotlayers}}; \addlegendentry{median}
-\addplot[aux]  table[x=n, y=max]    {\dfile{rep_plotlayers}}; \addlegendentry{max}
-\addplot[aux2] table[x=n, y=min]    {\dfile{rep_plotlayers}}; \addlegendentry{min}
+\addplot[q1] table[x=n, y=median] {\dfile{rep_plotlayers}}; \addlegendentry{median}
+\addplot[q3] table[x=n, y=max]    {\dfile{rep_plotlayers}}; \addlegendentry{max}
+\addplot[q2] table[x=n, y=min]    {\dfile{rep_plotlayers}}; \addlegendentry{min}
 \end{axis}
 \end{tikzpicture}}
 
@@ -412,9 +583,14 @@ step actually consumes. \Cref{fig:layersize} reports it on a sample of 60
 instances at $n=10\,000$ (all six families, four densities, plus stars, paths
 and in-forests), 261\,232 layers in total.
 
-\tabfig{fig:layersize}{%
-Size of the closure layers, measured on 60 instances at $n=10\,000$
-(261\,232 layers). \emph{The distribution is extremely skewed}: overall
+\tabfigwide{fig:layersize}{%
+Distribution of the closure-layer \emph{size} (number of vertices per layer):
+the table gives the number of layers, their median, mean and maximum size and the
+percentage of singleton layers per group; the plot gives the percentage of layers
+of size at least $s$. Instances: 60 instances at $n=10\,000$ -- all six
+coefficient families and four densities of \texttt{mixed-forest}, plus
+\texttt{star-mixed}, \texttt{path-mixed} and \texttt{in-forest} -- for a total of
+261\,232 layers. Observations: \emph{the distribution is extremely skewed}: overall
 median 1, mean $2.3$, and two thirds of all layers are singletons -- yet the
 largest single layer holds $5\,077$ vertices, half the graph. So a parametric
 solution is typically a long chain of one-vertex layers plus a handful of very
@@ -428,11 +604,11 @@ families -- which is the mechanism behind their much smaller layer counts
 of magnitude: on sparse random forests the biggest layer holds $563$ vertices,
 against $\approx5\,000$ once the graph is a single tree, because a layer cannot
 straddle components.}{%
-\tiny\setlength{\tabcolsep}{2pt}\tab{rep_layer_sizes}}{%
+\scriptsize\setlength{\tabcolsep}{3pt}\tab{rep_layer_sizes}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, ymode=log, sizeaxis, xlabel={layer size $s$},
-  ylabel={\% of layers with size $\ge s$}]
-\addplot[hpac, mark=none, very thick] table[x=size, y=frac_at_least]
+  ylabel={\% of layers with size $\ge s$}, width=0.62\textwidth]
+\addplot[q1, mark=none, very thick] table[x=size, y=frac_at_least]
   {\dfile{rep_plotlayersize}};
 \addlegendentry{all 261\,232 layers}
 \end{axis}
@@ -461,12 +637,16 @@ straddle components.}{%
 
 \begin{table}[htbp]
 \centering
-\caption{Instances benchmarked and cross-algorithm disagreements per campaign.
-Campaign G (\cref{sec:bppf}) is listed apart, \texttt{BPPF} being an external
-baseline rather than one of our algorithms.}
+\caption{Number of instances benchmarked, of timed runs, and of
+cross-algorithm disagreements, per instance class. Every group aggregates all
+sizes, densities, coefficient families and seeds of that class. The
+\texttt{BPPF} comparison is listed apart, \texttt{BPPF} being an external
+baseline rather than one of our algorithms. Zero disagreements everywhere: on
+each instance the algorithms returned the same partition, the same thresholds and
+the same canonical order.}
 \label{tab:correctness}
 \small
-\tab{correctness}
+\tab{rep_correctness}
 \end{table}
 
 \section{The campaigns}\label{sec:campaigns}
@@ -568,13 +748,16 @@ heap's overhead is still comparable to its benefit, so it is where the
 crossover can be located.
 
 \tabfig{fig:b}{%
-All five algorithms on \texttt{mixed-forest} instances,
-$n\in\{100,200,\dots,1\,000\}$ (240 instances per size). The two families are
+Median CPU time in milliseconds of the five algorithms, per size. Instances:
+\texttt{mixed-forest}, $n\in\{100,200,\dots,1\,000\}$, 240 instances per size
+(four densities $\times$ six coefficient families $\times$ ten seeds), 11
+repetitions each. Observations: the scan-based and the heap-based algorithms are
 indistinguishable up to $n\approx300$ and the heap pays off from $n\approx400$
-on; each dual tracks its primal throughout, which is why the manuscript
-reports only the primals. \texttt{PaC} re-scans every candidate ratio at every
-iteration, while \texttt{HPaC} extracts the maximum in logarithmic time and
-refreshes only the candidates touched by the last peel or contraction.}{%
+on; each dual tracks its primal over the whole range, which is why the
+manuscript reports only the primals. The mechanism is the candidate selection:
+\texttt{PaC} re-scans every candidate ratio at every iteration, while
+\texttt{HPaC} extracts the maximum in logarithmic time and refreshes only the
+candidates touched by the last peel or contraction.}{%
 \tab{rep_times_campaign_b}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={CPU time (ms)}]
@@ -587,13 +770,16 @@ refreshes only the candidates touched by the last peel or contraction.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:b_ratio_pac}{%
-Paired ratio \texttt{PaC}/\texttt{HPaC} by size, with its IQR: $0.91$ at
-$n=100$ (the scan is marginally faster where heap maintenance does not yet pay
-for itself), crossing 1 near $n=400$, reaching $2.3$ at $n=1\,000$. Beyond
-this range it keeps growing -- $20.3$ at $n=10^4$, $42.9$ at $n=2\cdot10^4$ --
-which is the practical meaning of the $\mathcal O(n^2)$ against
-$\mathcal O(n\log n)$-in-practice difference. The dashed line marks parity.}{%
-\tab{campaign_b_pac_over_hpac}}{%
+Median of the paired per-instance ratio \texttt{PaC}/\texttt{HPaC}, per size,
+with the number of paired instances and the IQR of the ratio. Instances:
+\texttt{mixed-forest}, $n\in\{100,200,\dots,1\,000\}$, 240 instances per size.
+Observations: the ratio is $0.91$ at $n=100$ -- the scan is marginally faster
+where heap maintenance does not yet pay for itself -- crosses 1 near $n=400$ and
+reaches $2.3$ at $n=1\,000$. Beyond this range it keeps growing, $20.3$ at
+$n=10^4$ and $42.9$ at $n=2\cdot10^4$ (\cref{sec:ccamp}), which is the practical
+meaning of the $\mathcal O(n^2)$ bound against $\mathcal O(n\log n)$ behaviour in
+practice. The dashed line marks parity.}{%
+\tab{rep_ratio_campaign_b_pac_over_hpac_by_size}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, pcfplot, xlabel={$n$}, ylabel={\texttt{PaC}/\texttt{HPaC}},
   ymin=0,
@@ -604,9 +790,13 @@ $\mathcal O(n\log n)$-in-practice difference. The dashed line marks parity.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:b_rho}{%
-Campaign B by density. Every algorithm slows down as the forest becomes more
-connected, but not by the same factor: \texttt{HPaC} roughly doubles from
-$\varrho=0.3$ to $\varrho=1.0$ while \texttt{RaC} grows less. This is the
+Median CPU time in milliseconds of \texttt{PaC}, \texttt{HPaC} and \texttt{RaC},
+per arc density. Instances: \texttt{mixed-forest}, $n\in\{100,\dots,1\,000\}$
+pooled, 600 instances per density. Observations: every algorithm slows down as
+the forest becomes more connected -- more arcs mean more closure sums to
+propagate -- but not by the same factor: \texttt{HPaC} roughly doubles from
+$\varrho=0.3$ to $\varrho=1.0$ while \texttt{RaC} grows less, since part of its
+cost is the per-tree bookkeeping it pays whatever the density. This is the
 medium-size beginning of the density effect that dominates
 \cref{sec:ccamp}.}{%
 \tab{rep_times_campaign_b_by_rho}}{%
@@ -619,10 +809,13 @@ medium-size beginning of the density effect that dominates
 \end{tikzpicture}}
 
 \tabfig{fig:b_fam}{%
-Campaign B by coefficient family. The two tie-stressing families are the
-fastest for every algorithm, consistently with their smaller layer counts
-(\cref{fig:layersfam}); the ordering between algorithms is the same in all
-six, so no family reverses a conclusion.}{%
+Median CPU time in milliseconds of \texttt{PaC}, \texttt{HPaC} and \texttt{RaC},
+per coefficient family. Instances: \texttt{mixed-forest},
+$n\in\{100,\dots,1\,000\}$ and all four densities pooled, 400 instances per
+family. Observations: the two tie-stressing families are the fastest for every
+algorithm, consistently with their smaller layer counts (\cref{fig:layersfam}) --
+fewer breakpoints, fewer iterations; the ordering between algorithms is the same
+in all six, so no family reverses a conclusion.}{%
 \tab{rep_times_campaign_b_by_family}}{%
 \begin{tikzpicture}
 \begin{axis}[famaxis, ylabel={CPU time (ms)}]
@@ -633,9 +826,12 @@ six, so no family reverses a conclusion.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:b_ratio_fam}{%
-Campaign B, paired ratio \texttt{RaC}/\texttt{HPaC} by family: flat at
-$3.1$--$3.3$ across all six. At these sizes the coefficient family does not
-affect which algorithm wins.}{%
+Median of the paired per-instance ratio \texttt{RaC}/\texttt{HPaC}, per
+coefficient family, with the number of paired instances and the IQR. Instances:
+\texttt{mixed-forest}, $n\in\{100,\dots,1\,000\}$ and all four densities pooled,
+400 instances per family. Observations: the ratio is flat at $3.1$--$3.3$ across
+all six families -- at these sizes the coefficient family changes how much work
+there is, not which algorithm does it faster.}{%
 \tab{rep_ratio_campaign_b_rac_over_hpac_by_family}}{%
 \begin{tikzpicture}
 \begin{axis}[famaxis, ylabel={\texttt{RaC}/\texttt{HPaC}}, ymin=0]
@@ -653,10 +849,15 @@ up to $10^5$ vertices, and how much of the answer depends on the density of
 the forest. As it turns out, more than it depends on the size.
 
 \tabfig{fig:c}{%
-\texttt{mixed-forest} instances, $n\in\{10\,000,\dots,100\,000\}$ (240 per
-size). \texttt{HPaC} computes the full parametric solution on $10^5$ vertices
-in about $0.2$\,s; \texttt{DHPaC} stays within $25\%$ of it at every size, and
-is marginally faster at $n=10^5$.}{%
+Median CPU time in milliseconds of \texttt{HPaC}, \texttt{DHPaC} and
+\texttt{RaC}, per size. Instances: \texttt{mixed-forest},
+$n\in\{10\,000,20\,000,\dots,100\,000\}$, 240 instances per size (four densities
+$\times$ six families $\times$ ten seeds), 3 repetitions each. Observations:
+\texttt{HPaC} computes the full parametric solution on $10^5$ vertices in about
+$0.2$\,s; \texttt{DHPaC} stays within $25\%$ of it at every size and is
+marginally faster at $n=10^5$, so the primal/dual choice is immaterial at scale;
+\texttt{RaC} is above both throughout, by a factor that grows with $n$
+(\cref{fig:c_ratio}).}{%
 \tab{rep_times_campaign_c}}{%
 \begin{tikzpicture}
 \begin{axis}[pcfplot, xlabel={$n$}, ylabel={CPU time (ms)},
@@ -669,10 +870,14 @@ is marginally faster at $n=10^5$.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:c_ratio}{%
-Paired ratio \texttt{RaC}/\texttt{HPaC} by size, with IQR: from $4.2$ at
-$n=10^4$ to $13.3$ at $n=10^5$. The IQR widens with $n$, so the disadvantage
-grows \emph{and} becomes more variable -- the next figure explains why.}{%
-\tab{campaign_c_rac_over_hpac}}{%
+Median of the paired per-instance ratio \texttt{RaC}/\texttt{HPaC}, per size,
+with the number of paired instances and the IQR. Instances:
+\texttt{mixed-forest}, $n\in\{10\,000,\dots,100\,000\}$, 240 instances per size.
+Observations: the ratio grows from $4.2$ at $n=10^4$ to $13.3$ at $n=10^5$, and
+its IQR widens with $n$ as well, so \texttt{RaC}'s disadvantage grows \emph{and}
+becomes more variable. The variability is not noise: it is the mixture of the
+four densities, which \cref{fig:c_ratio_rho} separates.}{%
+\tab{rep_ratio_campaign_c_rac_over_hpac_by_size}}{%
 \begin{tikzpicture}
 \begin{axis}[pcfplot, xlabel={$n$}, ylabel={\texttt{RaC}/\texttt{HPaC}},
   xtick={10000,40000,70000,100000}, scaled x ticks=false, ymin=0,
@@ -683,17 +888,20 @@ grows \emph{and} becomes more variable -- the next figure explains why.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:c_ratio_rho}{%
-The same pairing aggregated by density, and the reason a single aggregate
-would mislead: the median ratio is $12.9$ at $\varrho=0.3$, $17.0$ at
+Median of the paired per-instance ratio \texttt{RaC}/\texttt{HPaC}, per arc
+density, with the number of paired instances and the IQR. Instances:
+\texttt{mixed-forest}, $n\in\{10\,000,\dots,100\,000\}$ pooled, 600 instances per
+density. Observations: the ratio is $12.9$ at $\varrho=0.3$, $17.0$ at
 $\varrho=0.6$, $5.0$ at $\varrho=0.9$ and only $2.0$ on single spanning trees,
 with the IQR shrinking from $10.2$ to $0.4$ in the same direction. A sparse
-forest splits into many small components, on which \texttt{HPaC}'s
-contractions are almost free while \texttt{RaC} still pays cluster bookkeeping
-per component; on one spanning tree the two are closest. The ordering never
-reverses, but the margin varies by almost an order of magnitude -- the
-population is a mixture of four regimes, which is exactly what the widening
-IQR of \cref{fig:c_ratio} is made of.}{%
-\tab{campaign_c_rac_over_hpac_by_rho}}{%
+forest splits into tens of thousands of tiny trees (\cref{fig:forest}), on which
+\texttt{HPaC}'s contractions are almost free while \texttt{RaC} still pays
+cluster bookkeeping per tree; on one spanning tree the two are closest. The
+ordering never reverses, but the margin varies by almost an order of magnitude --
+the population is a mixture of four regimes, which is exactly what the widening
+IQR of \cref{fig:c_ratio} is made of, and the reason a single aggregate over
+densities would mislead.}{%
+\tab{rep_ratio_campaign_c_rac_over_hpac_by_rho}}{%
 \begin{tikzpicture}
 \begin{axis}[rhoaxis, ylabel={\texttt{RaC}/\texttt{HPaC}}, ymin=0]
 \addplot[rac] table[x=rho, y=ratio] {\dfile{rep_plotratiorho_campaign_c_rac_hpac}};
@@ -702,10 +910,21 @@ IQR of \cref{fig:c_ratio} is made of.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:c_rho}{%
-Campaign C by density, absolute times: the gap between \texttt{RaC} and the
-heap-based algorithms closes as the forest becomes connected, and all three
-get faster -- fewer components means fewer, larger closure layers
-(\cref{fig:struct}).}{%
+Median CPU time in milliseconds of \texttt{RaC}, \texttt{DHPaC} and
+\texttt{HPaC}, per arc density. Instances: \texttt{mixed-forest},
+$n\in\{10\,000,\dots,100\,000\}$ pooled, 600 instances per density.
+Observations: this is \cref{fig:c_ratio_rho} in absolute terms, and the two
+algorithms respond to density in opposite ways. \texttt{HPaC} grows
+monotonically, by a factor 8 from $\varrho=0.3$ to $\varrho=1.0$ ($27.8$ to
+$221.4$\,ms): more arcs mean more closure sums to propagate per move.
+\texttt{RaC} is \emph{non-monotone} -- it peaks at $\varrho=0.6$ ($902$\,ms) and
+falls to $433$\,ms on single spanning trees -- because its cost is a per-tree
+overhead plus contraction work per tree: at $\varrho=0.3$ there are $\approx
+70\,000$ trees but $77\%$ are isolated vertices and cost nothing to contract, at
+$\varrho=0.6$ there are still $40\,000$ trees and most are non-trivial (the worst
+combination), and from $\varrho=0.9$ on the count collapses and the work
+concentrates in one large tree, where the $\mathcal O(\log n)$ contraction rounds
+are amortized best (\cref{fig:forest,fig:forestccdf}).}{%
 \tab{rep_times_campaign_c_by_rho}}{%
 \begin{tikzpicture}
 \begin{axis}[rhoaxis, ylabel={CPU time (ms)}]
@@ -716,8 +935,12 @@ get faster -- fewer components means fewer, larger closure layers
 \end{tikzpicture}}
 
 \tabfig{fig:c_fam}{%
-Campaign C by family, absolute times: at most $14\%$ spread per algorithm --
-an order of magnitude less than the spread across densities.}{%
+Median CPU time in milliseconds of \texttt{RaC}, \texttt{DHPaC} and
+\texttt{HPaC}, per coefficient family. Instances: \texttt{mixed-forest},
+$n\in\{10\,000,\dots,100\,000\}$ and all four densities pooled, 400 instances per
+family. Observations: at most $14\%$ spread per algorithm across the six
+families -- an order of magnitude less than the spread across densities in
+\cref{fig:c_rho}, and in the same direction for all three algorithms.}{%
 \tab{rep_times_campaign_c_by_family}}{%
 \begin{tikzpicture}
 \begin{axis}[famaxis, ylabel={CPU time (ms)}]
@@ -728,10 +951,14 @@ an order of magnitude less than the spread across densities.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:c_ratio_fam}{%
-Campaign C, paired ratio by family: between $5.80$ and $6.11$ in all six. Read
-against \cref{fig:c_ratio_rho}, this is the clearest single statement of the
-study -- the topology decides which algorithm wins, the coefficient family
-only how much work there is to do.}{%
+Median of the paired per-instance ratio \texttt{RaC}/\texttt{HPaC}, per
+coefficient family, with the number of paired instances and the IQR. Instances:
+\texttt{mixed-forest}, $n\in\{10\,000,\dots,100\,000\}$ and all four densities
+pooled, 400 instances per family. Observations: the ratio lies between $5.80$ and
+$6.11$ in all six families, a $5\%$ spread. Read against \cref{fig:c_ratio_rho},
+where the same ratio moves between $2.0$ and $17.0$, this is the clearest single
+statement of the study: the topology decides which algorithm wins, the
+coefficient family only how much work there is to do.}{%
 \tab{rep_ratio_campaign_c_rac_over_hpac_by_family}}{%
 \begin{tikzpicture}
 \begin{axis}[famaxis, ylabel={\texttt{RaC}/\texttt{HPaC}}, ymin=0]
@@ -776,10 +1003,16 @@ are the classes where the theoretical complexity separation becomes visible.
 Paths and binary trees confirm the random-forest picture; stars invert it.
 
 \tabfig{fig:path}{%
-\texttt{path-mixed} instances (60 per size). These behave like random forests:
-median \texttt{RaC}/\texttt{HPaC} between $5.8$ and $9.0$ over the whole
-range, and \texttt{PaC} left far behind by $n=10^4$, as its
-$\mathcal O(n^2)$ bound predicts.}{%
+Median CPU time in milliseconds of \texttt{PaC}, \texttt{HPaC}, \texttt{DHPaC}
+and \texttt{RaC}, per size. Instances: \texttt{path-mixed} (one path, random
+orientations), $n$ from $100$ to $100\,000$, 60 instances per size (six
+coefficient families $\times$ ten seeds); \texttt{PaC} up to $n=2\,000$, its
+preregistered cutoff. Observations: paths behave like random forests -- median
+\texttt{RaC}/\texttt{HPaC} between $5.8$ and $9.0$ over the whole range, flat in
+$n$, and \texttt{PaC} left far behind by $n=10^4$ as its $\mathcal O(n^2)$ bound
+predicts. A path gives \texttt{RaC}'s compress rounds no branching to exploit
+while every vertex has degree $\le2$, so no heap update ever cascades: the shape
+favours the heap.}{%
 \tab{rep_times_campaign_d_path}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={CPU time (ms)}]
@@ -791,22 +1024,35 @@ $\mathcal O(n^2)$ bound predicts.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:path_fam}{%
-Paths by family: absolute times (left) and the paired ratio
-\texttt{RaC}/\texttt{HPaC} (right). Flat across families, like the random
-campaigns.}{%
+Median CPU time in milliseconds of \texttt{PaC}, \texttt{HPaC} and \texttt{RaC},
+per coefficient family. Instances: \texttt{path-mixed}, all sizes pooled ($n$ up
+to $2\,000$ for \texttt{PaC}, up to $100\,000$ for the others), 100 instances per
+family for \texttt{HPaC} and \texttt{RaC}. Observations: the family changes
+absolute times by at most $16\%$ for \texttt{RaC} and $7\%$ for \texttt{HPaC},
+with \texttt{near-ties} and \texttt{exact-ties} the fastest as everywhere else;
+the paired \texttt{RaC}/\texttt{HPaC} ratio stays within $6.7$--$8.1$ across the
+six families, so on paths too the family moves the amount of work and not the
+ranking. Absolute times pool sizes and are therefore comparable only across
+families, not against \cref{fig:path}.}{%
 \tab{rep_times_campaign_d_path_by_family}}{%
 \begin{tikzpicture}
-\begin{axis}[famaxis, ylabel={\texttt{RaC}/\texttt{HPaC}}, ymin=0]
-\addplot[rac] table[x=idx, y=ratio] {\dfile{rep_plotratiofam_campaign_d_path_rac_hpac}};
-\addlegendentry{median ratio}
+\begin{axis}[famaxis, ylabel={CPU time (ms)}, ymode=log]
+\addplot[pac]  table[x=idx, y=pac]  {\dfile{rep_plotfam_campaign_d_path}}; \addlegendentry{\texttt{PaC}}
+\addplot[hpac] table[x=idx, y=hpac] {\dfile{rep_plotfam_campaign_d_path}}; \addlegendentry{\texttt{HPaC}}
+\addplot[rac]  table[x=idx, y=rac]  {\dfile{rep_plotfam_campaign_d_path}}; \addlegendentry{\texttt{RaC}}
 \end{axis}
 \end{tikzpicture}}
 
 \tabfig{fig:binary}{%
-\texttt{binary-mixed} instances (60 per size): median
-\texttt{RaC}/\texttt{HPaC} between $3.2$ and $3.9$ over the whole range --
-lower than on paths, since a balanced tree gives \texttt{RaC}'s contraction
-rounds more to work with.}{%
+Median CPU time in milliseconds of \texttt{PaC}, \texttt{HPaC}, \texttt{DHPaC}
+and \texttt{RaC}, per size. Instances: \texttt{binary-mixed} (balanced binary
+tree, random orientations), $n$ from $100$ to $100\,000$, 60 instances per size;
+\texttt{PaC} up to $n=2\,000$. Observations: the median
+\texttt{RaC}/\texttt{HPaC} ratio is between $3.2$ and $3.9$ over the whole
+range -- lower than the $5.8$--$9.0$ of paths, since a balanced tree gives
+\texttt{RaC}'s rake and compress rounds more to work with at each round, while
+for the heap-based schedules a bounded degree keeps updates cheap on both
+shapes.}{%
 \tab{rep_times_campaign_d_binary}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={CPU time (ms)}]
@@ -818,27 +1064,40 @@ rounds more to work with.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:binary_fam}{%
-Binary trees by family: absolute times (left), paired ratio (right).}{%
+Median CPU time in milliseconds of \texttt{PaC}, \texttt{HPaC} and \texttt{RaC},
+per coefficient family. Instances: \texttt{binary-mixed}, all sizes pooled ($n$
+up to $2\,000$ for \texttt{PaC}, up to $100\,000$ for the others), 100 instances
+per family for \texttt{HPaC} and \texttt{RaC}. Observations: the same flat
+picture as on paths, with a narrower band -- $16.0$ to $18.9$\,ms for
+\texttt{RaC} and $4.4$ to $4.7$\,ms for \texttt{HPaC}, i.e.\ $18\%$ and $7\%$ of
+spread -- and the paired \texttt{RaC}/\texttt{HPaC} ratio between $3.4$ and $3.8$
+across the six families. The two tie-stressing families are again the fastest,
+and by the same relative amount for both algorithms, which is what ``the family
+sets the amount of work'' means quantitatively.}{%
 \tab{rep_times_campaign_d_binary_by_family}}{%
 \begin{tikzpicture}
-\begin{axis}[famaxis, ylabel={\texttt{RaC}/\texttt{HPaC}}, ymin=0]
-\addplot[rac] table[x=idx, y=ratio] {\dfile{rep_plotratiofam_campaign_d_binary_rac_hpac}};
-\addlegendentry{median ratio}
+\begin{axis}[famaxis, ylabel={CPU time (ms)}, ymode=log]
+\addplot[pac]  table[x=idx, y=pac]  {\dfile{rep_plotfam_campaign_d_binary}}; \addlegendentry{\texttt{PaC}}
+\addplot[hpac] table[x=idx, y=hpac] {\dfile{rep_plotfam_campaign_d_binary}}; \addlegendentry{\texttt{HPaC}}
+\addplot[rac]  table[x=idx, y=rac]  {\dfile{rep_plotfam_campaign_d_binary}}; \addlegendentry{\texttt{RaC}}
 \end{axis}
 \end{tikzpicture}}
 
 \tabfig{fig:star}{%
-\texttt{star-mixed} instances (60 per size) -- the class that inverts the
-ordering. \texttt{RaC} is already faster at $n=100$ and $\approx250\times$
+Median CPU time in milliseconds of \texttt{HPaC}, \texttt{DHPaC}, \texttt{PaC}
+and \texttt{RaC}, per size. Instances: \texttt{star-mixed} (one hub, $n-1$
+leaves, random orientations), $n$ from $100$ to $100\,000$, 60 instances per
+size; the heap-based algorithms up to $n=20\,000$, \texttt{PaC} and \texttt{RaC}
+over the full range. Observations: this is the class that inverts the ordering.
+\texttt{RaC} is already faster at $n=100$ and $\approx250\times$
 faster at $n=20\,000$. Every peel or contraction touches the hub and
 invalidates the candidate ratios of a constant fraction of the remaining
 leaves, so \emph{any} heap-based schedule pays $\Theta(n)$ maintenance per
 event, while \texttt{RaC}'s rake operations absorb all leaves in
 $\mathcal O(\log n)$ rounds regardless of the hub's update history.
 \texttt{PaC}, which maintains no candidate structure at all, stays an order of
-magnitude below \texttt{HPaC}. The heap-based algorithms stop at the
-preregistered cutoff $n=20\,000$, where their quadratic trend is
-established.}{%
+magnitude below \texttt{HPaC} -- on this class the schedule that maintains
+nothing beats the one that maintains a heap.}{%
 \tab{rep_times_campaign_d_star}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={CPU time (ms)}]
@@ -850,25 +1109,37 @@ established.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:star_fam}{%
-Stars by family: absolute times (left) and the paired ratio
-\texttt{RaC}/\texttt{HPaC} (right), between $0.060$ and $0.064$ in all six.
-The inversion is purely topological: no coefficient family produces it and
-none removes it.}{%
+Median CPU time in milliseconds of \texttt{PaC}, \texttt{HPaC} and \texttt{RaC},
+per coefficient family. Instances: \texttt{star-mixed}, all sizes pooled
+($n\le20\,000$ for \texttt{HPaC}, up to $100\,000$ for \texttt{PaC} and
+\texttt{RaC}), 100 instances per family. Observations: the inversion of
+\cref{fig:star} is present in every family and its size barely moves -- the
+paired \texttt{RaC}/\texttt{HPaC} ratio lies between $0.060$ and $0.064$ in all
+six -- so the inversion is purely topological: no coefficient family produces it
+and none removes it. Note the vertical scale: \texttt{HPaC} is two orders of
+magnitude above \texttt{RaC} on this class, whereas on every other class it is
+below.}{%
 \tab{rep_times_campaign_d_star_by_family}}{%
 \begin{tikzpicture}
-\begin{axis}[famaxis, ylabel={\texttt{RaC}/\texttt{HPaC}}, ymin=0]
-\addplot[rac] table[x=idx, y=ratio] {\dfile{rep_plotratiofam_campaign_d_star_rac_hpac}};
-\addlegendentry{median ratio}
+\begin{axis}[famaxis, ylabel={CPU time (ms)}, ymode=log]
+\addplot[pac]  table[x=idx, y=pac]  {\dfile{rep_plotfam_campaign_d_star}}; \addlegendentry{\texttt{PaC}}
+\addplot[hpac] table[x=idx, y=hpac] {\dfile{rep_plotfam_campaign_d_star}}; \addlegendentry{\texttt{HPaC}}
+\addplot[rac]  table[x=idx, y=rac]  {\dfile{rep_plotfam_campaign_d_star}}; \addlegendentry{\texttt{RaC}}
 \end{axis}
 \end{tikzpicture}}
 
 \tabfig{fig:star_racpac}{%
-Stars, \texttt{RaC} against \texttt{PaC}: the comparison between the two
-algorithms that are \emph{not} penalized by a candidate structure on a hub,
-and therefore the one that isolates the asymptotic difference. The crossover
-sits between $n=1\,000$ and $n=2\,000$; by $n=10^5$ \texttt{RaC} is
-$130\times$ faster. Dashed line marks parity.}{%
-\tab{campaign_d_star_rac_over_pac}}{%
+Median of the paired per-instance ratio \texttt{RaC}/\texttt{PaC}, per size, with
+the number of paired instances and the IQR. Instances: \texttt{star-mixed}, $n$
+from $100$ to $100\,000$, 60 instances per size. Observations: this pairs the two
+algorithms that are \emph{not} penalized by a candidate structure on a hub, and
+therefore isolates the asymptotic difference $\mathcal O(n\log n)$ against
+$\mathcal O(n^2)$ on the shape where it is visible. The crossover sits between
+$n=1\,000$ and $n=2\,000$ ($1.15$ then $0.52$); at $n=10^5$ the ratio is $0.007$,
+i.e.\ \texttt{RaC} is $135\times$ faster, and the IQR is below $0.001$, so the
+effect is uniform over instances and not driven by outliers. Dashed line marks
+parity.}{%
+\tab{rep_ratio_campaign_d_star_rac_over_pac_by_size}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{RaC}/\texttt{PaC}},
   extra y ticks={1}, extra y tick style={grid=major, grid style={black!45, dashed}}]
@@ -906,11 +1177,15 @@ and the constant is remarkably stable across sizes, densities and coefficient
 families.
 
 \tabfig{fig:ein}{%
-\texttt{in-forest} instances (240 per size): the specialized \texttt{HIPaC}
-against the general \texttt{HPaC} and against \texttt{RaC}. On a single
-orientation the minimal preceding set of every arc collapses to a singleton,
-so one heap value per vertex suffices and no closure-sum propagation is ever
-needed -- that is where the constant factor comes from.}{%
+Median CPU time in milliseconds of \texttt{HPaC}, \texttt{DHPaC}, the
+specialized \texttt{HIPaC} and \texttt{RaC}, per size. Instances:
+\texttt{in-forest} (out-degree $\le1$), $n\in\{100,\dots,1\,000\}\cup\{10\,000,
+\dots,100\,000\}$, 240 instances per size. Observations: \texttt{HIPaC} is below
+\texttt{HPaC} at every size and the two curves stay parallel, so the
+specialization is a constant factor and not a change of regime. The mechanism:
+on a single orientation the minimal preceding set of every arc collapses to a
+singleton, so one heap value per vertex suffices and no closure sum is ever
+propagated.}{%
 \tab{rep_times_campaign_e_in}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={CPU time (ms)}]
@@ -922,10 +1197,15 @@ needed -- that is where the constant factor comes from.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:ein_ratio}{%
-Paired ratio \texttt{HIPaC}/\texttt{HPaC} by size: between $0.52$ and $0.75$,
-with no erosion up to $n=10^5$ -- if anything the advantage grows mildly with
-$n$. Dashed line marks parity.}{%
-\tab{campaign_e_in_hipac_over_hpac}}{%
+Median of the paired per-instance ratio \texttt{HIPaC}/\texttt{HPaC}, per size,
+with the number of paired instances and the IQR. Instances: \texttt{in-forest},
+$n$ from $100$ to $100\,000$, 240 instances per size (all four densities and six
+families). Observations: the ratio lies between $0.52$ and $0.75$ with no erosion
+up to $n=10^5$ -- if anything the advantage grows mildly with $n$. The IQR is
+large ($0.44$ to $0.82$) because these 240 instances mix four densities, on which
+the gain differs by a factor 6: \cref{fig:e_rho} separates them. Dashed line
+marks parity.}{%
+\tab{rep_ratio_campaign_e_in_hipac_over_hpac_by_size}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, pcfplot, xlabel={$n$}, ylabel={\texttt{HIPaC}/\texttt{HPaC}},
   ymin=0, ymax=1.1,
@@ -936,9 +1216,13 @@ $n$. Dashed line marks parity.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:eout}{%
-\texttt{out-forest} instances (240 per size): \texttt{HOPaC} against
-\texttt{HPaC} and \texttt{RaC}. The picture mirrors the in-forest one, as the
-symmetry of the two constructions predicts.}{%
+Median CPU time in milliseconds of \texttt{HPaC}, \texttt{DHPaC}, the
+specialized \texttt{HOPaC} and \texttt{RaC}, per size. Instances:
+\texttt{out-forest} (in-degree $\le1$), $n$ from $100$ to $100\,000$, 240
+instances per size. Observations: the picture mirrors the in-forest one of
+\cref{fig:ein} at every size, as the symmetry of the two constructions predicts;
+the dual algorithm on the dual class buys the same constant factor, which is also
+a consistency check on the two implementations.}{%
 \tab{rep_times_campaign_e_out}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={CPU time (ms)}]
@@ -950,9 +1234,13 @@ symmetry of the two constructions predicts.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:eout_ratio}{%
-Paired ratio \texttt{HOPaC}/\texttt{HPaC} by size: between $0.57$ and
-$0.78$.}{%
-\tab{campaign_e_out_hopac_over_hpac}}{%
+Median of the paired per-instance ratio \texttt{HOPaC}/\texttt{HPaC}, per size,
+with the number of paired instances and the IQR. Instances: \texttt{out-forest},
+$n$ from $100$ to $100\,000$, 240 instances per size. Observations: the ratio
+lies between $0.57$ and $0.78$ and is never more than $0.09$ from the in-forest
+value at the same size (\cref{fig:ein_ratio}) -- the two specializations are worth
+the same constant, and neither erodes with $n$. Dashed line marks parity.}{%
+\tab{rep_ratio_campaign_e_out_hopac_over_hpac_by_size}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, pcfplot, xlabel={$n$}, ylabel={\texttt{HOPaC}/\texttt{HPaC}},
   ymin=0, ymax=1.1,
@@ -963,20 +1251,61 @@ $0.78$.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:e_rho}{%
-In-forests by density: absolute times (left) and the specialized-variant ratio
-(right). The gain of the specialization is stable in $\varrho$ too, so it does
-not depend on how fragmented the forest is.}{%
+Median CPU time in milliseconds of \texttt{HPaC}, the specialized \texttt{HIPaC}
+and \texttt{RaC}, per arc density. Instances: \texttt{in-forest}, all twenty
+sizes pooled, 1\,200 instances per density. Observations: this is where the
+specialization's gain actually comes from, and it is \emph{not} uniform. From
+$\varrho=0.3$ to $\varrho=1.0$, \texttt{HPaC} slows down by a factor 9 ($1.9$ to
+$17.2$\,ms) while \texttt{HIPaC} slows down by less than a factor 2 ($2.1$ to
+$3.9$\,ms): the paired ratio \texttt{HIPaC}/\texttt{HPaC} therefore falls from
+$1.23$ at $\varrho=0.3$ -- where the specialization is a small \emph{loss} -- to
+$0.84$, $0.34$ and $0.21$ at $\varrho=0.6$, $0.9$ and $1.0$, a $4.7\times$ gain on
+single spanning in-trees. The reason is exactly the propagation the
+specialization removes: on a fragmented forest of mostly isolated vertices
+(\cref{fig:forest}) there is almost no closure sum to propagate, so
+\texttt{HPaC} pays nothing for its generality and \texttt{HIPaC}'s setup cost is
+not recovered; the more connected the forest, the more the general algorithm
+propagates. The single figure ``$0.52$--$0.75$'' of \cref{fig:ein_ratio} is thus
+an average over four quite different regimes.}{%
 \tab{rep_times_campaign_e_in_by_rho}}{%
 \begin{tikzpicture}
-\begin{axis}[rhoaxis, ylabel={\texttt{HIPaC}/\texttt{HPaC}}, ymin=0, ymax=1]
+\begin{axis}[rhoaxis, ylabel={CPU time (ms)}, ymode=log]
+\addplot[hpac]  table[x=rho, y=hpac]  {\dfile{rep_plotrho_campaign_e_in}}; \addlegendentry{\texttt{HPaC}}
+\addplot[hipac] table[x=rho, y=hipac] {\dfile{rep_plotrho_campaign_e_in}}; \addlegendentry{\texttt{HIPaC}}
+\addplot[rac]   table[x=rho, y=rac]   {\dfile{rep_plotrho_campaign_e_in}}; \addlegendentry{\texttt{RaC}}
+\end{axis}
+\end{tikzpicture}}
+
+\tabfig{fig:e_ratio_rho}{%
+Median of the paired per-instance ratio \texttt{HIPaC}/\texttt{HPaC}, per arc
+density, with the number of paired instances and the IQR. Instances:
+\texttt{in-forest}, all twenty sizes pooled, 1\,200 instances per density.
+Observations: the same effect as \cref{fig:e_rho} in paired form, which is the
+form that admits no aggregation artefact -- the ratio is computed on each
+instance and then aggregated. It crosses parity between $\varrho=0.3$ and
+$\varrho=0.6$, and the IQR stays below $0.17$ throughout, so within one density
+the effect is tight: the wide IQR of \cref{fig:ein_ratio} is entirely the mixture
+of densities. Practical reading: the specialized variants are worth having when
+the input is a connected in-tree or out-tree, and worth nothing on a heavily
+fragmented forest.}{%
+\tab{rep_ratio_campaign_e_in_hipac_over_hpac_by_rho}}{%
+\begin{tikzpicture}
+\begin{axis}[rhoaxis, ylabel={\texttt{HIPaC}/\texttt{HPaC}}, ymin=0, ymax=1.4,
+  extra y ticks={1}, extra y tick style={grid=major, grid style={black!45, dashed}}]
 \addplot[hipac] table[x=rho, y=ratio] {\dfile{rep_plotratiorho_campaign_e_in_hipac_hpac}};
 \addlegendentry{median ratio}
 \end{axis}
 \end{tikzpicture}}
 
 \tabfig{fig:e_fam}{%
-In-forests by family: the ratio table (left) and its plot (right). There is no
-family in which the advantage of the specialization disappears.}{%
+Median of the paired per-instance ratio \texttt{HIPaC}/\texttt{HPaC}, per
+coefficient family, with the number of paired instances and the IQR. Instances:
+\texttt{in-forest}, all sizes and densities pooled, 800 instances per family.
+Observations: the ratio lies between $0.65$ and $0.70$ in all six families, a
+$7\%$ spread -- against the factor 6 across densities of \cref{fig:e_ratio_rho}.
+There is no family in which the advantage of the specialization disappears, and
+none in which it is much larger: as everywhere else in this report, the
+coefficients set the amount of work and the topology sets who wins.}{%
 \tab{rep_ratio_campaign_e_in_hipac_over_hpac_by_family}}{%
 \begin{tikzpicture}
 \begin{axis}[famaxis, ylabel={\texttt{HIPaC}/\texttt{HPaC}}, ymin=0, ymax=1]
@@ -986,10 +1315,15 @@ family in which the advantage of the specialization disappears.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:e_rac}{%
-For completeness, \texttt{RaC} against the general \texttt{HPaC} on the same
-oriented instances, by family (out-forests behave the same). \texttt{RaC}
-loses ground as $n$ grows here too, from about $2.8\times$ at $n\le1\,000$ to
-$12.8\times$ at $n=10^5$.}{%
+Median of the paired per-instance ratio \texttt{RaC}/\texttt{HPaC}, per
+coefficient family, with the number of paired instances and the IQR. Instances:
+\texttt{in-forest}, all sizes and densities pooled, 800 instances per family
+(out-forests give the same values within $3\%$). Observations: the ratio is
+$3.0$--$3.2$ in every family, i.e.\ flat as on mixed forests, while by size it
+grows from about $2.8\times$ at $n\le1\,000$ to $12.8\times$ at $n=10^5$ -- so
+restricting the orientation does not change \texttt{RaC}'s standing against the
+heap-based algorithms, it only removes the need for closure-sum propagation from
+the latter.}{%
 \tab{rep_ratio_campaign_e_in_rac_over_hpac_by_family}}{%
 \begin{tikzpicture}
 \begin{axis}[famaxis, ylabel={\texttt{RaC}/\texttt{HPaC}}, ymin=0]
@@ -1012,11 +1346,19 @@ across the two versions are therefore not comparable; only trends are.
 \subsection{What the oriented classes say}
 
 \begin{itemize}
-  \item \textbf{The specialization buys a stable constant, around $1.5\times$
-  to $2\times$.} It does not change the growth rate, and it does not erode:
-  the ratio at $n=10^5$ is as good as at $n=10^3$, and it is the same across
-  densities and families. This is the cleanest, most predictable effect in the
-  whole study.
+  \item \textbf{The specialization buys a constant, around $1.5\times$ to
+  $2\times$ overall, and it does not erode with size.} The ratio at $n=10^5$ is
+  as good as at $n=10^3$ (\cref{fig:ein_ratio,fig:eout_ratio}) and it is the same
+  in all six coefficient families (\cref{fig:e_fam}).
+  \item \textbf{But that constant is a strong function of the density, and this
+  is the one place where the aggregate figure hides the effect.} The gain runs
+  from $1.23$ (a small loss) on forests with $\varrho=0.3$ to $0.21$ (a
+  $4.7\times$ gain) on single spanning in-trees (\cref{fig:e_rho,fig:e_ratio_rho}).
+  What the specialization removes is closure-sum propagation, and there is
+  nothing to propagate in a forest of mostly isolated vertices: the more
+  connected the input, the more the specialization is worth. Reported as a single
+  number, the specialization looks like a modest constant; reported per density,
+  it ranges from useless to a factor five.
   \item \textbf{It is smaller than the theory might suggest.} Both
   \texttt{HIPaC} and the general \texttt{HPaC} behave like
   $\mathcal O(n\log n)$ in practice on these instances, so what separates them
@@ -1048,34 +1390,37 @@ asymptotic time bound and very different in practice.
 \end{itemize}
 
 \tabfig{fig:heap}{%
-The two policies on \texttt{star-mixed} instances
-(\texttt{independent-positive}, seed 0, one repetition; single-algorithm
-invocations, the only regime in which peak RSS is attributable to one
-algorithm). The lazy heap's memory grows by a factor of 100 when $n$ grows by
-10 -- quadratic, as predicted -- reaching $1.5$\,GiB at $n=10^4$ where the
-rebuild policy uses $8$\,MiB; extrapolating, the lazy policy exhausts an
-8\,GiB ceiling by $n\approx20\,000$. The rebuild policy is also
-$\approx4\times$ faster here (and $\approx2\times$ on large random forests),
-with bit-identical output on every instance tested. For reference,
-\texttt{PaC}, which maintains no candidate structure, peaks at $5.6$\,MiB at
-$n=10^4$. The practical lesson: on this problem the choice of data structure
-inside one algorithm is worth as much as the choice between algorithms.}{%
-\begin{tabular}{@{}rrrrr@{}}
+CPU time in milliseconds and peak RSS in MiB of \texttt{HPaC} under the two heap
+policies, per size; the plot shows the memory column of the table. Instances:
+\texttt{star-mixed}, \texttt{independent-positive}, seed 0, $n$ from $1\,000$ to
+$10\,000$ -- one instance per size, one repetition, each algorithm invoked in its
+own process, which is the only regime in which peak RSS is attributable to a
+single algorithm (\cref{sec:setup}). Observations: the lazy heap's memory grows by
+a factor of 100 when $n$ grows by 10 -- quadratic, as predicted -- reaching
+$1.5$\,GiB at $n=10^4$ where the rebuild policy uses $8$\,MiB; extrapolating, the
+lazy policy would exhaust the 8\,GiB ceiling by $n\approx20\,000$. The rebuild
+policy is also $\approx4\times$ faster here (and $\approx2\times$ on large random
+forests), with bit-identical output on every instance tested, so the two policies
+are not a trade-off: one dominates. For reference, \texttt{PaC}, which maintains
+no candidate structure, peaks at $5.6$\,MiB at $n=10^4$. The practical lesson: on
+this problem the choice of data structure inside one algorithm is worth as much
+as the choice between algorithms.}{%
+\begin{tabular}{@{}rrrrrr@{}}
 \toprule
-& \multicolumn{2}{c}{lazy deletion} & \multicolumn{2}{c}{periodic rebuild} \\
-\cmidrule(lr){2-3}\cmidrule(l){4-5}
-$n$ & ms & MiB & ms & MiB \\
+& & \multicolumn{2}{c}{lazy deletion} & \multicolumn{2}{c}{periodic rebuild} \\
+\cmidrule(lr){3-4}\cmidrule(l){5-6}
+$n$ & \#inst & ms & MiB & ms & MiB \\
 \midrule
-1\,000 & 139.0 & 15.6 & 64.1 & 3.9 \\
-2\,000 & 628.7 & 51.5 & 233.1 & 4.0 \\
-5\,000 & 5\,440.9 & 388.0 & 1\,422.1 & 6.4 \\
-10\,000 & 27\,020.7 & 1\,541.2 & 6\,396.5 & 8.2 \\
+1\,000 & 1 & 139.0 & 15.6 & 64.1 & 3.9 \\
+2\,000 & 1 & 628.7 & 51.5 & 233.1 & 4.0 \\
+5\,000 & 1 & 5\,440.9 & 388.0 & 1\,422.1 & 6.4 \\
+10\,000 & 1 & 27\,020.7 & 1\,541.2 & 6\,396.5 & 8.2 \\
 \bottomrule
 \end{tabular}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={peak RSS (MiB)}]
-\addplot[aux2] table[x=n, y=rss_lazy]    {\dfile{rep_plotheap}}; \addlegendentry{lazy}
-\addplot[hpac] table[x=n, y=rss_bounded] {\dfile{rep_plotheap}}; \addlegendentry{rebuild}
+\addplot[q2] table[x=n, y=rss_lazy]    {\dfile{rep_plotheap}}; \addlegendentry{lazy deletion}
+\addplot[q1] table[x=n, y=rss_bounded] {\dfile{rep_plotheap}}; \addlegendentry{periodic rebuild}
 \end{axis}
 \end{tikzpicture}}
 
@@ -1093,13 +1438,21 @@ in-process time on the same instance; fixed-point precision $10^{-6}$; all
 2\,400 instances with $n\le1\,000$.
 
 \tabfig{fig:bppf}{%
-\texttt{HPaC} against \texttt{BPPF}. The median paired ratio grows from $1.5$
-at $n=100$ to $4.5$ at $n=1\,000$ (overall median $3.3$). Scope: forests with
-$n\le1\,000$, while \texttt{BPPF} solves a strictly more general problem, so
-this says nothing about \texttt{BPPF} outside this class. Note the times are
-sub-millisecond at the small end, which is why they are quoted here to one
-decimal in milliseconds and the ratio is computed per instance rather than
-from these columns.}{%
+Median CPU time in milliseconds of \texttt{HPaC} and of \texttt{BPPF}, per size:
+\texttt{HPaC}'s in-process time for the full parametric sweep against
+\texttt{BPPF}'s own internal solve timer, input parsing excluded. Instances:
+\texttt{mixed-forest}, $n\in\{100,200,\dots,1\,000\}$, 240 instances per size,
+2\,400 in total; \texttt{BPPF} is given the $k+1$ parameter values bracketing the
+$k$ breakpoints, in its native affine capacity format, precision $10^{-6}$.
+Observations: the median paired ratio \texttt{BPPF}/\texttt{HPaC} grows from
+$1.5$ at $n=100$ to $4.5$ at $n=1\,000$, overall median $3.3$, even though the
+breakpoints are handed to \texttt{BPPF} for free. Scope: forests with
+$n\le1\,000$, whereas \texttt{BPPF} solves a strictly more general problem on
+arbitrary precedence graphs, so nothing here transfers outside this class -- and
+recall that on a forest \texttt{BPPF}'s bound reads $\mathcal O(n^2\log n)$
+(\cref{tab:algos}), so the measured factor of a few is far kinder to it than the
+bounds. The times are sub-millisecond at the small end, which is why the ratio is
+computed per instance and not from these two columns.}{%
 \begin{tabular}{@{}rrrr@{}}
 \toprule
 & & \multicolumn{2}{c}{CPU time (ms)} \\
@@ -1154,13 +1507,18 @@ expressed as the relative IQR (\cref{sec:defs}): the IQR over the repetitions
 of one instance, divided by that instance's median time.
 
 \tabfig{fig:iqr_c}{%
-Median \emph{relative} IQR of the timing (IQR over the repetitions of one
-instance, divided by that instance's median), campaign C. Below $1\%$ for
-\texttt{HPaC} throughout, a few percent for \texttt{DHPaC} and \texttt{RaC}.
-This is the number that says how much of a reported difference is signal:
-every ratio in this report is far larger than the noise of the measurements it
-rests on. The single exception is the near-tie $0.91$ against $1$ at $n=100$
-in \cref{sec:bcamp}, which is reported as a near-tie and not as an
+Median relative IQR of the timing, in percent, per size: for each instance, the
+IQR over its repetitions divided by its own median time, then the median of that
+over instances. Instances: \texttt{mixed-forest},
+$n\in\{10\,000,\dots,100\,000\}$, 240 instances per size, 3 repetitions each.
+Observations: $0.5\%$ to $1.8\%$ for \texttt{HPaC}, $1.6\%$ to $2.3\%$ for
+\texttt{DHPaC}, and $4.6\%$ falling to $1.2\%$ for \texttt{RaC} -- the longer a
+run, the smaller its relative noise, which is why the largest sizes are the
+quietest. This is the number that
+says how much of a reported difference is signal: every ratio in this report is at
+least an order of magnitude larger than the measurement noise it rests on. The
+single exception is the near-tie $0.91$ against $1$ at $n=100$ in
+\cref{sec:bcamp}, which is for that reason reported as a near-tie and not as an
 advantage.}{%
 \tab{rep_iqr_campaign_c}}{%
 \begin{tikzpicture}
@@ -1174,8 +1532,16 @@ advantage.}{%
 \end{tikzpicture}}
 
 \tabfig{fig:iqr_e}{%
-The same for in-forests: the specialized variant is as stable as the general
-algorithm, so its advantage is not an artefact of variance.}{%
+Median relative IQR of the timing, in percent, per size, defined as in
+\cref{fig:iqr_c}. Instances: \texttt{in-forest}, $n$ from $100$ to $100\,000$,
+240 instances per size, 3 repetitions each. Observations: $2.2\%$--$4.2\%$ for
+\texttt{HIPaC} against $2.5\%$--$8.7\%$ for the general \texttt{HPaC}, so the
+specialized variant is at least as stable as the algorithm it replaces and its
+advantage is not an artefact of variance; \texttt{RaC} goes from $12.3\%$ at
+$n=100$ down to $1.1\%$ at $n=10^5$. Noise is largest at $n=100$, where a run
+lasts tens of microseconds and the timer resolution starts to show; from $n=200$
+on every algorithm stays below $6\%$, an order of magnitude below the
+$1.5$--$4.7\times$ effects measured in \cref{sec:oriented}.}{%
 \tab{rep_iqr_campaign_e_in}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, pcfplot, xlabel={$n$}, ylabel={relative IQR (\%)}, ymin=0]
@@ -1198,11 +1564,21 @@ margin that widens with $n$ (at $n=10^5$, \texttt{near-ties} costs
 family ever reverses the relative standing of the two algorithms. The plots
 show four representative families to stay readable; the tables give all six.
 
-\tabfig{fig:detail_b_hpac}{%
-\texttt{HPaC} on \texttt{mixed-forest} instances, $n\le1\,000$.}{%
+\tabfigwide{fig:detail_b_hpac}{%
+Median CPU time of \texttt{HPaC} in milliseconds, one column per coefficient
+family and one row per size. Instances: \texttt{mixed-forest},
+$n\in\{100,\dots,1\,000\}$, all four densities, 40 instances per cell. The plot
+shows four of the six families, the table all six. Observations: at these sizes
+all times are sub-millisecond and the six families are indistinguishable at the
+reported resolution -- the largest gap at any size is one tenth of a
+millisecond, i.e.\ the last digit. The family effect exists but needs
+$n\ge10^4$ to be measurable (\cref{fig:detail_c_hpac}); this table is here to
+show that it is \emph{not} measurable below that, so no conclusion in
+\cref{sec:bcamp} rests on it.}{%
 \tab{rep_detail_campaign_b_hpac}}{%
 \begin{tikzpicture}
-\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{HPaC} time (ms)}, legend columns=2]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{HPaC} time (ms)}, legend columns=4,
+  width=0.62\textwidth]
 \addplot[hpac] table[x=n, y=independentpositive] {\dfile{rep_plotdetail_campaign_b_hpac}};
 \addlegendentry{ind-pos}
 \addplot[hpac, dashed, mark=o] table[x=n, y=correlated] {\dfile{rep_plotdetail_campaign_b_hpac}};
@@ -1214,11 +1590,25 @@ show four representative families to stay readable; the tables give all six.
 \end{axis}
 \end{tikzpicture}}
 
-\tabfig{fig:detail_b_rac}{%
-\texttt{RaC} on \texttt{mixed-forest} instances, $n\le1\,000$.}{%
+\tabfigwide{fig:detail_b_rac}{%
+Median CPU time of \texttt{RaC} in milliseconds, one column per coefficient
+family and one row per size. Instances: \texttt{mixed-forest},
+$n\in\{100,\dots,1\,000\}$, all four densities, 40 instances per cell. The plot
+shows four of the six families, the table all six. Observations: the same picture
+as \cref{fig:detail_b_hpac} a factor of three higher, with the families within
+$0.5$\,ms of each other at $n=1\,000$. Every family shows the same dip from
+$n=900$ to $n=1\,000$ ($3.5$ to $3.1$\,ms for \texttt{anti-correlated}), and so
+does \texttt{HPaC}, while the number of closure layers keeps growing ($470$ to
+$528$) and \texttt{PaC} keeps growing with it. We attribute the two elevated
+sizes to memory-bandwidth contention between the parallel lanes of the sweep
+(\cref{sec:setup}), which touches the two memory-bound algorithms and not the
+scan-based one; the effect is $\approx10\%$, an order of magnitude below every
+ratio reported in this document, and it is visible only in this per-cell
+breakdown.}{%
 \tab{rep_detail_campaign_b_rac}}{%
 \begin{tikzpicture}
-\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{RaC} time (ms)}, legend columns=2]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{RaC} time (ms)}, legend columns=4,
+  width=0.62\textwidth]
 \addplot[rac] table[x=n, y=independentpositive] {\dfile{rep_plotdetail_campaign_b_rac}};
 \addlegendentry{ind-pos}
 \addplot[rac, dashed, mark=o] table[x=n, y=correlated] {\dfile{rep_plotdetail_campaign_b_rac}};
@@ -1230,11 +1620,25 @@ show four representative families to stay readable; the tables give all six.
 \end{axis}
 \end{tikzpicture}}
 
-\tabfig{fig:detail_c_hpac}{%
-\texttt{HPaC} on \texttt{mixed-forest} instances, $n\ge10\,000$.}{%
+\tabfigwide{fig:detail_c_hpac}{%
+Median CPU time of \texttt{HPaC} in milliseconds, one column per coefficient
+family and one row per size. Instances: \texttt{mixed-forest},
+$n\in\{10\,000,\dots,100\,000\}$, all four densities, 40 instances per cell. The
+plot shows four of the six families, the table all six. Observations: here the
+family effect is measurable and consistent -- the two tie-stressing families
+(\texttt{near-ties}, \texttt{exact-ties}) occupy the two fastest columns at 9 of
+the 10 sizes, and \texttt{anti-correlated} or \texttt{independent-signed} the
+slowest -- with a spread between fastest and slowest family of $8$--$17\%$ that
+neither grows nor shrinks with $n$. Compare \cref{fig:layersfam}:
+\texttt{near-ties} produces $27\times$ fewer
+closure layers than \texttt{independent-signed} at these sizes, yet costs only
+about $10\%$ less time -- so the per-layer cost is far from constant, and most of
+\texttt{HPaC}'s work at $n=10^5$ is proportional to $n$ (building and rebuilding
+the heaps) rather than to the number of breakpoints.}{%
 \tab{rep_detail_campaign_c_hpac}}{%
 \begin{tikzpicture}
-\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{HPaC} time (ms)}, legend columns=2]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{HPaC} time (ms)}, legend columns=4,
+  width=0.62\textwidth]
 \addplot[hpac] table[x=n, y=independentpositive] {\dfile{rep_plotdetail_campaign_c_hpac}};
 \addlegendentry{ind-pos}
 \addplot[hpac, dashed, mark=o] table[x=n, y=correlated] {\dfile{rep_plotdetail_campaign_c_hpac}};
@@ -1246,11 +1650,25 @@ show four representative families to stay readable; the tables give all six.
 \end{axis}
 \end{tikzpicture}}
 
-\tabfig{fig:detail_c_rac}{%
-\texttt{RaC} on \texttt{mixed-forest} instances, $n\ge10\,000$.}{%
+\tabfigwide{fig:detail_c_rac}{%
+Median CPU time of \texttt{RaC} in milliseconds, one column per coefficient
+family and one row per size. Instances: \texttt{mixed-forest},
+$n\in\{10\,000,\dots,100\,000\}$, all four densities, 40 instances per cell. The
+plot shows four of the six families, the table all six. Observations: the family
+spread is $4$--$10\%$, i.e.\ narrower than \texttt{HPaC}'s, and the ordering is
+the same, which is why the paired ratio of \cref{fig:c_ratio_fam} is flat: the
+two algorithms react to the coefficients in the same way. \texttt{RaC}'s growth
+over this range is the steepest of any algorithm here -- a factor $33$ ($53$ to
+$1\,766$\,ms) for a $10\times$ increase in $n$, against a factor $17$ for
+\texttt{HPaC} -- which is consistent with its being the only algorithm whose
+space is $\mathcal O(n\log n)$: past a few tens of thousands of vertices its
+top-tree structures no longer fit in cache and every contraction round pays
+main-memory latency. We report this as an interpretation, not as a measurement:
+we did not instrument cache misses.}{%
 \tab{rep_detail_campaign_c_rac}}{%
 \begin{tikzpicture}
-\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{RaC} time (ms)}, legend columns=2]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{RaC} time (ms)}, legend columns=4,
+  width=0.62\textwidth]
 \addplot[rac] table[x=n, y=independentpositive] {\dfile{rep_plotdetail_campaign_c_rac}};
 \addlegendentry{ind-pos}
 \addplot[rac, dashed, mark=o] table[x=n, y=correlated] {\dfile{rep_plotdetail_campaign_c_rac}};

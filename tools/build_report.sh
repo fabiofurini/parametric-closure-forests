@@ -76,7 +76,7 @@ inst = defaultdict(set)
 for r in csv.DictReader(open("results/processed/processed.csv")):
     inst[r["algorithm"]].add((r["campaign_id"], r["instance"]))
 lines = ["\\begin{tabular}{@{}lrrr@{}}", "\\toprule",
-         "algorithm & instances & timed runs & runs/instance \\\\", "\\midrule"]
+         "algorithm & \\#inst & timed runs & runs/instance \\\\", "\\midrule"]
 for a in ["pac","dpac","hpac","dhpac","hipac","hopac","rac"]:
     n_i, n_r = len(inst[a]), s["runs_per_algorithm"][a]
     lines.append(f"\\texttt{{{NICE[a]}}} & {n_i:,} & {n_r:,} & {n_r/n_i:.1f} \\\\".replace(",", "\\,"))
@@ -86,6 +86,19 @@ lines += ["\\midrule",
 pathlib.Path("results/tables/rep_runs_per_algorithm.tex").write_text("\n".join(lines)+"\n")
 print("wrote results/tables/rep_runs_per_algorithm.tex")
 PYSNIP
+
+# forest structure: number of trees per forest and their sizes (reads the .pcf
+# files only, no solver involved)
+python3 tools/forest_structure_stats.py \
+  --group 'mixed-forest,instances/campaign_b,gen_n1000_rho*_independent-positive_seed*.pcf' \
+  --group 'mixed-forest,instances/campaign_c,gen_n10000_rho*_independent-positive_seed*.pcf' \
+  --group 'mixed-forest,instances/campaign_c,gen_n100000_rho*_independent-positive_seed*.pcf' \
+  --group 'in-forest,instances/campaign_e_in,in_n100000_rho*_independent-positive_seed*.pcf' \
+  --group 'out-forest,instances/campaign_e_out,out_n100000_rho*_independent-positive_seed*.pcf' \
+  --group 'path-mixed,instances/campaign_d_path,path_n100000_independent-positive_seed*.pcf' \
+  --group 'binary-mixed,instances/campaign_d_binary,binary_n100000_independent-positive_seed*.pcf' \
+  --group 'star-mixed,instances/campaign_d_star,star_n100000_independent-positive_seed*.pcf' \
+  --output-dir results/tables
 
 # layer-size statistics (runs pcf_solve on a sample; skipped if solver missing)
 if [ -x build/pcf_solve ]; then

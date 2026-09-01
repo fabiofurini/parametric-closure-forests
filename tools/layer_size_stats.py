@@ -62,6 +62,7 @@ def main() -> None:
     args = parser.parse_args()
 
     per_group: dict[tuple[str, str], list[int]] = defaultdict(list)
+    group_instances: dict[tuple[str, str], int] = defaultdict(int)
     all_sizes: list[int] = []
     n_instances = 0
     for directory, pattern in zip(args.instances, args.pattern):
@@ -74,23 +75,28 @@ def main() -> None:
             all_sizes += sizes
             per_group[(info["topo"], info["rho"])] += sizes
             per_group[("family:" + info["family"], "--")] += sizes
+            group_instances[(info["topo"], info["rho"])] += 1
+            group_instances[("family:" + info["family"], "--")] += 1
     if not all_sizes:
         raise SystemExit("no instance matched")
 
-    def row(label: str, sizes: list[int]) -> list[str]:
+    def row(label: str, sizes: list[int], instances: int) -> list[str]:
         singletons = 100.0 * sum(1 for s in sizes if s == 1) / len(sizes)
-        return [label, str(len(sizes)), f"{statistics.median(sizes):.0f}",
+        return [label, str(instances), str(len(sizes)),
+                f"{statistics.median(sizes):.0f}",
                 f"{statistics.fmean(sizes):.2f}", str(max(sizes)),
                 f"{singletons:.1f}"]
 
-    header = ["group", "layers", "median", "mean", "max", "singletons (\\%)"]
+    header = ["group", "\\#inst", "layers", "median", "mean", "max",
+              "singletons (\\%)"]
     body = []
     for key in sorted(per_group):
         label = key[0] if key[1] == "--" else f"{key[0]}, $\\varrho={key[1]}$"
         label = label.replace("family:", "").replace("_", "-")
-        body.append(row(f"\\texttt{{{label}}}", per_group[key]))
+        body.append(row(f"\\texttt{{{label}}}", per_group[key],
+                        group_instances[key]))
 
-    lines = ["\\begin{tabular}{@{}lrrrrr@{}}", "\\toprule",
+    lines = ["\\begin{tabular}{@{}lrrrrrr@{}}", "\\toprule",
              " & ".join(header) + " \\\\", "\\midrule"]
     lines += [" & ".join(r) + " \\\\" for r in body]
     lines += ["\\bottomrule", "\\end{tabular}"]

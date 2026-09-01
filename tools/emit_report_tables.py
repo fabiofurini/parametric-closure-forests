@@ -47,7 +47,9 @@ def tabular(header: list[str], rows: list[list[str]], align: str,
         out.append(f"\\cmidrule(l){{{first}-{last}}}")
     out.append(" & ".join(header) + " \\\\")
     out.append("\\midrule")
-    out += [" & ".join(r) + " \\\\" for r in rows]
+    for r in rows:
+        # a one-element ["\midrule"] row is a rule, not data
+        out.append("\\midrule" if r == ["\\midrule"] else " & ".join(r) + " \\\\")
     out += ["\\bottomrule", "\\end{tabular}"]
     return "\n".join(out) + "\n"
 
@@ -60,6 +62,17 @@ def median_times(rows, campaign, algorithms, key):
             continue
         acc[(r[key], r["algorithm"])].append(float(r["median_elapsed_ns"]) / MS)
     return acc
+
+
+def instance_counts(rows, campaign, key) -> dict[str, int]:
+    """How many distinct instances each group of a table aggregates -- the
+    \\#inst column that every table in the report carries."""
+    seen = defaultdict(set)
+    for r in rows:
+        if r["campaign_id"] != campaign:
+            continue
+        seen[r[key]].add(r["instance"])
+    return {k: len(v) for k, v in seen.items()}
 
 
 def paired_ratio(rows, campaign, numerator, denominator, key):
@@ -77,6 +90,18 @@ def paired_ratio(rows, campaign, numerator, denominator, key):
         if numerator in byalg and denominator in byalg:
             acc[meta[ident]].append(byalg[numerator] / byalg[denominator])
     return acc
+
+
+def count(value: float) -> str:
+    """Integer quantities (arcs, trees, layers): no decimal, thin-space
+    thousands separator."""
+    return f"{round(value):,d}".replace(",", "\\,")
+
+
+def ratio_fmt(value: float) -> str:
+    """Ratios: two decimals, three below 1 -- one convention for every ratio
+    table in the report, including the star ratios that live around 0.004."""
+    return f"{value:.3f}" if abs(value) < 1 else f"{value:.2f}"
 
 
 def sort_key(value: str):
@@ -112,16 +137,17 @@ def main() -> None:
         ("campaign_e_out", ["hpac", "dhpac", "hopac", "rac"]),
     ]:
         acc = median_times(rows, campaign, algorithms, "n_nodes")
+        counts = instance_counts(rows, campaign, "n_nodes")
         sizes = sorted({int(k[0]) for k in acc}, key=int)
         body = []
         for n in sizes:
             cells = [fmt(statistics.median(acc[(str(n), a)])) if (str(n), a) in acc else "--"
                      for a in algorithms]
-            body.append([fmt(n).replace(".0", ""), *cells])
-        head = ["$n$"] + [f"\\texttt{{{NICE[a]}}}" for a in algorithms]
+            body.append([fmt(n).replace(".0", ""), str(counts[str(n)]), *cells])
+        head = ["$n$", "\\#inst"] + [f"\\texttt{{{NICE[a]}}}" for a in algorithms]
         write(out / f"rep_times_{campaign}.tex",
-              tabular(head, body, "r" + "r" * len(algorithms),
-                      group=("CPU time (ms)", 2, len(algorithms) + 1)))
+              tabular(head, body, "rr" + "r" * len(algorithms),
+                      group=("median CPU time (ms)", 3, len(algorithms) + 2)))
 
     # ---- breakdown by coefficient family and by density, every campaign ----
     # (the structured families have no density parameter, hence family only)
@@ -137,19 +163,20 @@ def main() -> None:
         for key in keys:
             name = "family" if key == "coefficient_class" else "rho"
             acc = median_times(rows, campaign, algorithms, key)
+            counts = instance_counts(rows, campaign, key)
             keys = sorted({k[0] for k in acc}, key=sort_key)
             body = []
             for value in keys:
                 cells = [fmt(statistics.median(acc[(value, a)])) if (value, a) in acc else "--"
                          for a in algorithms]
                 label = f"\\texttt{{{value}}}" if name == "family" else value
-                body.append([label, *cells])
-            head = ["family" if name == "family" else "$\\varrho$"] + \
+                body.append([label, fmt(counts[value]).replace(".0", ""), *cells])
+            head = ["family" if name == "family" else "$\\varrho$", "\\#inst"] + \
                    [f"\\texttt{{{NICE[a]}}}" for a in algorithms]
-            align = ("l" if name == "family" else "r") + "r" * len(algorithms)
+            align = ("l" if name == "family" else "r") + "r" + "r" * len(algorithms)
             write(out / f"rep_times_{campaign}_by_{name}.tex",
                   tabular(head, body, align,
-                          group=("median CPU time (ms)", 2, len(algorithms) + 1)))
+                          group=("median CPU time (ms)", 3, len(algorithms) + 2)))
 
     # ---- paired ratios broken down by family (the manuscript only has by size) ----
     for campaign, num, den in [("campaign_b", "rac", "hpac"),
@@ -163,19 +190,61 @@ def main() -> None:
                                ("campaign_d_binary", "rac", "hpac"),
                                ("campaign_d_star", "rac", "hpac"),
                                ("campaign_d_star", "rac", "pac")]:
-        acc = paired_ratio(rows, campaign, num, den, "coefficient_class")
-        if not acc:
+        for key, name in [("coefficient_class", "family"), ("n_nodes", "size"),
+                          ("rho", "rho")]:
+            acc = paired_ratio(rows, campaign, num, den, key)
+            if not acc:
+                continue
+            body = []
+            for value in sorted(acc, key=sort_key):
+                values = acc[value]
+                quart = statistics.quantiles(values, n=4, method="inclusive") \
+                    if len(values) > 3 else None
+                iqr = ratio_fmt(quart[2] - quart[0]) if quart else "--"
+                if name == "family":
+                    label = f"\\texttt{{{value}}}"
+                elif name == "rho":
+                    label = value
+                else:
+                    label = fmt(float(value)).replace(".0", "")
+                body.append([label, str(len(values)),
+                             ratio_fmt(statistics.median(values)), iqr])
+            head = [{"family": "family", "rho": "$\\varrho$"}.get(name, "$n$"),
+                    "\\#inst",
+                    f"median \\texttt{{{NICE[num]}}}/\\texttt{{{NICE[den]}}}", "IQR"]
+            write(out / f"rep_ratio_{campaign}_{num}_over_{den}_by_{name}.tex",
+                  tabular(head, body, ("l" if name == "family" else "r") + "rrr"))
+
+    # ---- correctness per instance class (the report names classes, not campaigns) --
+    CLASS = [
+        ("campaign_b", "\\texttt{mixed-forest}", "$100$--$1\\,000$"),
+        ("campaign_c", "\\texttt{mixed-forest}", "$10^4$--$10^5$"),
+        ("campaign_d_path", "\\texttt{path-mixed}", "$100$--$10^5$"),
+        ("campaign_d_binary", "\\texttt{binary-mixed}", "$100$--$10^5$"),
+        ("campaign_d_star", "\\texttt{star-mixed}", "$100$--$10^5$"),
+        ("campaign_e_in", "\\texttt{in-forest}", "$100$--$10^5$"),
+        ("campaign_e_out", "\\texttt{out-forest}", "$100$--$10^5$"),
+    ]
+    body = []
+    total_inst = total_runs = total_bad = 0
+    for campaign, label, sizes in CLASS:
+        block = [r for r in rows if r["campaign_id"] == campaign]
+        if not block:
             continue
-        body = []
-        for value in sorted(acc, key=sort_key):
-            values = acc[value]
-            quart = statistics.quantiles(values, n=4, method="inclusive") if len(values) > 3 else None
-            iqr = f"{quart[2] - quart[0]:.3f}" if quart else "--"
-            body.append([f"\\texttt{{{value}}}", str(len(values)),
-                         f"{statistics.median(values):.3f}", iqr])
-        head = ["family", "\\#inst", f"median \\texttt{{{NICE[num]}}}/\\texttt{{{NICE[den]}}}", "IQR"]
-        write(out / f"rep_ratio_{campaign}_{num}_over_{den}_by_family.tex",
-              tabular(head, body, "lrrr"))
+        instances = {r["instance"] for r in block}
+        runs = sum(int(r["repetitions"]) for r in block)
+        bad = sum(1 for r in block if r["correctness_status"] == "mismatch")
+        total_inst += len(instances)
+        total_runs += runs
+        total_bad += bad
+        body.append([label, sizes, fmt(len(instances)).replace(".0", ""),
+                     fmt(runs).replace(".0", ""), str(bad)])
+    body.append(["total", "", fmt(total_inst).replace(".0", ""),
+                 fmt(total_runs).replace(".0", ""), str(total_bad)])
+    write(out / "rep_correctness.tex",
+          tabular(["instance class", "$n$", "\\#inst", "timed runs",
+                   "disagreements"], body[:-1] + [["\\midrule"]] + body[-1:],
+                  "llrrr"))
 
     # ---- plot data: one .dat per campaign, pgfplots reads it with \addplot table ----
     for campaign, algorithms in [
@@ -208,23 +277,24 @@ def main() -> None:
     body = []
     for rho in sorted(struct, key=sort_key):
         d = struct[rho]
-        body.append([rho, f"{statistics.median(d['arcs']):.0f}",
-                     f"{statistics.median(d['comp']):.0f}",
-                     f"{statistics.median(d['layers']):.0f}"])
+        body.append([rho, str(len(d["arcs"])),
+                     count(statistics.median(d['arcs'])),
+                     count(statistics.median(d['comp'])),
+                     count(statistics.median(d['layers']))])
     write(out / "rep_struct_by_rho.tex",
-          tabular(["$\\varrho$", "arcs", "components", "closure layers"],
-                  body, "rrrr", group=("median over campaign C", 2, 4)))
+          tabular(["$\\varrho$", "\\#inst", "arcs", "trees", "closure layers"],
+                  body, "rrrrr", group=("median per instance", 3, 5)))
 
     # ---- closure layers by size, both random campaigns ----
     lay = defaultdict(list)
     for r in rows:
         if r["campaign_id"] in ("campaign_b", "campaign_c") and r["algorithm"] == "hpac":
             lay[int(r["n_nodes"])].append(int(r["n_layers"]))
-    body = [[fmt(n).replace(".0", ""), f"{statistics.median(lay[n]):.0f}",
-             f"{min(lay[n])}", f"{max(lay[n])}"] for n in sorted(lay)]
+    body = [[count(n), str(len(lay[n])), count(statistics.median(lay[n])),
+             count(min(lay[n])), count(max(lay[n]))] for n in sorted(lay)]
     write(out / "rep_layers_by_size.tex",
-          tabular(["$n$", "median", "min", "max"], body, "rrrr",
-                  group=("\\# closure layers", 2, 4)))
+          tabular(["$n$", "\\#inst", "median", "min", "max"], body, "rrrrr",
+                  group=("\\# closure layers", 3, 5)))
 
     # ---- dispersion of the absolute times: relative IQR ----
     for campaign, algorithms in [("campaign_c", ["hpac", "dhpac", "rac"]),
@@ -236,17 +306,19 @@ def main() -> None:
                 if med > 0:
                     acc[(int(r["n_nodes"]), r["algorithm"])].append(
                         100.0 * float(r["iqr_elapsed_ns"]) / med)
+        counts = instance_counts(rows, campaign, "n_nodes")
         sizes = sorted({k[0] for k in acc})
         body = []
         for n in sizes:
-            body.append([fmt(n).replace(".0", "")] +
+            body.append([fmt(n).replace(".0", ""), str(counts[str(n)])] +
                         [f"{statistics.median(acc[(n, a)]):.1f}" if (n, a) in acc else "--"
                          for a in algorithms])
         write(out / f"rep_iqr_{campaign}.tex",
-              tabular(["$n$"] + [f"\\texttt{{{NICE[a]}}}" for a in algorithms],
-                      body, "r" + "r" * len(algorithms),
-                      group=("median relative IQR of the timing (\\%)", 2,
-                             len(algorithms) + 1)))
+              tabular(["$n$", "\\#inst"] +
+                      [f"\\texttt{{{NICE[a]}}}" for a in algorithms],
+                      body, "rr" + "r" * len(algorithms),
+                      group=("median relative IQR of the timing (\\%)", 3,
+                             len(algorithms) + 2)))
 
     # ---- family x size detail for the two headline algorithms ----
     for campaign in ("campaign_b", "campaign_c"):
@@ -260,17 +332,20 @@ def main() -> None:
             sizes = sorted({k[0] for k in acc})
             body = []
             for n in sizes:
-                body.append([fmt(n).replace(".0", "")] +
+                # every cell of one row aggregates the same number of instances
+                per_cell = min(len(acc[(n, f)]) for f in fams if (n, f) in acc)
+                body.append([fmt(n).replace(".0", ""), str(per_cell)] +
                             [fmt(statistics.median(acc[(n, f)])) if (n, f) in acc else "--"
                              for f in fams])
             short = {"independent-positive": "ind-pos", "independent-signed": "ind-sgn",
                      "correlated": "corr", "anti-correlated": "anti",
                      "near-ties": "near", "exact-ties": "exact"}
-            head = ["$n$"] + [f"\\texttt{{{short.get(f, f)}}}" for f in fams]
+            head = ["$n$", "\\#inst"] + \
+                   [f"\\texttt{{{short.get(f, f)}}}" for f in fams]
             write(out / f"rep_detail_{campaign}_{algorithm}.tex",
-                  tabular(head, body, "r" + "r" * len(fams),
+                  tabular(head, body, "rr" + "r" * len(fams),
                           group=(f"median \\texttt{{{NICE[algorithm]}}} CPU time (ms) per family",
-                                 2, len(fams) + 1)))
+                                 3, len(fams) + 2)))
 
     # ---- plot data for every breakdown, so each table has a plot beside it ----
     FAM_ORDER = ["independent-positive", "independent-signed", "correlated",
@@ -383,14 +458,16 @@ def main() -> None:
     families = sorted({k[0] for k in acc})
     body = []
     for family in families:
-        cells = []
+        cells, per_cell = [], 0
         for campaign in ("campaign_b", "campaign_c"):
             values = acc.get((family, campaign))
-            cells.append(f"{statistics.median(values):.0f}" if values else "--")
-        body.append([f"\\texttt{{{family}}}", *cells])
+            cells.append(count(statistics.median(values))
+                         if values else "--")
+            per_cell = max(per_cell, len(values or []))
+        body.append([f"\\texttt{{{family}}}", str(per_cell), *cells])
     write(out / "rep_layers_by_family.tex",
-          tabular(["family", "$n\\le 1\\,000$", "$n\\ge 10\\,000$"], body, "lrr",
-                  group=("median \\# closure layers", 2, 3)))
+          tabular(["family", "\\#inst", "$n\\le 1\\,000$", "$n\\ge 10\\,000$"],
+                  body, "lrrr", group=("median \\# closure layers", 3, 4)))
 
 
 if __name__ == "__main__":
