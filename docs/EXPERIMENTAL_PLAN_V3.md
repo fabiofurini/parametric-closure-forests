@@ -1,7 +1,15 @@
 # Experimental Plan V3 — clean redo of the computational study
 
-**Status: DRAFT under joint validation (FF + coauthors). Becomes the
-preregistered plan once validated; no campaign starts before that.**
+**Status (2026-09-01): EXECUTED.** Validated by FF on 2026-08-31 (GO);
+Phases 0–3 completed overnight at freeze commit `2c83e501f034`
+(tag `campaign-freeze-v3`): all campaigns B, C, D, E, G ran to completion
+with zero cross-algorithm mismatches, zero censored runs, and zero genuine
+BPPF disagreements (16,200 instances, 292,080 timed runs — see
+`results/`). Phase 4: manuscript §4, Conclusion, Acknowledgements, Code &
+Data Availability and the instance appendix rewritten from this sweep
+(all in red); the technical report rewrite is still open. Phase 5:
+release v0.3.0 cut with the packaged assets. Remaining open items are
+tracked in the checklists below.
 
 This plan supersedes every benchmark result produced before 2026-08-31. All
 prior raw/processed results were moved to the untracked local folder

@@ -146,7 +146,7 @@ Each topic has its own page:
 | [`docs/VALIDATION.md`](docs/VALIDATION.md) | The two independent correctness layers (exhaustive enumeration oracle, cross-algorithm differential testing), sanitizers, CI |
 | [`docs/INSTANCE_FORMAT.md`](docs/INSTANCE_FORMAT.md) | The `.pcf` file grammar |
 | [`docs/INSTANCE_GENERATION.md`](docs/INSTANCE_GENERATION.md) | The six topology families and six affine-coefficient families, and how each is built |
-| [`docs/EXPERIMENTAL_PROTOCOL.md`](docs/EXPERIMENTAL_PROTOCOL.md) | Measurement protocol, statistics, and the official campaign design (A–F) |
+| [`docs/EXPERIMENTAL_PROTOCOL.md`](docs/EXPERIMENTAL_PROTOCOL.md) | Measurement protocol, statistics, and the official campaign design (A–E, G) |
 | [`docs/RAC_SPECIFICATION.md`](docs/RAC_SPECIFICATION.md) | `RaC`'s implementation contract, frozen against the manuscript |
 | [`docs/RAC_AUDIT.md`](docs/RAC_AUDIT.md) | Line-by-line audit of the ported `RaC` source against that contract |
 | [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) | Regenerating instances, rebuilding tables, the clean-clone independence checklist, release contents |
