@@ -29,8 +29,8 @@ echo "=== aggregating ==="
 python3 tools/aggregate_results.py --raw "${STANDARD_RAW[@]}" --output-dir results/processed
 
 echo "=== emitting tables ==="
-python3 tools/emit_latex_tables.py --mode correctness --processed-dir results/processed \
-  --output results/tables/correctness.tex
+# (the correctness summary is emitted per instance class by
+# tools/emit_report_tables.py, as results/tables/rep_correctness.tex)
 
 emit_ratio() {
   local campaign=$1 baseline=$2 candidate=$3 group=${4:-n_nodes}

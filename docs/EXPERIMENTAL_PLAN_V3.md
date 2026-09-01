@@ -13,8 +13,9 @@ tracked in the checklists below.
 
 This plan supersedes every benchmark result produced before 2026-08-31. All
 prior raw/processed results were moved to the untracked local folder
-`_OLD_RUNS_ARCHIVE_20260831/` (kept only for reference during the redo,
-deleted after release v0.3.0). No number produced before the freeze commit
+`_OLD_RUNS_ARCHIVE_20260831/` (kept only for reference during the redo, and
+deleted on 2026-09-01 once the manuscript and the report had been checked to
+cite no pre-freeze number). No number produced before the freeze commit
 of Phase 0 may be cited in the manuscript, the technical report, or any
 table under `results/`.
 
@@ -381,10 +382,13 @@ journal choice. The sweep contributes only the empirical growth fits.
 
 - [ ] `tools/package_release.sh` → v0.3.0 assets + SHA-256.
 - [ ] Clean-clone checklist passes end-to-end.
-- [ ] Tag + publish release v0.3.0; update commit/version cited in report
+- [x] Tag + publish release v0.3.0; update commit/version cited in report
       and manuscript.
-- [ ] Delete `_OLD_RUNS_ARCHIVE_20260831/` (after confirming nothing in
-      the paper cites a pre-freeze number).
+- [x] Delete `_OLD_RUNS_ARCHIVE_20260831/` (2026-09-01: 1.6 GB removed --
+      superseded raw runs, the pre-split `instances.zip`, the obsolete
+      `TODO_DIAG.md` and the stale per-version table fragments of the paper
+      folder; nothing in the manuscript, the report or the docs cited a
+      pre-freeze number).
 
 ---
 
