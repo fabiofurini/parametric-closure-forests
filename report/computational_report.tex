@@ -476,9 +476,13 @@ the same density means the same fragmentation at $n=10^3$ and at $n=10^5$.
 Structure of the generated forests: median number of arcs, median number of
 trees, trees per vertex, then the median, mean and largest tree size, the
 largest tree as a percentage of $n$, and the percentage of trees that are
-isolated vertices. Each row aggregates 10 instances of one class, size and
-density (\texttt{independent-positive} coefficients: the topology is generated
-independently of the coefficients, so one family represents all six). Measured
+isolated vertices; the plot below the table shows the three quantities that move
+with the density, at $n=100\,000$. Instances: \texttt{mixed-forest} at
+$n\in\{10^3,10^4,10^5\}$, \texttt{in-forest} and \texttt{out-forest} at
+$n=10^5$, all four densities, plus the three structured classes at $n=10^5$;
+10 instances per row, all with \texttt{independent-positive} coefficients, since
+the topology is generated independently of the coefficients and one family
+therefore represents all six. Observations: measured
 values match the closed forms above to three digits -- $(1-\varrho)n$ trees, mean
 size $1/(1-\varrho)$ -- and are the same for \texttt{mixed-forest},
 \texttt{in-forest} and \texttt{out-forest}, confirming that orientation does not
@@ -486,9 +490,7 @@ touch the structure; \texttt{path-}, \texttt{binary-} and \texttt{star-mixed}
 are single trees by construction. The interesting column is the largest tree:
 at $\varrho=0.3$ and $\varrho=0.6$ it holds $0.1\%$ and $1.6\%$ of the vertices
 at $n=10^5$, but at $\varrho=0.9$ it holds $36\%$ -- while the median tree is
-\emph{still} a single vertex and half the trees are still isolated vertices. The
-plot below the table shows the three quantities that move with the density, at
-$n=100\,000$.}{%
+\emph{still} a single vertex and half the trees are still isolated vertices.}{%
 \tiny\setlength{\tabcolsep}{3pt}\tab{rep_forest_struct}}{%
 \begin{tikzpicture}
 \begin{axis}[rhoaxis, ylabel={count / size}, ymode=log, width=0.62\textwidth]
@@ -500,9 +502,10 @@ $n=100\,000$.}{%
 
 \tabfig{fig:forestccdf}{%
 Distribution of the tree size: for each size $s$, the percentage of trees with
-at least $s$ vertices, one curve and one column per density, on the 40
-\texttt{mixed-forest} instances with $n=100\,000$ (10 per density); the table
-lists the same distribution at selected sizes. The distribution is heavy-tailed
+at least $s$ vertices, one curve and one column per density; the table lists the
+same distribution at selected sizes, plus the largest tree observed. Instances:
+\texttt{mixed-forest}, $n=100\,000$, 10 instances per density, 40 in total.
+Observations: the distribution is heavy-tailed
 at every density below 1: at $\varrho=0.3$, $77\%$ of the trees are single
 vertices and only $0.3\%$ reach 10 vertices, yet the largest reaches 96. At
 $\varrho=0.9$ the tail detaches completely -- $30\%$ of trees have $\ge3$
@@ -559,12 +562,16 @@ every timing table below, which would otherwise look counter-intuitive.}{%
 \tabfig{fig:layerssize}{%
 Median, minimum and maximum number of closure layers, per size. Instances:
 \texttt{mixed-forest}, $n$ from $100$ to $100\,000$, all four densities and six
-families, 240 instances per size. Observations: the layer-to-vertex ratio settles
-around $0.15$ at $n=10^5$, so a $10^5$-vertex instance typically has of the order
-of $15\,000$ breakpoints to enumerate. The min-max band spans roughly a factor of
-three at every size: instances of equal size can differ that much in how much
-parametric structure they carry, which is the dominant source of
-instance-to-instance variation in the timing tables.}{%
+families, 240 instances per size. Observations: the median layer count grows
+essentially linearly in $n$, settling at $0.43$ layers per vertex
+($43\,390$ layers at $n=10^5$): a $10^5$-vertex instance typically has of the
+order of $4\cdot10^4$ breakpoints to enumerate. The min--max band, however, spans
+a factor of $86$ at that size ($915$ to $78\,393$), and the reason is not noise
+but the coefficient families: \texttt{near-ties} produces $27\times$ fewer
+layers than the independent families (\cref{fig:layersfam}). Two instances of
+equal size can therefore carry very different amounts of parametric structure,
+which is the dominant source of instance-to-instance variation in every timing
+table below.}{%
 \tab{rep_layers_by_size}}{%
 \begin{tikzpicture}
 \begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\# closure layers}]
@@ -794,11 +801,14 @@ Median CPU time in milliseconds of \texttt{PaC}, \texttt{HPaC} and \texttt{RaC},
 per arc density. Instances: \texttt{mixed-forest}, $n\in\{100,\dots,1\,000\}$
 pooled, 600 instances per density. Observations: every algorithm slows down as
 the forest becomes more connected -- more arcs mean more closure sums to
-propagate -- but not by the same factor: \texttt{HPaC} roughly doubles from
-$\varrho=0.3$ to $\varrho=1.0$ while \texttt{RaC} grows less, since part of its
-cost is the per-tree bookkeeping it pays whatever the density. This is the
-medium-size beginning of the density effect that dominates
-\cref{sec:ccamp}.}{%
+propagate -- but by very different factors from $\varrho=0.3$ to
+$\varrho=1.0$: $4.5\times$ for \texttt{HPaC} ($0.2$ to $0.9$\,ms),
+$3.8\times$ for \texttt{RaC} ($0.6$ to $2.3$\,ms) and only $1.5\times$ for
+\texttt{PaC} ($0.6$ to $0.9$\,ms), which maintains nothing and therefore has
+nothing to refresh when the forest gains arcs. \texttt{HPaC} overtakes
+\texttt{PaC} on sparse forests and merely draws level with it on single spanning
+trees: the heap's advantage at these sizes comes from the sparse end. This is the
+medium-size beginning of the density effect that dominates \cref{sec:ccamp}.}{%
 \tab{rep_times_campaign_b_by_rho}}{%
 \begin{tikzpicture}
 \begin{axis}[rhoaxis, ylabel={CPU time (ms)}]
@@ -812,10 +822,13 @@ medium-size beginning of the density effect that dominates
 Median CPU time in milliseconds of \texttt{PaC}, \texttt{HPaC} and \texttt{RaC},
 per coefficient family. Instances: \texttt{mixed-forest},
 $n\in\{100,\dots,1\,000\}$ and all four densities pooled, 400 instances per
-family. Observations: the two tie-stressing families are the fastest for every
-algorithm, consistently with their smaller layer counts (\cref{fig:layersfam}) --
-fewer breakpoints, fewer iterations; the ordering between algorithms is the same
-in all six, so no family reverses a conclusion.}{%
+family. Observations: the two tie-stressing families are the
+fastest for \texttt{PaC} ($0.5$--$0.6$ against $0.8$\,ms) and for \texttt{HPaC}
+($0.3$ against $0.4$\,ms), consistently with their smaller layer counts
+(\cref{fig:layersfam}) -- fewer breakpoints, fewer iterations -- while for
+\texttt{RaC} the six families all sit at $1.2$--$1.3$\,ms, indistinguishable at
+this resolution. The ordering between algorithms is the same in all six
+families, so no family reverses a conclusion.}{%
 \tab{rep_times_campaign_b_by_family}}{%
 \begin{tikzpicture}
 \begin{axis}[famaxis, ylabel={CPU time (ms)}]
@@ -854,9 +867,11 @@ Median CPU time in milliseconds of \texttt{HPaC}, \texttt{DHPaC} and
 $n\in\{10\,000,20\,000,\dots,100\,000\}$, 240 instances per size (four densities
 $\times$ six families $\times$ ten seeds), 3 repetitions each. Observations:
 \texttt{HPaC} computes the full parametric solution on $10^5$ vertices in about
-$0.2$\,s; \texttt{DHPaC} stays within $25\%$ of it at every size and is
-marginally faster at $n=10^5$, so the primal/dual choice is immaterial at scale;
-\texttt{RaC} is above both throughout, by a factor that grows with $n$
+$0.2$\,s ($203.9$\,ms). The paired ratio \texttt{DHPaC}/\texttt{HPaC} stays
+between $0.96$ and $1.24$ over the range, so the primal/dual choice is immaterial
+at scale -- the difference is small enough that the median columns of the table
+and the paired ratio need not rank the two the same way at $n=10^5$.
+\texttt{RaC} is above both at every size, by a factor that grows with $n$
 (\cref{fig:c_ratio}).}{%
 \tab{rep_times_campaign_c}}{%
 \begin{tikzpicture}
@@ -938,9 +953,12 @@ are amortized best (\cref{fig:forest,fig:forestccdf}).}{%
 Median CPU time in milliseconds of \texttt{RaC}, \texttt{DHPaC} and
 \texttt{HPaC}, per coefficient family. Instances: \texttt{mixed-forest},
 $n\in\{10\,000,\dots,100\,000\}$ and all four densities pooled, 400 instances per
-family. Observations: at most $14\%$ spread per algorithm across the six
-families -- an order of magnitude less than the spread across densities in
-\cref{fig:c_rho}, and in the same direction for all three algorithms.}{%
+family. Observations: the spread across the six families is
+$14\%$ for \texttt{HPaC} ($62.0$--$70.7$\,ms), $16\%$ for \texttt{DHPaC} and
+$15\%$ for \texttt{RaC} ($490$--$563$\,ms) -- an order of magnitude less than
+the spread across densities in \cref{fig:c_rho}, and in the same direction for
+all three algorithms, \texttt{near-ties} and \texttt{exact-ties} being the
+fastest for each of them.}{%
 \tab{rep_times_campaign_c_by_family}}{%
 \begin{tikzpicture}
 \begin{axis}[famaxis, ylabel={CPU time (ms)}]
@@ -1028,7 +1046,8 @@ Median CPU time in milliseconds of \texttt{PaC}, \texttt{HPaC} and \texttt{RaC},
 per coefficient family. Instances: \texttt{path-mixed}, all sizes pooled ($n$ up
 to $2\,000$ for \texttt{PaC}, up to $100\,000$ for the others), 100 instances per
 family for \texttt{HPaC} and \texttt{RaC}. Observations: the family changes
-absolute times by at most $16\%$ for \texttt{RaC} and $7\%$ for \texttt{HPaC},
+absolute times by $22\%$ for \texttt{RaC} ($21.2$--$25.8$\,ms) and $7\%$ for
+\texttt{HPaC} ($2.9$--$3.1$\,ms),
 with \texttt{near-ties} and \texttt{exact-ties} the fastest as everywhere else;
 the paired \texttt{RaC}/\texttt{HPaC} ratio stays within $6.7$--$8.1$ across the
 six families, so on paths too the family moves the amount of work and not the
@@ -1318,7 +1337,7 @@ coefficients set the amount of work and the topology sets who wins.}{%
 Median of the paired per-instance ratio \texttt{RaC}/\texttt{HPaC}, per
 coefficient family, with the number of paired instances and the IQR. Instances:
 \texttt{in-forest}, all sizes and densities pooled, 800 instances per family
-(out-forests give the same values within $3\%$). Observations: the ratio is
+(out-forests give the same values within $6\%$). Observations: the ratio is
 $3.0$--$3.2$ in every family, i.e.\ flat as on mixed forests, while by size it
 grows from about $2.8\times$ at $n\le1\,000$ to $12.8\times$ at $n=10^5$ -- so
 restricting the orientation does not change \texttt{RaC}'s standing against the
@@ -1655,7 +1674,7 @@ Median CPU time of \texttt{RaC} in milliseconds, one column per coefficient
 family and one row per size. Instances: \texttt{mixed-forest},
 $n\in\{10\,000,\dots,100\,000\}$, all four densities, 40 instances per cell. The
 plot shows four of the six families, the table all six. Observations: the family
-spread is $4$--$10\%$, i.e.\ narrower than \texttt{HPaC}'s, and the ordering is
+spread is $5$--$11\%$, comparable to \texttt{HPaC}'s, and the ordering is
 the same, which is why the paired ratio of \cref{fig:c_ratio_fam} is flat: the
 two algorithms react to the coefficients in the same way. \texttt{RaC}'s growth
 over this range is the steepest of any algorithm here -- a factor $33$ ($53$ to
