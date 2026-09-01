@@ -1,0 +1,874 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=2.4cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{xcolor}
+\usepackage{csquotes}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage[capitalise]{cleveref}
+\usepackage{url}
+\usepackage{float}
+\usepackage{enumitem}
+
+\definecolor{darkgreen}{rgb}{0.0, 0.5, 0.0}
+
+% Same visual conventions as the manuscript: one shared axis style, legend
+% outside the axis so it never covers a curve, and one colour/marker/dash per
+% algorithm, identical in every figure.
+\pgfplotsset{pcfplot/.style={
+  tick label style={font=\scriptsize}, label style={font=\small},
+  legend style={font=\scriptsize, at={(0.5,1.03)}, anchor=south,
+                legend columns=2, draw=none, fill=none,
+                /tikz/every even column/.append style={column sep=8pt}},
+  grid=major, grid style={gray!25}}}
+\pgfplotsset{
+  pac/.style   ={color=red!80,          mark=square*,   thick},
+  dpac/.style  ={color=red!80,          mark=diamond*,  thick, dashed},
+  hpac/.style  ={color=darkgreen,       mark=*,         thick},
+  dhpac/.style ={color=darkgreen,       mark=pentagon*, thick, dashed},
+  rac/.style   ={color=blue!70,         mark=triangle*, thick},
+  hipac/.style ={color=orange!90!black, mark=triangle*, thick},
+  hopac/.style ={color=violet,          mark=square*,   thick}}
+
+\newcommand{\tab}[1]{\input{../results/tables/#1.tex}}
+\newcommand{\dat}[1]{../results/tables/rep_plot_#1.dat}
+
+\title{Computational Study of Algorithms for the Parametric\\
+Maximum Closure Problem on Directed Forests\\[0.3em]
+\large Technical Report}
+\author{Valerio Dose \and Fabio Furini \and Marco Locatelli}
+\date{September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+This is a companion technical report to the manuscript \emph{``On parametric
+Maximum Closure Problems over precedence forests''} (Dose, Furini and
+Locatelli). The manuscript introduces the algorithms studied here
+(\texttt{PaC}, \texttt{DPaC}, \texttt{HPaC}, \texttt{DHPaC}, \texttt{HIPaC},
+\texttt{HOPaC} and \texttt{RaC}) with their correctness proofs and complexity
+analysis, and reports a compact selection of the experiments. This report
+contains the full computational study: instance design, validation
+methodology, measurement protocol, campaign definitions, and complete
+results broken down \emph{by size, by density and by coefficient family} --
+together with the implementation analysis and the paired-ratio dispersion
+that the manuscript has no room for. Every number below is generated from the
+raw benchmark data of release \texttt{v0.3.0} by the repository's own
+pipeline; none is hand-typed.
+\end{abstract}
+
+\section{Scope and relationship to the manuscript}
+
+The manuscript is the reference for the problem, the algorithms and their
+analysis. This report is the reference for \emph{how} the experiments were run
+and \emph{what exactly} was measured, and it reports the breakdowns that the
+manuscript summarizes in one sentence or omits. \Cref{sec:recap} recaps
+problem and algorithms; \cref{sec:instances,sec:validation,sec:protocol,%
+sec:campaigns} document instances, correctness, protocol and campaign design;
+\cref{sec:results} reports every result.
+
+The whole study was rerun from scratch in a single sweep on 2026-08-31/09-01
+from one frozen commit, under the preregistered plan
+\texttt{docs/EXPERIMENTAL\_PLAN\_V3.md}. All earlier benchmark results are
+superseded and are cited nowhere in this report.
+
+\section{Problem and algorithms recap}\label{sec:recap}
+
+Let $G=(V,A)$ be a directed acyclic graph on $n$ vertices, where arc
+$(i,j)\in A$ means that including vertex $i$ forces the inclusion of vertex
+$j$. Each vertex has an integer profit $p_i$ (possibly negative) and a
+strictly positive integer weight $w_i$. For a closed subset $S$, let
+$P(S)=\sum_{i\in S}p_i$ and $W(S)=\sum_{i\in S}w_i$. The parametric Maximum
+Closure Problem asks for the set of optimal solutions of
+$u(\lambda):=\max_{S\text{ closed}}P(S)-\lambda W(S)$ as a function of
+$\lambda$. Function $u$ is convex piecewise linear with at most $n$
+breakpoints; the optimal solutions at consecutive breakpoints are nested,
+which partitions $V$ into $k$ \emph{closure layers}
+$\mathcal I_1,\dots,\mathcal I_k$, strictly decreasing in profit-to-weight
+ratio. Computing that ordered partition is the task studied here, on directed
+forests (underlying undirected graph a forest, orientations arbitrary).
+
+\begin{description}[leftmargin=2.1cm,style=nextline]
+  \item[\texttt{PaC}] Peel-and-Contract, direct-scan reference algorithm:
+  $\mathcal O(n^2)$ time, $\mathcal O(n)$ space. Repeatedly peels the current
+  best final vertices or contracts an arc, selecting the maximum-ratio
+  candidate by a linear scan.
+  \item[\texttt{DPaC}] dual of \texttt{PaC}: layers in increasing ratio order,
+  same complexity.
+  \item[\texttt{HPaC}] heap-based variant: the scans are replaced by two
+  candidate heaps. $\mathcal O(n^2\log n)$ worst case, $\mathcal O(n)$ space.
+  \item[\texttt{DHPaC}] dual of \texttt{HPaC}.
+  \item[\texttt{HIPaC}/\texttt{HOPaC}] specialized heap variants for forests
+  of in-trees (out-degree $\le 1$) or out-trees (in-degree $\le 1$):
+  $\mathcal O(n\log n)$ time.
+  \item[\texttt{RaC}] Rake-and-Compress, top-tree algorithm:
+  $\mathcal O(n\log n)$ time and space, any orientation.
+  \item[\texttt{BPPF}] Bounded-Precision Parametric Pseudoflow, unmodified
+  upstream implementation for general precedence graphs; external baseline
+  (\cref{sec:bppf}).
+\end{description}
+
+All algorithms of this repository return the same canonical object -- the
+ordered sequence of closure layers with exact rational thresholds -- computed
+with exact integer arithmetic: 64-bit integer coefficients, 128-bit
+cross-multiplications for every ratio comparison, no floating point in any
+decision path.
+
+\section{Instance generation}\label{sec:instances}
+
+Instances are stored in a capacity-free text format (\texttt{.pcf}): the arc
+list of a forest on $n$ vertices, one integer profit and one strictly positive
+integer weight per vertex, arc $(u,v)$ encoding $x_u\le x_v$. Every instance
+is produced by a seeded deterministic generator -- never hand-edited -- and is
+determined by a topology, a coefficient family, a size and a seed. Each is
+manifested with its SHA-256 checksum, topology classification and coefficient
+bounds (\texttt{instances/manifests/}), so any regenerated or downloaded
+archive is verifiable byte-for-byte.
+
+\paragraph{Affine-coefficient families.} Six families, chosen for the shape of
+the ratios $p_i/w_i$ and never after an external classification.
+\texttt{independent-positive}: $w_i,p_i$ independent uniform on
+$\{1,\dots,1000\}$. \texttt{independent-signed}: as above with $p_i$ uniform
+on $\{-1000,\dots,1000\}$. \texttt{correlated}: $p_i=w_i+\delta_i$,
+$\delta_i$ uniform on $\{-50,\dots,50\}$. \texttt{anti-correlated}:
+$p_i=(1001-w_i)+\delta_i$. \texttt{near-ties}: one target ratio
+$\mathrm{num}/\mathrm{den}$ per instance ($\mathrm{num},\mathrm{den}$ uniform
+on $\{1,\dots,20\}$), then $t_i$ uniform on $\{1,\dots,50\}$,
+$w_i=\mathrm{den}\cdot t_i$, $p_i=\mathrm{num}\cdot t_i+\jmath_i$ with jitter
+$\jmath_i$ uniform on $\{-2,-1,1,2\}$. \texttt{exact-ties}:
+$g=\max(1,\lfloor n/20\rfloor)$ groups with their own exact ratio, vertex $i$
+assigned to group $i\bmod g$, so vertices sharing a threshold are spread over
+the graph rather than adjacent.
+
+The last two families are the ones that stress exact arithmetic: they place
+thresholds at infinitesimal distance (\texttt{near-ties}) or exactly equal
+(\texttt{exact-ties}). They also produce markedly fewer closure layers, which
+is the single most useful fact for reading absolute times, since the work of
+every algorithm scales with the number of breakpoints
+(\cref{tab:layers}): at $n\ge 10\,000$ the median count ranges from
+$1\,222$ (\texttt{near-ties}) to $33\,183$ (\texttt{independent-signed}), a
+factor of 27 between families of the same size.
+
+\begin{table}[t]
+\centering
+\caption{Median number of closure layers per coefficient family, i.e.\ how
+much parametric structure each family creates. This drives the running time
+of every algorithm and, in \cref{sec:bppf}, the number of probes handed to
+\texttt{BPPF}.}
+\label{tab:layers}
+\small
+\tab{rep_layers_by_family}
+\end{table}
+
+\paragraph{Topologies.} \texttt{mixed-forest}: each vertex
+$v\in\{2,\dots,n\}$ is connected to a uniformly chosen predecessor $u<v$
+independently with probability $\varrho$, and each edge is oriented $(u,v)$ or
+$(v,u)$ with probability $1/2$. With $\varrho\in\{0.3,0.6,0.9,1.0\}$ the
+forest has $\varrho(n-1)$ arcs and $n-\varrho(n-1)$ components in expectation,
+so $\varrho=1.0$ gives a spanning tree and $\varrho=0.3$ a forest of many
+small trees. \texttt{in-forest}: vertices scanned $u\in\{1,\dots,n-1\}$, with
+probability $\varrho$ one arc $(u,j)$ with $j$ uniform on $\{u{+}1,\dots,n\}$,
+giving out-degree at most one; \texttt{out-forest} symmetric.
+\texttt{path-mixed}, \texttt{binary-mixed}, \texttt{star-mixed}: fixed
+underlying shape (path; balanced binary tree with parent
+$\lfloor(v-1)/2\rfloor$; star with hub $0$), only orientations randomized.
+
+\section{Validation methodology}\label{sec:validation}
+
+\paragraph{Exhaustive enumeration oracle.} The CTest suite checks every
+algorithm against an oracle that enumerates all closed sets, builds their
+affine lines $P-\lambda W$ and computes the exact upper envelope -- a method
+structurally unrelated to any algorithm under test. Coverage: every directed
+forest with at most four vertices over a finite coefficient grid,
+exhaustively; 10\,000 random forests up to 11 vertices; mixed-orientation
+path, binary and star trees up to 257 vertices; 6\,000 in-forest and 6\,000
+out-forest instances plus 2\,000 larger ones per orientation; and the
+structural invariants (the layers partition $V$, each is a closure increment,
+thresholds strictly decreasing).
+
+\paragraph{Cross-algorithm differential agreement.} Every campaign runs
+several algorithms on the same instance and compares the returned sequences --
+partition, thresholds and canonical order, not merely the layer count -- via a
+64-bit fingerprint of the canonical serialization. Disagreements are listed in
+\texttt{results/processed/mismatches.csv}, never averaged away.
+\Cref{tab:correctness} reports the outcome: over 16\,200 instances and
+292\,080 timed runs, every pair of algorithms benchmarked on the same instance
+returned the identical sequence.
+
+\begin{table}[t]
+\centering
+\caption{Instances benchmarked and cross-algorithm disagreements per campaign.
+Campaign G (\cref{sec:bppf}) is reported separately, \texttt{BPPF} being an
+external baseline rather than one of our algorithms.}
+\label{tab:correctness}
+\small
+\tab{correctness}
+\end{table}
+
+\paragraph{Sanitizers, CI and exactness.} The suite is built and run on every
+push in three configurations: GCC Release, GCC Debug with the address and
+undefined-behaviour sanitizers, and Clang Debug. All three pass at the frozen
+commit (\path{results/TEST_REPORT_2026-08-31.md}).
+\texttt{validate\_instance} rejects any instance whose total absolute profit
+or total weight would leave the exact-arithmetic safety margin
+($\texttt{INT64\_MAX}/4$), so overflow is refused explicitly rather than
+silently wrapped.
+
+\section{Experimental protocol}\label{sec:protocol}
+
+All algorithms are implemented in C++ and run single-threaded on a Linux
+machine (Ubuntu 22.04.5, kernel 6.8) with an Intel Core i7-12700 and 32\,GB of
+RAM, GCC 11.4.0 at \texttt{-O3}. Every benchmark process is pinned to one
+physical core with \texttt{taskset}; the six campaign lanes ran concurrently
+on distinct cores, never two processes on one core. Only the algorithm call is
+timed: parsing, result hashing and correctness comparison are outside the
+timed region. Algorithm order is shuffled independently per repetition.
+Repetitions: 11 on the medium random campaign, 3 on the larger and structured
+campaigns and on the \texttt{BPPF} comparison, where a single run takes from
+tens of milliseconds to tens of seconds. A 300\,s wall-clock timeout and an
+8\,GiB memory ceiling (\texttt{ulimit -v}) applied to every run; \emph{no run
+of the study hit either}, so no observation is censored.
+
+\paragraph{What we measure, and what ``peak RSS'' means.} Time is wall-clock
+time of the algorithm call (\texttt{std::chrono::steady\_clock}); on an
+otherwise idle single-threaded run this tracks CPU time closely. Memory is
+reported as \emph{peak RSS}, the peak \emph{resident set size} of the process:
+the maximum amount of physical RAM the process had mapped at any instant,
+excluding pages swapped out or never touched. It is read from
+\texttt{getrusage(RUSAGE\_SELF).ru\_maxrss} after each repetition. Two
+properties of this counter matter when reading memory figures. First, it is a
+\emph{process-lifetime} peak and never decreases, so within one invocation
+that benchmarks several algorithms the value attributed to the second
+algorithm includes the peak of the first: memory numbers are therefore only
+meaningful for single-algorithm invocations, and this report quotes them only
+from such runs (\cref{sec:heap}). Second, it counts pages actually resident,
+so it includes the allocator's own overhead and is the figure that determines
+whether a run survives a memory ceiling -- which is exactly what we want to
+report.
+
+\paragraph{Statistics.} Absolute times are medians over repetitions and then
+over instances. Comparisons are always \emph{paired}: the ratio is computed
+per instance, on the same instance solved by both algorithms, and we report
+the median with the interquartile range (IQR) of those per-instance ratios --
+never a ratio of aggregate means. The median is used deliberately: it is
+invariant under inversion of the comparison, unlike the arithmetic mean of
+ratios, which depends on which algorithm sits in the denominator; it is
+insensitive to the right tail of the timing noise, which is asymmetric by
+construction, since system interference can only slow a run down and never
+speed it up; and on every comparison where an advantage is claimed it is the
+conservative choice. As a check, on the \texttt{BPPF} comparison at
+$n=1\,000$ the three aggregates are $4.5$ (median), $5.8$ (geometric mean)
+and $8.7$ (arithmetic mean): the reported figure is the smallest. Where a
+population mixes regimes -- as the large random campaign does across four
+densities -- no single aggregate describes it, and the breakdowns of
+\cref{sec:large} are reported instead of relying on the overall figure.
+
+\paragraph{Known limitation.} The machine has no passwordless root, so the CPU
+governor stayed at \texttt{powersave} rather than \texttt{performance}.
+Absolute numbers therefore carry ordinary frequency-scaling noise, mitigated
+(not eliminated) by median-of-repetitions reporting, core pinning, and by
+expressing every headline comparison as a paired same-instance ratio: a
+frequency shift during one instance's measurement affects both algorithms
+compared on it almost identically.
+
+\section{Campaign design}\label{sec:campaigns}
+
+For every topology and size, 240 instances are generated (four densities, six
+coefficient families, ten seeds), or 60 for the structured families, which
+have no density parameter. \texttt{mixed-forest}, \texttt{in-forest} and
+\texttt{out-forest} instances exist for
+$n\in\{100,200,\dots,1\,000\}\cup\{10\,000,20\,000,\dots,100\,000\}$; the
+structured families for
+$n\in\{100,200,500,1\,000,2\,000,5\,000,10\,000,20\,000,50\,000,100\,000\}$.
+
+\begin{table}[t]
+\centering
+\caption{The campaigns of the sweep. Two preregistered size cutoffs apply,
+both because the asymptotic trend is established below them and running
+further would consume hours without adding information:
+\texttt{PaC}/\texttt{DPaC} stop at $n=20\,000$ on random forests, and
+\texttt{HPaC}/\texttt{DHPaC} stop at $n=20\,000$ on the star class, where
+\texttt{PaC} is cheap and is run on the full range instead.}
+\label{tab:campaigns}
+\begin{adjustbox}{max width=\textwidth}
+\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+Campaign & Topology & Sizes $n$ & Algorithms \\
+\midrule
+A -- correctness & all six & $\le 11$ (exhaustive at 4) & all, vs.\ enumeration oracle \\
+B -- medium random & \texttt{mixed-forest} & $100,200,\dots,1\,000$ & \texttt{PaC}, \texttt{DPaC}, \texttt{HPaC}, \texttt{DHPaC}, \texttt{RaC} \\
+C -- large random & \texttt{mixed-forest} & $10\,000,\dots,100\,000$ & \texttt{HPaC}, \texttt{DHPaC}, \texttt{RaC}; \texttt{PaC}/\texttt{DPaC} at $10^4,2{\cdot}10^4$ \\
+D -- structured & \texttt{path}/\texttt{binary}/\texttt{star-mixed} & $100,\dots,100\,000$ (10 sizes) & \texttt{PaC}, \texttt{DPaC}, \texttt{HPaC}, \texttt{DHPaC}, \texttt{RaC} \\
+E -- orientations & \texttt{in-}/\texttt{out-forest} & $100,\dots,100\,000$ (20 sizes) & \texttt{HPaC}, \texttt{DHPaC}, \texttt{HIPaC}/\texttt{HOPaC}, \texttt{RaC} \\
+G -- \texttt{BPPF} baseline & \texttt{mixed-forest} & $100,200,\dots,1\,000$ & \texttt{HPaC} vs.\ \texttt{BPPF} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\section{Results}\label{sec:results}
+
+\subsection{Direct scan versus heap on random forests}\label{sec:bcamp}
+
+\Cref{fig:b} reports every algorithm of campaign B on the same instances. The
+two families are indistinguishable up to $n\approx 300$ and the heap pays off
+from $n\approx 400$ on: the median paired ratio \texttt{PaC}/\texttt{HPaC} is
+$0.91$ at $n=100$ -- the direct scan is marginally faster where heap
+maintenance does not yet pay for itself -- crosses 1 around $n=400$, and
+reaches $2.3$ at $n=1\,000$, $20.3$ at $n=10\,000$ and $42.9$ at
+$n=20\,000$. The duals track their primals throughout
+(\texttt{DPaC}/\texttt{DHPaC} reaches $54.6$ at $n=20\,000$). The mechanism is
+the one anticipated by the manuscript: \texttt{PaC} re-scans every candidate
+ratio at every iteration, while \texttt{HPaC} extracts the maximum in
+logarithmic time and refreshes only the candidates touched by the last peel or
+contraction.
+
+\begin{figure}[t]
+\centering
+\begin{minipage}[c]{0.47\textwidth}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\tab{rep_times_campaign_b}
+\end{minipage}%
+\hfill
+\begin{minipage}[c]{0.49\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.97\linewidth, height=5.4cm, xlabel={$n$},
+  ylabel={CPU time (ms)}, xmode=log, ymode=log, pcfplot]
+\addplot[pac]   table[x=n, y=pac]   {\dat{campaign_b}}; \addlegendentry{\texttt{PaC}}
+\addplot[dpac]  table[x=n, y=dpac]  {\dat{campaign_b}}; \addlegendentry{\texttt{DPaC}}
+\addplot[hpac]  table[x=n, y=hpac]  {\dat{campaign_b}}; \addlegendentry{\texttt{HPaC}}
+\addplot[dhpac] table[x=n, y=dhpac] {\dat{campaign_b}}; \addlegendentry{\texttt{DHPaC}}
+\addplot[rac]   table[x=n, y=rac]   {\dat{campaign_b}}; \addlegendentry{\texttt{RaC}}
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\caption{Median CPU time of all five algorithms on \texttt{mixed-forest}
+instances with $n\in\{100,200,\dots,1\,000\}$ (campaign B, 240 instances per
+size).}
+\label{fig:b}
+\end{figure}
+
+The aggregate hides two systematic effects, which the breakdowns make
+visible. By density (\cref{tab:b_rho}), all algorithms slow down as the forest
+becomes more connected, but not equally: from $\varrho=0.3$ to $\varrho=1.0$
+\texttt{HPaC} grows by a factor of about $2$ while \texttt{RaC} grows by less,
+which is the medium-size beginning of the density effect that dominates
+\cref{sec:large}. By family (\cref{tab:b_family}), the two tie-stressing
+families are the fastest for every algorithm, consistently with their smaller
+number of closure layers (\cref{tab:layers}); the ordering between algorithms
+is the same in every family, so no family reverses a conclusion.
+
+\begin{table}[t]
+\centering
+\begin{minipage}[t]{0.42\textwidth}
+\centering
+\caption{Campaign B by density.}
+\label{tab:b_rho}
+\small
+\tab{rep_times_campaign_b_by_rho}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.53\textwidth}
+\centering
+\caption{Campaign B by coefficient family.}
+\label{tab:b_family}
+\scriptsize
+\setlength{\tabcolsep}{2.6pt}
+\tab{rep_times_campaign_b_by_family}
+\end{minipage}
+\end{table}
+
+\begin{table}[t]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\caption{Campaign B, paired ratio \texttt{PaC}/\texttt{HPaC} by family:
+values above 1 favour \texttt{HPaC}.}
+\label{tab:b_ratio_pac}
+\scriptsize
+\setlength{\tabcolsep}{3.4pt}
+\tab{rep_ratio_campaign_b_pac_over_hpac_by_family}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\caption{Campaign B, paired ratio \texttt{RaC}/\texttt{HPaC} by family.}
+\label{tab:b_ratio_rac}
+\scriptsize
+\setlength{\tabcolsep}{3.4pt}
+\tab{rep_ratio_campaign_b_rac_over_hpac_by_family}
+\end{minipage}
+\end{table}
+
+\subsection{Heap policy, and why the implementation attains the \texorpdfstring{$\mathcal O(n)$}{O(n)} space bound}
+\label{sec:heap}
+
+The candidate heaps admit two natural implementations. The choice is invisible
+in the asymptotic time bound and decisive in practice. A push-only
+\emph{lazy-deletion} heap re-pushes one entry per incident arc whenever a
+vertex's closure sum changes, and discards stale entries only when they
+surface at the top: its size is bounded by the number of touch operations,
+not by $n$. On a star this is pathological -- every peel or contraction
+touches the hub, and each touch re-pushes one entry per incident arc, so the
+heap accumulates $\Theta(n^2)$ entries. The implementation used throughout
+this study instead rebuilds each heap from the live candidates whenever its
+size exceeds a constant multiple of the number of live candidates: an
+amortized $\mathcal O(\log n)$ cost per operation that leaves the worst-case
+time bound unchanged and makes the memory of the implementation
+$\mathcal O(n)$ on \emph{every} input, matching the space bound proved in the
+manuscript.
+
+\Cref{tab:heap} quantifies the difference on stars, with single-algorithm,
+single-repetition invocations (the only regime in which peak RSS is
+attributable to one algorithm, see \cref{sec:protocol}). The lazy heap's peak
+resident memory grows by a factor of 100 when $n$ grows by a factor of 10 --
+quadratic, as predicted -- and reaches $1.5$\,GiB at $n=10^4$, where the
+rebuild policy stays at $8$\,MiB; extrapolating, the lazy policy exhausts an
+8\,GiB ceiling by $n\approx 20\,000$. The rebuild policy is also
+\emph{faster}, by about $4\times$ here and about $2\times$ on large random
+forests, with bit-identical output on every instance tested. This is why the
+study reports a single \texttt{HPaC}: the rebuild policy dominates the lazy
+one on both axes, and the same policy is used in \texttt{DHPaC}.
+
+\begin{table}[t]
+\centering
+\caption{The two heap implementations on \texttt{star-mixed} instances
+(\texttt{independent-positive}, seed 0, one repetition, Release build). For
+reference, \texttt{PaC}, which maintains no candidate structure at all, peaks
+at $5.6$\,MiB at $n=10^4$.}
+\label{tab:heap}
+\small
+\begin{tabular}{@{}rrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{lazy-deletion heap} & \multicolumn{2}{c}{rebuild policy (used here)} \\
+\cmidrule(lr){2-3}\cmidrule(l){4-5}
+$n$ & time (ms) & peak RSS (MiB) & time (ms) & peak RSS (MiB) \\
+\midrule
+1\,000 & 139.0 & 15.6 & 64.1 & 3.9 \\
+2\,000 & 628.7 & 51.5 & 233.1 & 4.0 \\
+5\,000 & 5\,440.9 & 388.0 & 1\,422.1 & 6.4 \\
+10\,000 & 27\,020.7 & 1\,541.2 & 6\,396.5 & 8.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Large random forests: size, density and family}\label{sec:large}
+
+On \texttt{mixed-forest} instances up to $n=10^5$ (\cref{fig:c}),
+\texttt{HPaC} computes the full parametric solution in about $0.2$\,s and
+\texttt{DHPaC} stays within $25\%$ of it at every size. The median paired
+ratio \texttt{RaC}/\texttt{HPaC} grows from $4.2$ at $n=10^4$ to $13.3$ at
+$n=10^5$, with a widening IQR: \texttt{RaC}'s relative disadvantage on these
+instances becomes both larger and more variable as the forests grow.
+
+\begin{figure}[t]
+\centering
+\begin{minipage}[c]{0.45\textwidth}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\tab{rep_times_campaign_c}
+\end{minipage}%
+\hfill
+\begin{minipage}[c]{0.49\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.97\linewidth, height=5.4cm, xlabel={$n$},
+  ylabel={CPU time (ms)}, xtick={10000,40000,70000,100000},
+  minor xtick={20000,30000,50000,60000,80000,90000}, xminorgrids=true,
+  minor grid style={gray!15}, scaled x ticks=false,
+  /pgf/number format/.cd, fixed, 1000 sep={}, /tikz/.cd, pcfplot]
+\addplot[rac]   table[x=n, y=rac]   {\dat{campaign_c}}; \addlegendentry{\texttt{RaC}}
+\addplot[dhpac] table[x=n, y=dhpac] {\dat{campaign_c}}; \addlegendentry{\texttt{DHPaC}}
+\addplot[hpac]  table[x=n, y=hpac]  {\dat{campaign_c}}; \addlegendentry{\texttt{HPaC}}
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\caption{Median CPU time on \texttt{mixed-forest} instances with
+$n\in\{10\,000,20\,000,\dots,100\,000\}$ (campaign C, 240 instances per size).}
+\label{fig:c}
+\end{figure}
+
+That aggregate mixes four qualitatively different regimes.
+\Cref{tab:c_rho,tab:c_ratio_rho} break it down by density: the median
+\texttt{RaC}/\texttt{HPaC} ratio is $12.9$ at $\varrho=0.3$, $17.0$ at
+$\varrho=0.6$, $5.0$ at $\varrho=0.9$ and only $2.0$ at $\varrho=1.0$, i.e.\
+on single spanning trees, and the IQR shrinks in the same direction
+($10.2\to0.4$), so the sparse regime is not only worse for \texttt{RaC} but
+far more variable. The intuition is structural: a sparse forest splits into
+many small components, on which \texttt{HPaC}'s contractions are almost free,
+while \texttt{RaC} still pays its cluster bookkeeping per component; on one
+spanning tree the two are closest. Note that the ordering never reverses --
+\texttt{HPaC} is faster at every density on these instances -- but the margin
+varies by almost an order of magnitude, which is why a single aggregate would
+be misleading.
+
+The breakdown by family (\cref{tab:c_family,tab:c_ratio_family}) shows the
+opposite picture: it is remarkably flat. Absolute times vary by at most $14\%$
+across families for each algorithm, and the paired ratio
+\texttt{RaC}/\texttt{HPaC} stays between $5.80$ and $6.11$ in all six. The
+coefficient family therefore changes \emph{how much parametric structure}
+there is (\cref{tab:layers}) but not \emph{which algorithm wins}: on these
+instances the topology, not the coefficients, decides.
+
+\begin{table}[t]
+\centering
+\begin{minipage}[t]{0.46\textwidth}
+\centering
+\caption{Campaign C absolute times by density.}
+\label{tab:c_rho}
+\small
+\tab{rep_times_campaign_c_by_rho}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.50\textwidth}
+\centering
+\caption{Campaign C, paired ratio \texttt{RaC}/\texttt{HPaC} by density.}
+\label{tab:c_ratio_rho}
+\small
+\tab{campaign_c_rac_over_hpac_by_rho}
+\end{minipage}
+\end{table}
+
+\begin{table}[t]
+\centering
+\begin{minipage}[t]{0.50\textwidth}
+\centering
+\caption{Campaign C absolute times by family.}
+\label{tab:c_family}
+\scriptsize
+\setlength{\tabcolsep}{3.4pt}
+\tab{rep_times_campaign_c_by_family}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.47\textwidth}
+\centering
+\caption{Campaign C, paired ratio \texttt{RaC}/\texttt{HPaC} by family.}
+\label{tab:c_ratio_family}
+\scriptsize
+\setlength{\tabcolsep}{3.4pt}
+\tab{rep_ratio_campaign_c_rac_over_hpac_by_family}
+\end{minipage}
+\end{table}
+
+\subsection{Structured instance classes}
+
+Paths and balanced binary trees behave like random forests
+(\cref{fig:path,fig:binary}): the median ratio \texttt{RaC}/\texttt{HPaC}
+lies between $5.8$ and $9.0$ on paths and between $3.2$ and $3.9$ on binary
+trees, from $n=100$ to $n=100\,000$, with no trend towards a crossover. On
+both classes \texttt{PaC} behaves as its $\mathcal O(n^2)$ bound predicts and
+is left far behind by $n=10^4$.
+
+\begin{figure}[t]
+\centering
+\begin{minipage}[c]{0.45\textwidth}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\tab{rep_times_campaign_d_path}
+\end{minipage}%
+\hfill
+\begin{minipage}[c]{0.49\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.97\linewidth, height=5.4cm, xlabel={$n$},
+  ylabel={CPU time (ms)}, xmode=log, ymode=log, pcfplot]
+\addplot[pac]  table[x=n, y=pac]  {\dat{campaign_d_path}}; \addlegendentry{\texttt{PaC}}
+\addplot[hpac] table[x=n, y=hpac] {\dat{campaign_d_path}}; \addlegendentry{\texttt{HPaC}}
+\addplot[rac]  table[x=n, y=rac]  {\dat{campaign_d_path}}; \addlegendentry{\texttt{RaC}}
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\caption{Median CPU time on \texttt{path-mixed} instances (campaign D, 60
+instances per size).}
+\label{fig:path}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\begin{minipage}[c]{0.45\textwidth}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\tab{rep_times_campaign_d_binary}
+\end{minipage}%
+\hfill
+\begin{minipage}[c]{0.49\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.97\linewidth, height=5.4cm, xlabel={$n$},
+  ylabel={CPU time (ms)}, xmode=log, ymode=log, pcfplot]
+\addplot[pac]  table[x=n, y=pac]  {\dat{campaign_d_binary}}; \addlegendentry{\texttt{PaC}}
+\addplot[hpac] table[x=n, y=hpac] {\dat{campaign_d_binary}}; \addlegendentry{\texttt{HPaC}}
+\addplot[rac]  table[x=n, y=rac]  {\dat{campaign_d_binary}}; \addlegendentry{\texttt{RaC}}
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\caption{Median CPU time on \texttt{binary-mixed} instances (campaign D, 60
+instances per size).}
+\label{fig:binary}
+\end{figure}
+
+Stars invert the picture, increasingly sharply with $n$ (\cref{fig:star}):
+\texttt{RaC} is already faster than \texttt{HPaC} at $n=100$ (median ratio
+$0.75$) and about $250$ times faster at $n=20\,000$. The mechanism is the one
+of \cref{sec:heap} seen from the algorithmic side: every peel or contraction
+touches the hub and invalidates the candidate ratios of a constant fraction of
+the remaining leaves, so \emph{any} heap-based schedule pays $\Theta(n)$
+maintenance per event, while \texttt{RaC}'s rake operations absorb all leaves
+in $\mathcal O(\log n)$ rounds regardless of the hub's update history. The
+direct scan is far less affected, since it maintains no candidate structure:
+\texttt{PaC} stays about one order of magnitude below \texttt{HPaC} over the
+whole range and is overtaken by \texttt{RaC} only between $n=1\,000$ and
+$n=2\,000$. This is the one class of the study where the better worst-case
+bound of \texttt{RaC} is visible in practice, and there it is unambiguous.
+The effect is uniform across coefficient families
+(\cref{tab:star_ratio_family}): the median \texttt{RaC}/\texttt{HPaC} ratio lies
+between $0.060$ and $0.064$ in all six, so it is the topology alone that
+produces it.
+
+\begin{figure}[t]
+\centering
+\begin{minipage}[c]{0.45\textwidth}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\tab{rep_times_campaign_d_star}
+\end{minipage}%
+\hfill
+\begin{minipage}[c]{0.49\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.97\linewidth, height=5.4cm, xlabel={$n$},
+  ylabel={CPU time (ms)}, xmode=log, ymode=log, pcfplot]
+\addplot[hpac] table[x=n, y=hpac] {\dat{campaign_d_star}}; \addlegendentry{\texttt{HPaC}}
+\addplot[pac]  table[x=n, y=pac]  {\dat{campaign_d_star}}; \addlegendentry{\texttt{PaC}}
+\addplot[rac]  table[x=n, y=rac]  {\dat{campaign_d_star}}; \addlegendentry{\texttt{RaC}}
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\caption{Median CPU time on \texttt{star-mixed} instances (campaign D, 60
+instances per size). The heap-based algorithms stop at the preregistered
+cutoff $n=20\,000$; \texttt{PaC} and \texttt{RaC} run the full range.}
+\label{fig:star}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\caption{Stars, paired ratio \texttt{RaC}/\texttt{HPaC} by family: values
+below 1 favour \texttt{RaC}.}
+\label{tab:star_ratio_family}
+\scriptsize
+\setlength{\tabcolsep}{3.4pt}
+\tab{rep_ratio_campaign_d_star_rac_over_hpac_by_family}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\caption{Stars, paired ratio \texttt{RaC}/\texttt{PaC} by size: the crossover
+between the two non-heap-limited algorithms.}
+\label{tab:star_ratio_pac}
+\scriptsize
+\tab{campaign_d_star_rac_over_pac}
+\end{minipage}
+\end{table}
+
+\subsection{Specialized variants for single orientations}
+
+On the orientation each is built for, the specialized $\mathcal O(n\log n)$
+variants take a stable fraction of the general algorithm's time
+(\cref{fig:ein,fig:eout}): the median ratio \texttt{HIPaC}/\texttt{HPaC} lies
+between $0.52$ and $0.75$ on in-forests and \texttt{HOPaC}/\texttt{HPaC}
+between $0.57$ and $0.78$ on out-forests, with no erosion up to $n=10^5$ and
+no family in which the advantage disappears
+(\cref{tab:e_ratio_family_in,tab:e_ratio_family_out}). The gain reflects the
+structural reason given in the manuscript: on a single orientation the minimal
+preceding (respectively succeeding) set of every arc collapses to a singleton,
+so one heap value per vertex suffices and no closure-sum propagation is needed.
+On the same instances \texttt{RaC} loses ground as $n$ grows, from about
+$2.8\times$ \texttt{HPaC} at $n\le 1\,000$ to $12.8\times$ at $n=10^5$,
+mirroring the trend on general mixed forests.
+
+\begin{figure}[t]
+\centering
+\begin{minipage}[c]{0.45\textwidth}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\tab{rep_times_campaign_e_in}
+\end{minipage}%
+\hfill
+\begin{minipage}[c]{0.49\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.97\linewidth, height=5.4cm, xlabel={$n$},
+  ylabel={CPU time (ms)}, xmode=log, ymode=log, pcfplot]
+\addplot[hpac]  table[x=n, y=hpac]  {\dat{campaign_e_in}}; \addlegendentry{\texttt{HPaC}}
+\addplot[hipac] table[x=n, y=hipac] {\dat{campaign_e_in}}; \addlegendentry{\texttt{HIPaC}}
+\addplot[rac]   table[x=n, y=rac]   {\dat{campaign_e_in}}; \addlegendentry{\texttt{RaC}}
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\caption{Median CPU time on \texttt{in-forest} instances (campaign E, 240
+instances per size).}
+\label{fig:ein}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\begin{minipage}[c]{0.45\textwidth}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\tab{rep_times_campaign_e_out}
+\end{minipage}%
+\hfill
+\begin{minipage}[c]{0.49\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.97\linewidth, height=5.4cm, xlabel={$n$},
+  ylabel={CPU time (ms)}, xmode=log, ymode=log, pcfplot]
+\addplot[hpac]  table[x=n, y=hpac]  {\dat{campaign_e_out}}; \addlegendentry{\texttt{HPaC}}
+\addplot[hopac] table[x=n, y=hopac] {\dat{campaign_e_out}}; \addlegendentry{\texttt{HOPaC}}
+\addplot[rac]   table[x=n, y=rac]   {\dat{campaign_e_out}}; \addlegendentry{\texttt{RaC}}
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\caption{Median CPU time on \texttt{out-forest} instances (campaign E, 240
+instances per size).}
+\label{fig:eout}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\caption{In-forests, \texttt{HIPaC}/\texttt{HPaC} by family.}
+\label{tab:e_ratio_family_in}
+\scriptsize
+\setlength{\tabcolsep}{3.4pt}
+\tab{rep_ratio_campaign_e_in_hipac_over_hpac_by_family}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\caption{Out-forests, \texttt{HOPaC}/\texttt{HPaC} by family.}
+\label{tab:e_ratio_family_out}
+\scriptsize
+\setlength{\tabcolsep}{3.4pt}
+\tab{rep_ratio_campaign_e_out_hopac_over_hpac_by_family}
+\end{minipage}
+\end{table}
+
+We record explicitly that this advantage is smaller than the one reported in
+the first version of the manuscript, where the specialized variants were
+$4$--$10$ times faster than the general algorithm. The direction of the change
+is expected -- the general \texttt{HPaC} is substantially faster than it was,
+for the reasons of \cref{sec:heap} -- but its size is only partly accounted
+for by the heap policy: a direct comparison of the two heap implementations on
+these instances shows a factor of $1.3$--$1.4$, not $3$--$4$. The remainder is
+attributable to the code being an independent rewrite rather than a
+refactoring, and to instances regenerated under different coefficient
+families. We therefore treat absolute times across the two versions as
+incomparable, and only trends as comparable.
+
+\subsection{Comparison with parametric pseudoflow}\label{sec:bppf}
+
+\texttt{BPPF} is the unmodified upstream implementation of the parametric
+pseudoflow method, applicable to arbitrary precedence graphs. It evaluates
+minimum cuts at user-supplied parameter values, so a comparison requires
+deciding what to supply, and we drive it in the setting most favourable to it,
+identical to the methodology of the manuscript's first version: for each
+instance, one single \texttt{BPPF} process receives, in \texttt{BPPF}'s native
+affine (two-numbers-per-arc) capacity format, the $k+1$ parameter values that
+bracket all $k$ breakpoints. \texttt{BPPF} is thus spared the search for the
+breakpoints, and one call certifies the entire parametric solution. Its own
+internal solve timer (input parsing excluded) is compared against
+\texttt{HPaC}'s in-process time for the full sweep on the same instance; the
+fixed-point precision is $10^{-6}$.
+
+On all 2\,400 instances with $n\le 1\,000$, the median paired ratio
+\texttt{BPPF}/\texttt{HPaC} grows from $1.5$ at $n=100$ to $4.5$ at
+$n=1\,000$, with an overall median of $3.3$. Two qualifications belong with
+this number. First, it is measured on forests with $n\le 1\,000$, and
+\texttt{BPPF} solves a strictly more general problem, so it says nothing about
+\texttt{BPPF} outside this class. Second, the closures returned by the two
+methods agree at every probe on every instance, with one exception class: on
+16 of the 2\,400 instances \texttt{BPPF} merges two consecutive closure layers
+whose thresholds differ by less than its fixed-point precision, and therefore
+does not recover the exact optimal layer sequence. All 16 belong to
+\texttt{near-ties} and \texttt{exact-ties}, the families designed precisely to
+place thresholds at that distance. The algorithms of this study are
+unaffected, since they compare integers exactly; this is the practical
+consequence of exact arithmetic, and the reason the comparison reports
+agreement separately from timing.
+
+An earlier, discarded variant of this comparison drove \texttt{BPPF} once per
+breakpoint, one process spawn per call. That measurement is reported nowhere:
+the resulting ratio is dominated by process-creation overhead and says nothing
+about either algorithm.
+
+\section{Computational conclusions}
+
+Correctness is uniform across the study: 16\,200 instances, 292\,080 timed
+runs, seven algorithms, zero cross-algorithm disagreements, on top of the
+exhaustive enumeration oracle on small instances and the sanitizer builds. No
+run hit the time or memory limit, so no result is censored or imputed.
+
+On the instances tested, \texttt{HPaC} is the algorithm of choice on
+mixed-orientation random forests, paths and balanced binary trees, faster than
+\texttt{RaC} by a factor between $2$ and $13$ depending on size and density,
+and faster than the direct scan from $n\approx 400$ on. \texttt{RaC} is the
+algorithm of choice on stars, where its advantage grows with $n$ and reaches
+about $250\times$ at $n=20\,000$ -- the one class where its better worst-case
+bound is visible in practice, for a structural reason that also explains why
+the direct scan resists there better than any heap-based schedule.
+\texttt{HIPaC} and \texttt{HOPaC} deliver a stable $1.3$--$1.9\times$ speedup
+over the general algorithm when the orientation is known in advance. Against a
+general parametric pseudoflow implementation on forests with $n\le 1\,000$,
+\texttt{HPaC} is faster by a median factor of $3.3$ even when the pseudoflow
+solver is handed the breakpoint locations, and unlike it recovers the exact
+layer sequence on every instance.
+
+Two structural facts organize all of the above. The topology decides which
+algorithm wins -- density moves the margin by an order of magnitude and the
+star class inverts the ordering entirely -- while the coefficient family
+decides only how much parametric structure exists, moving absolute times but
+never the ranking. And the choice of data structure inside one algorithm can
+matter as much as the choice of algorithm: the two heap policies of
+\cref{sec:heap} differ by $4\times$ in time and two orders of magnitude in
+memory, at identical output and identical asymptotic bounds.
+
+None of these statements is a claim of general dominance: each is scoped to
+the topologies, sizes and coefficient families in which it was measured, and
+the star class is the standing reminder that the ordering can invert
+completely when the topology changes.
+
+\section*{Code and data availability}
+
+The code, instance generators, raw and processed benchmark data and the
+analysis pipeline are available at
+\url{https://github.com/fabiofurini/parametric-closure-forests}, release
+\texttt{v0.3.0}. The release attaches the full instance archive (split under
+GitHub's asset size limit) and the raw and processed benchmark data, with
+SHA-256 checksums. Every table and every plot in this report is generated from
+\texttt{results/raw/*.csv} by \texttt{tools/build\_report.sh} and
+\texttt{tools/emit\_report\_tables.py}; regenerating them from the same raw
+data reproduces this report exactly. The pseudoflow baseline is the unmodified
+upstream implementation available at
+\url{https://github.com/hochbaumGroup/Bounded-precision-simple-parametric.git}.
+
+\end{document}

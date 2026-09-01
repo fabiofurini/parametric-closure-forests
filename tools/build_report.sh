@@ -63,6 +63,9 @@ emit_ratio campaign_e_in hpac rac
 emit_ratio campaign_e_out hpac hopac
 emit_ratio campaign_e_out hpac rac
 
+echo "=== emitting the detailed report fragments (report/) ==="
+python3 tools/emit_report_tables.py
+
 echo "=== campaign G (BPPF native comparison) summary ==="
 if [ -f results/raw/campaign_g_bppf_native.csv ]; then
 python3 - <<'EOF'

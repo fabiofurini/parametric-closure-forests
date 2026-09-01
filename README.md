@@ -127,8 +127,9 @@ third_party/bppf/  unmodified upstream BPPF source — comparison baseline
 instances/         committed small fixtures + manifests; bulk archives are
                    generated, not committed (see docs/REPRODUCIBILITY.md)
 results/           raw and processed campaign data, LaTeX table fragments
-                   (a standalone technical report is being rewritten from the
-                    V3 sweep and is not part of this release)
+report/            standalone technical report: the full computational study,
+                   with the by-density and by-family breakdowns the manuscript
+                   has no room for
 docs/              full documentation — see below
 ```
 
