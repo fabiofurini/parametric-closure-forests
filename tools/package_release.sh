@@ -2,8 +2,8 @@
 # Packages the full instance archive and raw/processed results as release
 # assets (plan section 4 and 14.2): large data is attached to a GitHub
 # release, not committed to git history. Run after
-# tools/run_official_campaigns.sh, tools/run_bppf_campaign.py and
-# tools/build_report.sh have all produced their output.
+# tools/run_night_sweep.sh and tools/build_report.sh have produced their
+# output.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -12,9 +12,9 @@ echo "=== zipping instances (campaign_* directories + manifests) ==="
 zip -rq -X dist/instances.zip \
   instances/campaign_b instances/campaign_c \
   instances/campaign_d_path instances/campaign_d_binary instances/campaign_d_star \
-  instances/campaign_e_in instances/campaign_e_out instances/campaign_f \
+  instances/campaign_e_in instances/campaign_e_out \
   instances/manifests instances/tiny instances/mixed_tree.pcf \
-  -x '*.failures.csv' -x '*_pac_subset/*' -x '*_large_only/*'
+  -x '*.failures.csv' -x '*_pac_subset/*' -x '*_large_only/*' -x '*_star_small/*'
 sha256sum dist/instances.zip > dist/instances.zip.sha256
 echo "instances.zip: $(du -h dist/instances.zip | cut -f1)"
 
