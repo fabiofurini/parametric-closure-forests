@@ -68,7 +68,7 @@ campaign at once. Its raw CSVs (`results/raw/*.csv`) are committed to git,
 but the `.pcf` instance files they reference are not (see "Large instance
 archives" below); `validate_raw_data.py` needs those files to confirm every
 referenced instance actually exists, so on a fresh clone `build_report.sh`
-fails at the validation step until `dist/instances.zip` (or a regenerated
+fails at the validation step until the release instance archives (or a regenerated
 equivalent) has been downloaded and extracted into `instances/`. The
 already-committed `results/processed/` and `results/tables/*.tex` are the
 exact output of the last time this pipeline was run against the full
