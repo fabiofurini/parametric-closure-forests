@@ -398,6 +398,42 @@ journal choice. The sweep contributes only the empirical growth fits.
 | Report note: campaign E from reduced matrix | Campaign E full 4×10 matrix |
 | App. D: Θ/Ω claims, journal | Not computational — needs Marco |
 
+## 9. Post-sweep editorial decisions (2026-09-01, FF)
+
+Taken while reviewing the rewritten Section 4; recorded here so the
+manuscript and this repository stay traceable to one another.
+
+1. **Star-class size cutoff confirmed at n = 20,000** for the heap-based
+   algorithms. Completing the test bed would cost ~10 h at n = 100,000
+   alone (measured: 151 s per repetition at n = 50,000 on one instance,
+   quadratic growth), for no additional information: the trend and the
+   ratios are what the experiment needs. The table reports every tested
+   size; PaC and RaC run the full range.
+2. **Statistics.** Ratios are aggregated as the median of the per-instance
+   paired ratio, and the manuscript now states why: invariance under
+   inversion of the comparison (unlike the arithmetic mean of ratios),
+   robustness to the asymmetric right tail of timing noise, and the fact
+   that on every comparison where we claim an advantage the median is the
+   conservative choice (checked: the arithmetic mean would report a larger
+   advantage in all of them).
+3. **No medium/large test-bed dichotomy** in the manuscript: instances are
+   described once, and each experiment states the sizes it uses.
+4. **Figure/table presentation** (uniform across all five floats of
+   Section 4): half table, half plot, side by side and centred; caption
+   below (Springer figure style, also applied to the earlier figures of
+   Sections 1-3); all times in milliseconds with one decimal; an `#inst`
+   column everywhere; no ratio columns (ratios belong in the text); table
+   and plot always show exactly the same data; one shared pgfplots style
+   for fonts, grid and legend, with the legend outside the axis; one
+   global colour/marker/dash per algorithm, identical in every figure.
+5. **Notation:** calligraphic $\mathcal{O}$ for asymptotic growth and
+   `\varrho` for the density, throughout the manuscript.
+6. **Instance appendix corrections:** the `exact-ties` family assigns
+   vertex *i* to group *i* mod g (not contiguous blocks) -- which is what
+   spreads equal-threshold vertices over the graph; and the density is now
+   given an operational meaning (a forest with density rho has rho(n-1)
+   arcs and n-rho(n-1) components in expectation).
+
 ## Deviations
 
 - **2026-08-31, campaign G ("autonomous sweep") corrected before any run.**
