@@ -44,8 +44,9 @@ its results report, not per row:
   which is already robust to a single slow first observation. This is a
   documented simplification versus a literal separate warm-up rep.
 - Repetitions: 11 for instances expected to finish in well under 100 ms
-  (structured/random small-to-medium), 5 for instances expected to run
-  multiple seconds or more (large random/structured, campaigns C and D).
+  (campaign B), 3 for the larger/slower campaigns (C, D, E) and for the
+  BPPF comparison (G), where a single run already takes from tens of
+  milliseconds to tens of seconds.
 - Timeout: 300 seconds wall-clock per single algorithm run within
   `pcf_benchmark`; a run that does not return within the timeout is killed
   by the campaign driver, recorded as `status=timeout` in the campaign's own

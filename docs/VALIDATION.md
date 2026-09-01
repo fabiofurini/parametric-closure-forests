@@ -34,7 +34,8 @@ sequences — partition, thresholds and canonical order, not only the
 closure layer count. `tools/aggregate_results.py` records
 `correctness_status="agreed"` or `"mismatch"` per (campaign, instance)
 group; any mismatch is listed explicitly in `mismatches.csv`, never averaged
-away. Across every official campaign run so far: zero disagreements.
+away. Across the V3 sweep (release v0.3.0: 16,200 instances, 292,080 timed
+runs, campaigns B, C, D, E and G): zero disagreements.
 
 ## RaC-specific audit
 
