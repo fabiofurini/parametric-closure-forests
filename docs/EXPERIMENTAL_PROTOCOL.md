@@ -156,7 +156,10 @@ coefficient families, sizes, seeds, algorithms) are as follows:
   C). Star (plan V3 decisions #4/5bis, `docs/EXPERIMENTAL_PLAN_V3.md`):
   HPaC,RaC paired and DHPaC on `n≤20000`
   (`instances/campaign_d_star_small`, preregistered cutoff — HPaC/DHPaC's
-  n² time trend is established there), RaC alone on `n∈{50000,100000}`
+  n² time trend is established there: 0.6 ms at n=100 to 26 s at
+  n=20,000, with a single-instance calibration of 151 s at n=50,000, so
+  larger sizes cost hours without adding information; confirmed as final
+  by FF on 2026-09-01), RaC alone on `n∈{50000,100000}`
   (`instances/campaign_d_star_large_only`), and **PaC on the full size
   range** (cheap on stars). Since HPaC/DHPaC use the bounded-rebuild heap
   (O(n) space), no memory censoring occurs anywhere; in the V3 sweep no
