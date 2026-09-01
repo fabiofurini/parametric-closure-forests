@@ -65,6 +65,37 @@ emit_ratio campaign_e_out hpac rac
 
 echo "=== emitting the detailed report fragments (report/) ==="
 python3 tools/emit_report_tables.py
+# per-algorithm workload table (from the aggregate summary)
+python3 - <<'PYSNIP'
+import json, csv, pathlib
+from collections import defaultdict
+s = json.load(open("results/processed/results_summary.json"))
+NICE = {"pac":"PaC","dpac":"DPaC","hpac":"HPaC","dhpac":"DHPaC",
+        "hipac":"HIPaC","hopac":"HOPaC","rac":"RaC"}
+inst = defaultdict(set)
+for r in csv.DictReader(open("results/processed/processed.csv")):
+    inst[r["algorithm"]].add((r["campaign_id"], r["instance"]))
+lines = ["\\begin{tabular}{@{}lrrr@{}}", "\\toprule",
+         "algorithm & instances & timed runs & runs/instance \\\\", "\\midrule"]
+for a in ["pac","dpac","hpac","dhpac","hipac","hopac","rac"]:
+    n_i, n_r = len(inst[a]), s["runs_per_algorithm"][a]
+    lines.append(f"\\texttt{{{NICE[a]}}} & {n_i:,} & {n_r:,} & {n_r/n_i:.1f} \\\\".replace(",", "\\,"))
+lines += ["\\midrule",
+          f"total & {s['n_instances']:,} & {s['n_raw_rows']:,} & \\\\".replace(",", "\\,"),
+          "\\bottomrule", "\\end{tabular}"]
+pathlib.Path("results/tables/rep_runs_per_algorithm.tex").write_text("\n".join(lines)+"\n")
+print("wrote results/tables/rep_runs_per_algorithm.tex")
+PYSNIP
+
+# layer-size statistics (runs pcf_solve on a sample; skipped if solver missing)
+if [ -x build/pcf_solve ]; then
+  python3 tools/layer_size_stats.py --pcf-solve build/pcf_solve \
+    --instances instances/campaign_c      --pattern 'gen_n10000_*_seed0.pcf' \
+    --instances instances/campaign_d_star --pattern 'star_n10000_*_seed0.pcf' \
+    --instances instances/campaign_d_path --pattern 'path_n10000_*_seed0.pcf' \
+    --instances instances/campaign_e_in   --pattern 'in_n10000_*_seed0.pcf' \
+    --output-dir results/tables
+fi
 
 echo "=== campaign G (BPPF native comparison) summary ==="
 if [ -f results/raw/campaign_g_bppf_native.csv ]; then
