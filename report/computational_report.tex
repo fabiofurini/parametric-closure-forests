@@ -1583,7 +1583,7 @@ margin that widens with $n$ (at $n=10^5$, \texttt{near-ties} costs
 family ever reverses the relative standing of the two algorithms. The plots
 show four representative families to stay readable; the tables give all six.
 
-\tabfigwide{fig:detail_b_hpac}{%
+\tabfig{fig:detail_b_hpac}{%
 Median CPU time of \texttt{HPaC} in milliseconds, one column per coefficient
 family and one row per size. Instances: \texttt{mixed-forest},
 $n\in\{100,\dots,1\,000\}$, all four densities, 40 instances per cell. The plot
@@ -1596,8 +1596,7 @@ show that it is \emph{not} measurable below that, so no conclusion in
 \cref{sec:bcamp} rests on it.}{%
 \tab{rep_detail_campaign_b_hpac}}{%
 \begin{tikzpicture}
-\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{HPaC} time (ms)}, legend columns=4,
-  width=0.62\textwidth]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{HPaC} time (ms)}, legend columns=2]
 \addplot[hpac] table[x=n, y=independentpositive] {\dfile{rep_plotdetail_campaign_b_hpac}};
 \addlegendentry{ind-pos}
 \addplot[hpac, dashed, mark=o] table[x=n, y=correlated] {\dfile{rep_plotdetail_campaign_b_hpac}};
@@ -1609,7 +1608,7 @@ show that it is \emph{not} measurable below that, so no conclusion in
 \end{axis}
 \end{tikzpicture}}
 
-\tabfigwide{fig:detail_b_rac}{%
+\tabfig{fig:detail_b_rac}{%
 Median CPU time of \texttt{RaC} in milliseconds, one column per coefficient
 family and one row per size. Instances: \texttt{mixed-forest},
 $n\in\{100,\dots,1\,000\}$, all four densities, 40 instances per cell. The plot
@@ -1626,8 +1625,7 @@ ratio reported in this document, and it is visible only in this per-cell
 breakdown.}{%
 \tab{rep_detail_campaign_b_rac}}{%
 \begin{tikzpicture}
-\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{RaC} time (ms)}, legend columns=4,
-  width=0.62\textwidth]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{RaC} time (ms)}, legend columns=2]
 \addplot[rac] table[x=n, y=independentpositive] {\dfile{rep_plotdetail_campaign_b_rac}};
 \addlegendentry{ind-pos}
 \addplot[rac, dashed, mark=o] table[x=n, y=correlated] {\dfile{rep_plotdetail_campaign_b_rac}};
@@ -1656,8 +1654,7 @@ about $10\%$ less time -- so the per-layer cost is far from constant, and most o
 the heaps) rather than to the number of breakpoints.}{%
 \tab{rep_detail_campaign_c_hpac}}{%
 \begin{tikzpicture}
-\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{HPaC} time (ms)}, legend columns=4,
-  width=0.62\textwidth]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{HPaC} time (ms)}, legend columns=2]
 \addplot[hpac] table[x=n, y=independentpositive] {\dfile{rep_plotdetail_campaign_c_hpac}};
 \addlegendentry{ind-pos}
 \addplot[hpac, dashed, mark=o] table[x=n, y=correlated] {\dfile{rep_plotdetail_campaign_c_hpac}};
@@ -1686,8 +1683,7 @@ main-memory latency. We report this as an interpretation, not as a measurement:
 we did not instrument cache misses.}{%
 \tab{rep_detail_campaign_c_rac}}{%
 \begin{tikzpicture}
-\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{RaC} time (ms)}, legend columns=4,
-  width=0.62\textwidth]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{RaC} time (ms)}, legend columns=2]
 \addplot[rac] table[x=n, y=independentpositive] {\dfile{rep_plotdetail_campaign_c_rac}};
 \addlegendentry{ind-pos}
 \addplot[rac, dashed, mark=o] table[x=n, y=correlated] {\dfile{rep_plotdetail_campaign_c_rac}};
