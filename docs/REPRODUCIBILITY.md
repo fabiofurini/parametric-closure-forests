@@ -77,10 +77,12 @@ only wants the numbers rather than to regenerate them from scratch.
 
 ## Large instance archives and raw data
 
-Full-scale campaign archives (campaigns C and D reach `n=100000`) and their
-raw CSV output are attached as a compressed asset (`instances.zip`) on the
-GitHub release that accompanies the manuscript's computational section,
-rather than committed to git history. The manifest
+Full-scale campaign archives (campaigns C and E reach `n=100000`) and their
+raw CSV output are attached as compressed assets on the GitHub release that
+accompanies the manuscript's computational section, rather than committed
+to git history; the instance archive is split under GitHub's 2 GiB asset
+cap (`instances_b_d_fixtures.zip`, `instances_c.zip`, `instances_e_in.zip`,
+`instances_e_out.zip`). The manifest
 SHA-256 checksums under `instances/manifests/` let anyone verify a
 downloaded or regenerated archive against the one actually used, without
 needing git history to carry the binary data.
@@ -122,8 +124,9 @@ satisfies steps 1 and 4-5 on every commit.
 A GitHub release accompanying the manuscript packages:
 
 - the source tree at the exact tag/commit used for the campaign;
-- `instances.zip` (the full instance archive for the campaigns cited in the
-  manuscript) plus `instances/manifests/*.json`;
+- the split instance archive (`instances_b_d_fixtures.zip`,
+  `instances_c.zip`, `instances_e_in.zip`, `instances_e_out.zip`) covering
+  every campaign cited in the manuscript, plus `instances/manifests/*.json`;
 - `results/raw_*.csv` (raw, uncorrected) and `results/processed/*` (derived);
 - `results/results_summary.json`;
 - the environment description from `docs/EXPERIMENTAL_PROTOCOL.md`;
