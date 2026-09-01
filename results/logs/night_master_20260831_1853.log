@@ -1,0 +1,35 @@
+=== night sweep 20260831_1853: environment snapshot ===
+date_utc=2026-08-31T18:53:30Z
+git_commit=2c83e501f03460efa5d715a4ff98818d408d9fb4
+git_status=0 modified tracked files (must be 0)
+Linux canarino 6.8.0-138-generic #138~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Aug  7 13:43:15 UTC  x86_64 x86_64 x86_64 GNU/Linux
+model name	: 12th Gen Intel(R) Core(TM) i7-12700
+MemTotal:       32545804 kB
+gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0
+powersave
+=== phase 0bis: rebuild at HEAD so pcf_benchmark embeds the freeze commit ===
+binaries embed 2c83e501f034 = HEAD, ok
+pcf tests passed
+=== phase 1: instances ===
+=== phase 1: manifests (build if missing, verify always) ===
+=== phase 2: launching lanes ===
+lane official_bc (core 0): tools/run_official_campaigns.sh b c
+lane dual_bcd (core 2): tools/run_dual_variant_campaigns.sh b c d
+lane official_dg (core 4): bash -c tools/run_official_campaigns.sh d && \
+  taskset -c 4 python3 tools/run_bppf_native_campaign.py \
+    --pcf-solve build/pcf_solve --pcf-benchmark build/pcf_benchmark \
+    --pcf-bppf build/pcf_bppf --pcf-bppf-oracle build/pcf_bppf_oracle \
+    --instances instances/campaign_b \
+    --output results/raw/campaign_g_bppf_native.csv \
+    --repetitions 5 --prec 6
+lane official_ein (core 6): tools/run_official_campaigns.sh e_in
+lane official_eout (core 8): tools/run_official_campaigns.sh e_out
+lane dual_e (core 10): tools/run_dual_variant_campaigns.sh e
+=== waiting for all lanes (pids in results/logs/night_pids_20260831_1853.txt) ===
+lane official_bc: OK
+lane dual_bcd: OK
+lane official_dg: OK
+lane official_ein: OK
+lane official_eout: OK
+lane dual_e: OK
+=== night sweep finished: 2026-09-01T01:44:12Z, fail=0 ===

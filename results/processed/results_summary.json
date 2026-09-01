@@ -1,0 +1,32 @@
+{
+  "algorithms": [
+    "dhpac",
+    "dpac",
+    "hipac",
+    "hopac",
+    "hpac",
+    "pac",
+    "rac"
+  ],
+  "campaigns": [
+    "campaign_b",
+    "campaign_c",
+    "campaign_d_binary",
+    "campaign_d_path",
+    "campaign_d_star",
+    "campaign_e_in",
+    "campaign_e_out"
+  ],
+  "n_instances": 16200,
+  "n_mismatched_instances": 0,
+  "n_raw_rows": 292080,
+  "runs_per_algorithm": {
+    "dhpac": 67440,
+    "dpac": 29400,
+    "hipac": 14400,
+    "hopac": 14400,
+    "hpac": 67440,
+    "pac": 31200,
+    "rac": 67800
+  }
+}
