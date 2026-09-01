@@ -27,9 +27,8 @@
   width=0.97\linewidth, height=5.1cm,
   tick label style={font=\scriptsize}, label style={font=\small},
   legend style={font=\scriptsize, at={(0.5,1.03)}, anchor=south,
-                legend columns=3, draw=none, fill=none,
-                /tikz/every even column/.append style={column sep=6pt}},
-  grid=major, grid style={gray!25}, /pgfplots/.cd}}
+                legend columns=3, draw=none, fill=none},
+  grid=major, grid style={gray!25}}}
 
 % One colour / marker / dash per algorithm, identical in every plot of this
 % report and of the manuscript.
@@ -51,7 +50,7 @@
   xticklabel style={rotate=35, anchor=east, font=\tiny}, pcfplot}}
 \pgfplotsset{rhoaxis/.style={xlabel={$\varrho$},
   xtick={0.3,0.6,0.9,1.0}, xmin=0.25, xmax=1.05, pcfplot}}
-\pgfplotsset{sizeaxis/.style={xlabel={$n$}, /pgfplots/xmode=log, /pgfplots/ymode=log, pcfplot}}
+\pgfplotsset{sizeaxis/.style={xlabel={$n$}, pcfplot}}
 
 \newcommand{\tab}[1]{\input{../results/tables/#1.tex}}
 \newcommand{\dat}[1]{../results/tables/rep_plot_#1.dat}
@@ -364,7 +363,7 @@ constraints merge layers that would otherwise be distinct. This is why density
 is a genuine experimental factor and not a cosmetic one.}{%
 \tab{rep_struct_by_rho}}{%
 \begin{tikzpicture}
-\begin{axis}[rhoaxis, ylabel={count}, /pgfplots/ymode=log]
+\begin{axis}[rhoaxis, ylabel={count}, ymode=log]
 \addplot[aux]  table[x=rho, y=arcs]   {\dfile{rep_plotstruct}}; \addlegendentry{arcs}
 \addplot[aux2] table[x=rho, y=comp]   {\dfile{rep_plotstruct}}; \addlegendentry{components}
 \addplot[hpac] table[x=rho, y=layers] {\dfile{rep_plotstruct}}; \addlegendentry{layers}
@@ -381,7 +380,7 @@ why the tie-stressing families are the \emph{fastest} in every timing table
 below, which would otherwise look counter-intuitive.}{%
 \tab{rep_layers_by_family}}{%
 \begin{tikzpicture}
-\begin{axis}[famaxis, ylabel={\# closure layers}, /pgfplots/ymode=log]
+\begin{axis}[famaxis, ylabel={\# closure layers}, ymode=log]
 \addplot[hpac, only marks] coordinates {(1,344) (2,346) (3,337) (4,342) (5,164) (6,105)};
 \addlegendentry{$n\le10^3$}
 \addplot[aux, only marks] coordinates {(1,32374) (2,33183) (3,24825) (4,30379) (5,1222) (6,7884)};
@@ -397,7 +396,7 @@ enumerate, and the spread between the easiest and hardest instance of one size
 is roughly a factor of three.}{%
 \tab{rep_layers_by_size}}{%
 \begin{tikzpicture}
-\begin{axis}[sizeaxis, ylabel={\# closure layers}]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\# closure layers}]
 \addplot[hpac] table[x=n, y=median] {\dfile{rep_plotlayers}}; \addlegendentry{median}
 \addplot[aux]  table[x=n, y=max]    {\dfile{rep_plotlayers}}; \addlegendentry{max}
 \addplot[aux2] table[x=n, y=min]    {\dfile{rep_plotlayers}}; \addlegendentry{min}
@@ -431,7 +430,7 @@ against $\approx5\,000$ once the graph is a single tree, because a layer cannot
 straddle components.}{%
 \tiny\setlength{\tabcolsep}{2pt}\tab{rep_layer_sizes}}{%
 \begin{tikzpicture}
-\begin{axis}[sizeaxis, xlabel={layer size $s$},
+\begin{axis}[xmode=log, ymode=log, sizeaxis, xlabel={layer size $s$},
   ylabel={\% of layers with size $\ge s$}]
 \addplot[hpac, mark=none, very thick] table[x=size, y=frac_at_least]
   {\dfile{rep_plotlayersize}};
@@ -578,7 +577,7 @@ iteration, while \texttt{HPaC} extracts the maximum in logarithmic time and
 refreshes only the candidates touched by the last peel or contraction.}{%
 \tab{rep_times_campaign_b}}{%
 \begin{tikzpicture}
-\begin{axis}[sizeaxis, ylabel={CPU time (ms)}]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={CPU time (ms)}]
 \addplot[pac]   table[x=n, y=pac]   {\dat{campaign_b}}; \addlegendentry{\texttt{PaC}}
 \addplot[dpac]  table[x=n, y=dpac]  {\dat{campaign_b}}; \addlegendentry{\texttt{DPaC}}
 \addplot[hpac]  table[x=n, y=hpac]  {\dat{campaign_b}}; \addlegendentry{\texttt{HPaC}}
@@ -596,8 +595,8 @@ which is the practical meaning of the $\mathcal O(n^2)$ against
 $\mathcal O(n\log n)$-in-practice difference. The dashed line marks parity.}{%
 \tab{campaign_b_pac_over_hpac}}{%
 \begin{tikzpicture}
-\begin{axis}[pcfplot, xlabel={$n$}, ylabel={\texttt{PaC}/\texttt{HPaC}},
-  /pgfplots/xmode=log, ymin=0,
+\begin{axis}[xmode=log, pcfplot, xlabel={$n$}, ylabel={\texttt{PaC}/\texttt{HPaC}},
+  ymin=0,
   extra y ticks={1}, extra y tick style={grid=major, grid style={black!45, dashed}}]
 \addplot[pac] table[x=n, y expr=\thisrow{pac}/\thisrow{hpac}] {\dat{campaign_b}};
 \addlegendentry{median ratio}
@@ -783,9 +782,10 @@ range, and \texttt{PaC} left far behind by $n=10^4$, as its
 $\mathcal O(n^2)$ bound predicts.}{%
 \tab{rep_times_campaign_d_path}}{%
 \begin{tikzpicture}
-\begin{axis}[sizeaxis, ylabel={CPU time (ms)}]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={CPU time (ms)}]
 \addplot[pac]  table[x=n, y=pac]  {\dat{campaign_d_path}}; \addlegendentry{\texttt{PaC}}
 \addplot[hpac] table[x=n, y=hpac] {\dat{campaign_d_path}}; \addlegendentry{\texttt{HPaC}}
+\addplot[dhpac] table[x=n, y=dhpac] {\dat{campaign_d_path}}; \addlegendentry{\texttt{DHPaC}}
 \addplot[rac]  table[x=n, y=rac]  {\dat{campaign_d_path}}; \addlegendentry{\texttt{RaC}}
 \end{axis}
 \end{tikzpicture}}
@@ -809,9 +809,10 @@ lower than on paths, since a balanced tree gives \texttt{RaC}'s contraction
 rounds more to work with.}{%
 \tab{rep_times_campaign_d_binary}}{%
 \begin{tikzpicture}
-\begin{axis}[sizeaxis, ylabel={CPU time (ms)}]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={CPU time (ms)}]
 \addplot[pac]  table[x=n, y=pac]  {\dat{campaign_d_binary}}; \addlegendentry{\texttt{PaC}}
 \addplot[hpac] table[x=n, y=hpac] {\dat{campaign_d_binary}}; \addlegendentry{\texttt{HPaC}}
+\addplot[dhpac] table[x=n, y=dhpac] {\dat{campaign_d_binary}}; \addlegendentry{\texttt{DHPaC}}
 \addplot[rac]  table[x=n, y=rac]  {\dat{campaign_d_binary}}; \addlegendentry{\texttt{RaC}}
 \end{axis}
 \end{tikzpicture}}
@@ -840,8 +841,9 @@ preregistered cutoff $n=20\,000$, where their quadratic trend is
 established.}{%
 \tab{rep_times_campaign_d_star}}{%
 \begin{tikzpicture}
-\begin{axis}[sizeaxis, ylabel={CPU time (ms)}]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={CPU time (ms)}]
 \addplot[hpac] table[x=n, y=hpac] {\dat{campaign_d_star}}; \addlegendentry{\texttt{HPaC}}
+\addplot[dhpac] table[x=n, y=dhpac] {\dat{campaign_d_star}}; \addlegendentry{\texttt{DHPaC}}
 \addplot[pac]  table[x=n, y=pac]  {\dat{campaign_d_star}}; \addlegendentry{\texttt{PaC}}
 \addplot[rac]  table[x=n, y=rac]  {\dat{campaign_d_star}}; \addlegendentry{\texttt{RaC}}
 \end{axis}
@@ -868,7 +870,7 @@ sits between $n=1\,000$ and $n=2\,000$; by $n=10^5$ \texttt{RaC} is
 $130\times$ faster. Dashed line marks parity.}{%
 \tab{campaign_d_star_rac_over_pac}}{%
 \begin{tikzpicture}
-\begin{axis}[sizeaxis, ylabel={\texttt{RaC}/\texttt{PaC}},
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{RaC}/\texttt{PaC}},
   extra y ticks={1}, extra y tick style={grid=major, grid style={black!45, dashed}}]
 \addplot[rac] table[x=n, y expr=\thisrow{rac}/\thisrow{pac}] {\dat{campaign_d_star}};
 \addlegendentry{median ratio}
@@ -911,8 +913,9 @@ so one heap value per vertex suffices and no closure-sum propagation is ever
 needed -- that is where the constant factor comes from.}{%
 \tab{rep_times_campaign_e_in}}{%
 \begin{tikzpicture}
-\begin{axis}[sizeaxis, ylabel={CPU time (ms)}]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={CPU time (ms)}]
 \addplot[hpac]  table[x=n, y=hpac]  {\dat{campaign_e_in}}; \addlegendentry{\texttt{HPaC}}
+\addplot[dhpac] table[x=n, y=dhpac] {\dat{campaign_e_in}}; \addlegendentry{\texttt{DHPaC}}
 \addplot[hipac] table[x=n, y=hipac] {\dat{campaign_e_in}}; \addlegendentry{\texttt{HIPaC}}
 \addplot[rac]   table[x=n, y=rac]   {\dat{campaign_e_in}}; \addlegendentry{\texttt{RaC}}
 \end{axis}
@@ -924,7 +927,7 @@ with no erosion up to $n=10^5$ -- if anything the advantage grows mildly with
 $n$. Dashed line marks parity.}{%
 \tab{campaign_e_in_hipac_over_hpac}}{%
 \begin{tikzpicture}
-\begin{axis}[pcfplot, xlabel={$n$}, /pgfplots/xmode=log, ylabel={\texttt{HIPaC}/\texttt{HPaC}},
+\begin{axis}[xmode=log, pcfplot, xlabel={$n$}, ylabel={\texttt{HIPaC}/\texttt{HPaC}},
   ymin=0, ymax=1.1,
   extra y ticks={1}, extra y tick style={grid=major, grid style={black!45, dashed}}]
 \addplot[hipac] table[x=n, y expr=\thisrow{hipac}/\thisrow{hpac}] {\dat{campaign_e_in}};
@@ -938,8 +941,9 @@ $n$. Dashed line marks parity.}{%
 symmetry of the two constructions predicts.}{%
 \tab{rep_times_campaign_e_out}}{%
 \begin{tikzpicture}
-\begin{axis}[sizeaxis, ylabel={CPU time (ms)}]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={CPU time (ms)}]
 \addplot[hpac]  table[x=n, y=hpac]  {\dat{campaign_e_out}}; \addlegendentry{\texttt{HPaC}}
+\addplot[dhpac] table[x=n, y=dhpac] {\dat{campaign_e_out}}; \addlegendentry{\texttt{DHPaC}}
 \addplot[hopac] table[x=n, y=hopac] {\dat{campaign_e_out}}; \addlegendentry{\texttt{HOPaC}}
 \addplot[rac]   table[x=n, y=rac]   {\dat{campaign_e_out}}; \addlegendentry{\texttt{RaC}}
 \end{axis}
@@ -950,7 +954,7 @@ Paired ratio \texttt{HOPaC}/\texttt{HPaC} by size: between $0.57$ and
 $0.78$.}{%
 \tab{campaign_e_out_hopac_over_hpac}}{%
 \begin{tikzpicture}
-\begin{axis}[pcfplot, xlabel={$n$}, /pgfplots/xmode=log, ylabel={\texttt{HOPaC}/\texttt{HPaC}},
+\begin{axis}[xmode=log, pcfplot, xlabel={$n$}, ylabel={\texttt{HOPaC}/\texttt{HPaC}},
   ymin=0, ymax=1.1,
   extra y ticks={1}, extra y tick style={grid=major, grid style={black!45, dashed}}]
 \addplot[hopac] table[x=n, y expr=\thisrow{hopac}/\thisrow{hpac}] {\dat{campaign_e_out}};
@@ -1069,7 +1073,7 @@ $n$ & ms & MiB & ms & MiB \\
 \bottomrule
 \end{tabular}}{%
 \begin{tikzpicture}
-\begin{axis}[sizeaxis, ylabel={peak RSS (MiB)}]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={peak RSS (MiB)}]
 \addplot[aux2] table[x=n, y=rss_lazy]    {\dfile{rep_plotheap}}; \addlegendentry{lazy}
 \addplot[hpac] table[x=n, y=rss_bounded] {\dfile{rep_plotheap}}; \addlegendentry{rebuild}
 \end{axis}
@@ -1115,7 +1119,7 @@ $n$ & \#inst & \texttt{HPaC} & \texttt{BPPF} \\
 \bottomrule
 \end{tabular}}{%
 \begin{tikzpicture}
-\begin{axis}[pcfplot, xlabel={$n$}, ylabel={CPU time (ms)}, /pgfplots/ymode=log,
+\begin{axis}[ymode=log, pcfplot, xlabel={$n$}, ylabel={CPU time (ms)},
   xtick={100,400,700,1000}, scaled x ticks=false]
 \addplot[bppf] coordinates {(100,0.105) (200,0.305) (300,0.604) (400,0.991)
   (500,1.509) (600,2.086) (700,2.777) (800,3.581) (900,4.507) (1000,5.526)};
@@ -1174,7 +1178,7 @@ The same for in-forests: the specialized variant is as stable as the general
 algorithm, so its advantage is not an artefact of variance.}{%
 \tab{rep_iqr_campaign_e_in}}{%
 \begin{tikzpicture}
-\begin{axis}[pcfplot, xlabel={$n$}, ylabel={relative IQR (\%)}, /pgfplots/xmode=log, ymin=0]
+\begin{axis}[xmode=log, pcfplot, xlabel={$n$}, ylabel={relative IQR (\%)}, ymin=0]
 \addplot[rac]   table[x=n, y=rac]   {\dfile{rep_plotiqr_campaign_e_in}}; \addlegendentry{\texttt{RaC}}
 \addplot[hipac] table[x=n, y=hipac] {\dfile{rep_plotiqr_campaign_e_in}}; \addlegendentry{\texttt{HIPaC}}
 \addplot[hpac]  table[x=n, y=hpac]  {\dfile{rep_plotiqr_campaign_e_in}}; \addlegendentry{\texttt{HPaC}}
@@ -1198,7 +1202,7 @@ show four representative families to stay readable; the tables give all six.
 \texttt{HPaC} on \texttt{mixed-forest} instances, $n\le1\,000$.}{%
 \tab{rep_detail_campaign_b_hpac}}{%
 \begin{tikzpicture}
-\begin{axis}[sizeaxis, ylabel={\texttt{HPaC} time (ms)}, legend columns=2]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{HPaC} time (ms)}, legend columns=2]
 \addplot[hpac] table[x=n, y=independentpositive] {\dfile{rep_plotdetail_campaign_b_hpac}};
 \addlegendentry{ind-pos}
 \addplot[hpac, dashed, mark=o] table[x=n, y=correlated] {\dfile{rep_plotdetail_campaign_b_hpac}};
@@ -1214,7 +1218,7 @@ show four representative families to stay readable; the tables give all six.
 \texttt{RaC} on \texttt{mixed-forest} instances, $n\le1\,000$.}{%
 \tab{rep_detail_campaign_b_rac}}{%
 \begin{tikzpicture}
-\begin{axis}[sizeaxis, ylabel={\texttt{RaC} time (ms)}, legend columns=2]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{RaC} time (ms)}, legend columns=2]
 \addplot[rac] table[x=n, y=independentpositive] {\dfile{rep_plotdetail_campaign_b_rac}};
 \addlegendentry{ind-pos}
 \addplot[rac, dashed, mark=o] table[x=n, y=correlated] {\dfile{rep_plotdetail_campaign_b_rac}};
@@ -1230,7 +1234,7 @@ show four representative families to stay readable; the tables give all six.
 \texttt{HPaC} on \texttt{mixed-forest} instances, $n\ge10\,000$.}{%
 \tab{rep_detail_campaign_c_hpac}}{%
 \begin{tikzpicture}
-\begin{axis}[sizeaxis, ylabel={\texttt{HPaC} time (ms)}, legend columns=2]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{HPaC} time (ms)}, legend columns=2]
 \addplot[hpac] table[x=n, y=independentpositive] {\dfile{rep_plotdetail_campaign_c_hpac}};
 \addlegendentry{ind-pos}
 \addplot[hpac, dashed, mark=o] table[x=n, y=correlated] {\dfile{rep_plotdetail_campaign_c_hpac}};
@@ -1246,7 +1250,7 @@ show four representative families to stay readable; the tables give all six.
 \texttt{RaC} on \texttt{mixed-forest} instances, $n\ge10\,000$.}{%
 \tab{rep_detail_campaign_c_rac}}{%
 \begin{tikzpicture}
-\begin{axis}[sizeaxis, ylabel={\texttt{RaC} time (ms)}, legend columns=2]
+\begin{axis}[xmode=log, ymode=log, sizeaxis, ylabel={\texttt{RaC} time (ms)}, legend columns=2]
 \addplot[rac] table[x=n, y=independentpositive] {\dfile{rep_plotdetail_campaign_c_rac}};
 \addlegendentry{ind-pos}
 \addplot[rac, dashed, mark=o] table[x=n, y=correlated] {\dfile{rep_plotdetail_campaign_c_rac}};

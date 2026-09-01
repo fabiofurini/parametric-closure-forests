@@ -181,11 +181,11 @@ def main() -> None:
     for campaign, algorithms in [
         ("campaign_b", ["pac", "dpac", "hpac", "dhpac", "rac"]),
         ("campaign_c", ["hpac", "dhpac", "rac"]),
-        ("campaign_d_path", ["pac", "hpac", "rac"]),
-        ("campaign_d_binary", ["pac", "hpac", "rac"]),
-        ("campaign_d_star", ["pac", "hpac", "rac"]),
-        ("campaign_e_in", ["hpac", "hipac", "rac"]),
-        ("campaign_e_out", ["hpac", "hopac", "rac"]),
+        ("campaign_d_path", ["pac", "hpac", "dhpac", "rac"]),
+        ("campaign_d_binary", ["pac", "hpac", "dhpac", "rac"]),
+        ("campaign_d_star", ["pac", "hpac", "dhpac", "rac"]),
+        ("campaign_e_in", ["hpac", "dhpac", "hipac", "rac"]),
+        ("campaign_e_out", ["hpac", "dhpac", "hopac", "rac"]),
     ]:
         acc = median_times(rows, campaign, algorithms, "n_nodes")
         sizes = sorted({int(k[0]) for k in acc})

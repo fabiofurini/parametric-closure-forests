@@ -22,10 +22,10 @@
 \contentsline {section}{\numberline {10}Single orientations}{17}{section.10}%
 \contentsline {paragraph}{Note on the comparison with the first version of the manuscript.}{17}{section*.9}%
 \contentsline {subsection}{\numberline {10.1}What the oriented classes say}{17}{subsection.10.1}%
-\contentsline {section}{\numberline {11}Implementation note: heap policy}{20}{section.11}%
-\contentsline {section}{\numberline {12}Comparison with parametric pseudoflow}{20}{section.12}%
-\contentsline {paragraph}{Agreement and precision.}{20}{section*.10}%
+\contentsline {section}{\numberline {11}Implementation note: heap policy}{21}{section.11}%
+\contentsline {section}{\numberline {12}Comparison with parametric pseudoflow}{21}{section.12}%
+\contentsline {paragraph}{Agreement and precision.}{21}{section*.10}%
 \contentsline {paragraph}{Discarded variant.}{22}{section*.11}%
 \contentsline {section}{\numberline {13}Dispersion of the measurements}{22}{section.13}%
-\contentsline {section}{\numberline {A}Per-family detail at every size}{22}{appendix.A}%
-\contentsline {section}{\numberline {B}Reproducing this report}{22}{appendix.B}%
+\contentsline {section}{\numberline {A}Per-family detail at every size}{23}{appendix.A}%
+\contentsline {section}{\numberline {B}Reproducing this report}{23}{appendix.B}%
