@@ -9,7 +9,7 @@ tools/build_report.sh                        # aggregate + emit all tables
 cd report && latexmk -pdf computational_report.tex
 ```
 
-Code, generators, raw and processed data: <https://github.com/fabiofurini/parametric-closure-forests>, release `v0.3.0` (instance archives split under GitHub's asset size limit, with SHA-256 checksums). The pseudoflow baseline is the unmodified upstream implementation at <https://github.com/hochbaumGroup/Bounded-precision-simple-parametric.git>.
+Code, generators, raw and processed data: <https://github.com/fabiofurini/parametric-closure-forests>, release `v0.4.0` (instance archives split under GitHub's asset size limit, with SHA-256 checksums). The pseudoflow baseline is the unmodified upstream implementation at <https://github.com/hochbaumGroup/Bounded-precision-simple-parametric.git>.
 
 ---
 

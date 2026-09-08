@@ -48,7 +48,7 @@ closure problem separately at each $\lambda$.
 | `hipac` | **HIPaC** | Heap-based In-tree Peel-and-Contract (in-forests only) | $O(n\log n)$ |
 | `hopac` | **HOPaC** | Heap-based Out-tree Peel-and-Contract (out-forests only) | $O(n\log n)$ |
 | `rac` | **RaC** | Rake-and-Compress / top-tree algorithm, any tree | $O(n\log n)$ |
-| — | **BPPF** | Bounded-Precision Parametric Pseudoflow (Hochbaum et al.), third-party comparison baseline | — |
+| — | **FPHPF** | Fully parametric pseudoflow / HPF (Hochbaum group, v2 2025), third-party comparison baseline | $O(mn\log n)$ |
 
 `PaC`'s two moves (peel the current best final vertices, contract an arc)
 are the same pair as `RaC`'s own rake/compress, under a direct-scan or
@@ -74,21 +74,23 @@ variant, also $O(n)$ space) and `hpac_bounded` (an alias of `hpac`) remain
 available; all variants are covered by every exhaustive-oracle and
 differential-testing check in `pcf_tests`.
 
-### The BPPF comparison
+### The comparison with parametric pseudoflow
 
-BPPF (`third_party/bppf/`) is used for exactly one purpose in this
-repository: the timed comparison of `tools/run_bppf_native_campaign.py`.
-One `pcf_bppf` process per instance sweeps, in BPPF's native affine
-(two-numbers-per-arc) capacity format, the k+1 parameter values that
-bracket all k breakpoints — the same methodology as the v1 manuscript,
-and the most favorable setting for BPPF, since it is spared the search
-for the breakpoints (upstream BPPF evaluates min cuts only at
-user-supplied parameter values). Outside the timed region, one
-`pcf_bppf_oracle` run per instance checks that BPPF's closures agree with
-`hpac`'s at every probe, classifying any deviation as a fixed-point
-tolerance artifact (`prec`, default 1e-6) or a genuine disagreement; a
-genuine disagreement invalidates that instance's timing. Correctness of
-the algorithms in this repository is established independently of BPPF
+The external baseline is Hochbaum's **fully parametric** HPF solver
+(`third_party/fphpf/`, `pseudoflow-parametric-cut-v2`, May 2025): given the
+instance and a parameter range only, it locates every breakpoint by itself,
+so it solves exactly the problem the algorithms above solve and can be raced
+against them with no information passing from one side to the other
+(`tools/race_fphpf.py`). Both sides are timed on the same instance in the
+same session -- the solver's own internal solve timer, input parsing
+excluded, against `hpac`'s in-process time -- as medians of 11 repetitions.
+From the solver's output only the *partition* into closure layers is taken;
+every breakpoint is then recomputed exactly as P(I_r)/W(I_r), so none of its
+floating-point values enters the comparison. Disagreements are reported per
+instance and never silently accepted: from n = 10^4 on the solver's fixed
+`TOL = 1E-7` merges consecutive layers closer than about 2e-7 (see
+`third_party/fphpf/UPSTREAM_README.md`). Correctness of the algorithms in
+this repository is established independently of any external solver
 (`docs/VALIDATION.md`: exhaustive enumeration oracle plus cross-algorithm
 differential agreement).
 
@@ -125,9 +127,9 @@ arcs 3
 ```text
 include/, src/     C++ library, CLI solver (pcf_solve) and benchmark runner (pcf_benchmark)
 tests/             CTest suite (pcf_tests) — exhaustive oracle + differential checks
-tools/             instance generators, benchmark runner, BPPF converter/verifier,
+tools/             instance generators, benchmark runner, FPHPF converter and race driver,
                    aggregation/reporting/packaging pipeline (Python + shell)
-third_party/bppf/  unmodified upstream BPPF source — comparison baseline
+third_party/fphpf/ upstream fully-parametric HPF source (+2-line printf patch) — comparison baseline
 instances/         committed small fixtures + manifests; bulk archives are
                    generated, not committed (see docs/REPRODUCIBILITY.md)
 results/           raw and processed campaign data, LaTeX table fragments
@@ -181,7 +183,7 @@ results are attached to
 rather than committed to git history. See
 [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) for the exact
 regeneration commands, the full campaign pipeline
-(`tools/run_official_campaigns.sh`, `tools/run_bppf_native_campaign.py`,
+(`tools/run_official_campaigns.sh`, `tools/race_fphpf.py`,
 `tools/build_report.sh`, `tools/package_release.sh`), and the release
 contents.
 

@@ -14,7 +14,7 @@ RSS is the *resident set size*: the amount of physical RAM the process has mappe
 
 ### Statistics
 
-Absolute times: median over repetitions, then median over instances. Comparisons: *paired* per instance, reported as the median of the per-instance ratios together with their IQR ([Definitions and conventions](03-definitions-and-conventions.md)), never a ratio of aggregate means. The median is chosen because it is invariant under inversion of the comparison (the arithmetic mean of ratios is not: it depends on which algorithm sits in the denominator), because the timing noise has an asymmetric right tail by construction (interference can only slow a run down, never speed it up), and because it is the conservative choice on every comparison where we claim an advantage – on the `BPPF` comparison at $n=1\,000$ the three aggregates are $4.5$ (median), $5.8$ (geometric mean) and $8.7$ (arithmetic mean).
+Absolute times: median over repetitions, then median over instances. Comparisons: *paired* per instance, reported as the median of the per-instance ratios together with their IQR ([Definitions and conventions](03-definitions-and-conventions.md)), never a ratio of aggregate means. The median is chosen because it is invariant under inversion of the comparison (the arithmetic mean of ratios is not: it depends on which algorithm sits in the denominator), because the timing noise has an asymmetric right tail by construction (interference can only slow a run down, never speed it up), and because it is the conservative choice on every comparison where we claim an advantage – on the `FPHPF` comparison at $n=1\,000$ the three aggregates are $27.6$ (median), $33.4$ (geometric mean) and $48.0$ (arithmetic mean).
 
 ---
 

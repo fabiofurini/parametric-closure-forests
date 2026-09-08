@@ -47,13 +47,10 @@ add_executable(pcf_benchmark src/benchmark.cpp)
 target_link_libraries(pcf_benchmark PRIVATE pcf)
 target_compile_definitions(pcf_benchmark PRIVATE PCF_GIT_COMMIT="${PCF_GIT_COMMIT}")
 
-add_executable(pcf_bppf third_party/bppf/pseudopar.c)
-target_link_libraries(pcf_bppf PRIVATE m)
-
-# Same unmodified upstream source, built with node-breakpoint diagnostics
-# enabled: tools/run_bppf_native_campaign.py reads its "n <id> <breakpoint>" output
-# to recover which nodes are on the source side of the minimum cut (see
-# docs/EXPERIMENTAL_PROTOCOL.md, "Oracle 2").
-add_executable(pcf_bppf_oracle third_party/bppf/pseudopar.c)
-target_link_libraries(pcf_bppf_oracle PRIVATE m)
-target_compile_definitions(pcf_bppf_oracle PRIVATE BREAKPOINTS)
+# Hochbaum's fully parametric HPF solver, the comparison baseline: given only
+# a parameter range it computes every breakpoint itself, so it solves the same
+# problem HPaC does and can be raced against it directly. Vendored with its
+# licence and a patch of two printf formats only -- see
+# third_party/fphpf/UPSTREAM_README.md. Never linked into libpcf.
+add_executable(pcf_fphpf third_party/fphpf/c/hpf.c third_party/fphpf/core/libhpf.c)
+target_link_libraries(pcf_fphpf PRIVATE m)

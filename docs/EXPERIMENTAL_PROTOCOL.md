@@ -44,9 +44,11 @@ its results report, not per row:
   which is already robust to a single slow first observation. This is a
   documented simplification versus a literal separate warm-up rep.
 - Repetitions: 11 for instances expected to finish in well under 100 ms
-  (campaign B), 3 for the larger/slower campaigns (C, D, E) and for the
-  BPPF comparison (G), where a single run already takes from tens of
-  milliseconds to tens of seconds.
+  (campaign B) and for the pseudoflow race on the same instances (H);
+  3 for the larger/slower campaigns (C, D, E), where a single run already
+  takes from tens of milliseconds to tens of seconds; 1 for the exploratory
+  large-size extension of H, where a single solver run takes seconds to
+  minutes.
 - Timeout: 300 seconds wall-clock per single algorithm run within
   `pcf_benchmark`; a run that does not return within the timeout is killed
   by the campaign driver, recorded as `status=timeout` in the campaign's own
@@ -93,8 +95,8 @@ its results report, not per row:
 ## Correctness verification
 
 One independent oracle is used, plus cross-algorithm differential checks
-(`docs/VALIDATION.md`; BPPF plays no verification role — it appears only
-as the timed comparison baseline of campaign G):
+(`docs/VALIDATION.md`; the external pseudoflow solver plays no verification
+role — it appears only as the timed comparison baseline of campaign H):
 
 1. **Exhaustive enumeration** (`pcf_tests`, `tests/test_main.cpp`): every
    directed forest with at most four items over a finite coefficient grid,
@@ -172,18 +174,19 @@ coefficient families, sizes, seeds, algorithms) are as follows:
   seed matrix used by campaigns B/C and by the corresponding experiment in
   the v1 manuscript; it avoids confounding the comparison of the specialized
   algorithms with a change in density coverage.
-- **G — BPPF native comparison (v1-style)**: the full campaign-B test bed
-  (2,400 `mixed-forest` instances, `n∈{100,...,1000}`), 5 repetitions,
-  `prec=1e-6` (`tools/run_bppf_native_campaign.py`). One `pcf_bppf`
-  process per instance sweeps the k+1 probe values bracketing all k
-  breakpoints in BPPF's native affine encoding — the same methodology as
-  the v1 manuscript, and the most favorable setting for BPPF, since it is
-  spared the search for the breakpoints. Timing compares BPPF's own
-  cumulative solve timer against `hpac`'s in-process time on the same
-  instance. Outside the timed region, one `pcf_bppf_oracle` run per
-  instance checks closure agreement at every probe; deviations are
-  classified as fixed-point tolerance artifacts (reported as a count) or
-  genuine disagreements (which invalidate that instance's timing).
-  Instances rejected by the encoding's `2**53` representation guard are
-  skipped with a printed reason and counted per size/family. See
-  `docs/EXPERIMENTAL_PLAN_V3.md` for the full preregistered design.
+- **H — race against the fully parametric pseudoflow solver**: the full
+  campaign-B test bed (2,400 `mixed-forest` instances, `n∈{100,...,1000}`),
+  11 repetitions for both sides (`tools/race_fphpf.py`, `pcf_fphpf`). Each
+  instance is handed to the solver with a parameter range only; it locates
+  every breakpoint itself, so nothing computed by `hpac` reaches it. Timing
+  compares the solver's own solve timer (parsing excluded) against `hpac`'s
+  in-process time on the same instance, measured in the same session. From
+  its output only the partition is taken; breakpoints are recomputed exactly
+  as P(I_r)/W(I_r). Any partition disagreement is reported per instance
+  (`same_partition`). A small exploratory extension covers `n = 10^4` and
+  `2·10^4` (24 instances each: all families and densities, one seed),
+  `5·10^4` (6 instances) and `10^5` (1 instance), single repetition, since a
+  single solver run already takes seconds to minutes there. Campaign G, the
+  earlier comparison against the bounded-precision *simple* parametric solver
+  fed with probes built from `hpac`'s own thresholds, was withdrawn on
+  2026-09-08 (see `PROVENANCE_local.md`).

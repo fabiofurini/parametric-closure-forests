@@ -21,4 +21,4 @@ The candidate heaps admit two implementations, indistinguishable in the asymptot
 
 ---
 
-← [Single orientations](10-single-orientations.md) · [Contents](README.md) · [Comparison with parametric pseudoflow](12-comparison-with-parametric-pseudoflow.md) →
+← [Single orientations](10-single-orientations.md) · [Contents](README.md) · [Comparison with the fully parametric pseudoflow solver](12-comparison-with-the-fully-parametric-pseudoflow-solver.md) →

@@ -104,13 +104,12 @@ lane() { # lane <name> <core> <command...>
 : > "${LOGDIR}/night_pids_${STAMP}.txt"
 lane official_bc 0  tools/run_official_campaigns.sh b c
 lane dual_bcd    2  tools/run_dual_variant_campaigns.sh b c d
-lane official_dg 4  bash -c 'tools/run_official_campaigns.sh d && \
-  taskset -c 4 python3 tools/run_bppf_native_campaign.py \
+lane official_dh 4  bash -c 'tools/run_official_campaigns.sh d && \
+  taskset -c 4 python3 tools/race_fphpf.py \
     --pcf-solve build/pcf_solve --pcf-benchmark build/pcf_benchmark \
-    --pcf-bppf build/pcf_bppf --pcf-bppf-oracle build/pcf_bppf_oracle \
-    --instances instances/campaign_b \
-    --output results/raw/campaign_g_bppf_native.csv \
-    --repetitions 5 --prec 6'
+    --hpf build/pcf_fphpf --instances instances/campaign_b \
+    --output results/raw/campaign_h_fphpf_mixed_n100-1000.csv \
+    --repetitions 11'
 lane official_ein  6  tools/run_official_campaigns.sh e_in
 lane official_eout 8  tools/run_official_campaigns.sh e_out
 lane dual_e        10 tools/run_dual_variant_campaigns.sh e

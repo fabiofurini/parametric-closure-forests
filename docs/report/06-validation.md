@@ -7,7 +7,7 @@
 
 <a id="table-2"></a>
 
-**Table 2.** Number of instances benchmarked, of timed runs, and of cross-algorithm disagreements, per instance class. Every group aggregates all sizes, densities, coefficient families and seeds of that class. The `BPPF` comparison is listed apart, `BPPF` being an external baseline rather than one of our algorithms. Zero disagreements everywhere: on each instance the algorithms returned the same partition, the same thresholds and the same canonical order.
+**Table 2.** Number of instances benchmarked, of timed runs, and of cross-algorithm disagreements, per instance class. Every group aggregates all sizes, densities, coefficient families and seeds of that class. The `FPHPF` comparison is listed apart, `FPHPF` being an external baseline rather than one of our algorithms. Zero disagreements everywhere: on each instance the algorithms returned the same partition, the same thresholds and the same canonical order.
 
 | instance class | $n$ | #inst | timed runs | disagreements |
 |---|---|---|---|---|

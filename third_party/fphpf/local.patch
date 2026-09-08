@@ -1,0 +1,22 @@
+diff --git a/src/pseudoflow/c/hpf.c b/src/pseudoflow/c/hpf.c
+index 2cb9732..5de6acb 100644
+--- a/src/pseudoflow/c/hpf.c
++++ b/src/pseudoflow/c/hpf.c
+@@ -345,7 +345,7 @@ writeOutput
+ 	}
+ 
+ 	/* print times */
+-	fprintf(f, "t %.3lf %.3lf %.3lf\n", times[0], times[1], times[2]);
++	fprintf(f, "t %.9lf %.9lf %.9lf\n", times[0], times[1], times[2]);
+ 	/* print stats */
+ 	fprintf(f, "s %d %d %d %d %d\n", stats[0], stats[1], stats[2], stats[3], stats[4]);
+ 
+@@ -394,7 +394,7 @@ writeOutput
+ 
+             if(!first)
+                 fprintf(f, "\n");
+-            fprintf(f, "l %lf ", clam);
++            fprintf(f, "l %.17g ", clam);
+             clambda = clam;
+             first = 0;
+         }

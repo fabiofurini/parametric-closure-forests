@@ -2,15 +2,15 @@
 # One-shot analysis pipeline: raw CSVs -> validated -> aggregated -> LaTeX
 # table fragments + results_summary.json. Run after
 # tools/run_official_campaigns.sh, tools/run_dual_variant_campaigns.sh and
-# tools/run_bppf_native_campaign.py have produced results/raw/*.csv.
+# tools/race_fphpf.py have produced results/raw/*.csv.
 # Reproduces every number and table cited in the manuscript from raw data.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 mkdir -p results/processed results/tables
 
-# campaign_g_bppf_native.csv (tools/run_bppf_native_campaign.py) and
-# *.failures.csv use a different schema than pcf_benchmark's CSV and are
+# campaign_h_fphpf_*.csv (tools/race_fphpf.py, the fully-parametric HPF race)
+# and *.failures.csv use a different schema than pcf_benchmark's CSV and are
 # handled separately below.
 mapfile -t STANDARD_RAW < <(ls results/raw/campaign_{b,c,d_path,d_binary,d_star,e_in,e_out}_*.csv 2>/dev/null \
   | grep -v '\.failures\.csv$')
@@ -110,18 +110,29 @@ if [ -x build/pcf_solve ]; then
     --output-dir results/tables
 fi
 
-echo "=== campaign G (BPPF native comparison) summary ==="
-if [ -f results/raw/campaign_g_bppf_native.csv ]; then
+echo "=== campaign H (HPaC vs fully parametric HPF, both from scratch) summary ==="
+if ls results/raw/campaign_h_fphpf_*.csv >/dev/null 2>&1; then
 python3 - <<'EOF'
-import csv, statistics
-rows = list(csv.DictReader(open("results/raw/campaign_g_bppf_native.csv")))
-bad = [r for r in rows if r["agrees_or_tolerance_explained"] != "True"]
-ratios = sorted(float(r["bppf_internal_median_ns"]) / float(r["hpac_median_ns"]) for r in rows)
-print(f"instances={len(rows)} genuine_disagreements={len(bad)} "
-      f"bppf_internal/hpac median={statistics.median(ratios):.1f} range=[{ratios[0]:.1f}, {ratios[-1]:.1f}]")
+import csv, glob, statistics, collections
+rows = []
+for path in sorted(glob.glob("results/raw/campaign_h_fphpf_*.csv")):
+    rows += list(csv.DictReader(open(path)))
+by_n = collections.defaultdict(list)
+merged = collections.defaultdict(lambda: [0, 0])
+for r in rows:
+    n = int(r["n"])
+    by_n[n].append(float(r["ratio_fphpf_over_hpac"]))
+    merged[n][1] += 1
+    if r["same_partition"] != "True":
+        merged[n][0] += 1
+print(f"instances={len(rows)}  hpac_never_slower={all(q >= 1 for v in by_n.values() for q in v)}")
+for n in sorted(by_n):
+    q = by_n[n]
+    print(f"  n={n:>6}  #={len(q):>4}  median fphpf/hpac={statistics.median(q):>8.1f}x"
+          f"  layers_merged_by_fphpf={merged[n][0]}/{merged[n][1]}")
 EOF
 else
-  echo "campaign_g_bppf_native.csv not present, skipping"
+  echo "campaign_h_fphpf_*.csv not present, skipping"
 fi
 
 # the browsable Markdown edition under docs/report/ (needs the PDF's LaTeX

@@ -1,0 +1,4 @@
+instance,n,layers_hpac,layers_fphpf,same_partition,same_breakpoints,hpac_median_ns,fphpf_solve_median_ns,ratio_fphpf_over_hpac
+gen_n20000_rho0.9_independent-signed_seed0.pcf,20000,10858,10858,True,True,33238000,22924890000,689.719
+gen_n50000_rho0.9_independent-signed_seed0.pcf,50000,26695,26695,True,True,98791000,168164752000,1702.228
+gen_n100000_rho0.9_independent-signed_seed0.pcf,100000,52529,52528,False,False,227671000,910241338000,3998.056

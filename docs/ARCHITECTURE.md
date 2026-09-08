@@ -31,11 +31,12 @@ src/                          implementation, one algorithm per file
   benchmark.cpp                 pcf_benchmark executable
   internal/work_graph.hpp      shared internal graph-contraction helper
 tests/test_main.cpp           CTest suite (pcf_tests) — see docs/VALIDATION.md
-third_party/bppf/             unmodified upstream Bounded-Precision
-                               Parametric Pseudoflow source (third-party
-                               comparison baseline)
+third_party/fphpf/            upstream fully parametric HPF source
+                               (Hochbaum group; two printf formats patched,
+                               see its UPSTREAM_README.md) -- comparison
+                               baseline
 tools/                        Python: instance generators, benchmark runner,
-                               BPPF comparison driver, aggregation/reporting
+                               FPHPF race driver, aggregation/reporting
 instances/                    committed small fixtures + manifests;
                                bulk archives are generated, not committed
 results/                      raw and processed campaign data, LaTeX tables
@@ -100,15 +101,13 @@ stale ones, which grows to $\Theta(n^2)$ heap entries on a high-degree hub
   emitting one CSV row per repetition (`elapsed_ns`, `peak_rss_kib`,
   operation counters for `rac`, `git_commit`, `timestamp_utc`); driven by
   `tools/run_benchmark.py` for a full campaign.
-- `pcf_bppf` / `pcf_bppf_oracle`: the unmodified upstream BPPF binaries
-  (`third_party/bppf/`), built without and with `-DBREAKPOINTS`
-  respectively, used only by the timed comparison
-  `tools/run_bppf_native_campaign.py` (see README's "The BPPF
-  comparison"): one `pcf_bppf` process per instance sweeps a whole probe
-  sequence in BPPF's native affine encoding
-  (`tools/convert_to_bppf_sequence.py`) inside the timed region, and one
-  `pcf_bppf_oracle` run per instance checks closure agreement with `hpac`
-  outside it.
+- `pcf_fphpf`: the upstream fully parametric HPF solver
+  (`third_party/fphpf/`), used only by the head-to-head race
+  `tools/race_fphpf.py` (see README's "The comparison with parametric
+  pseudoflow"): one process per instance receives the instance and a
+  parameter range (`tools/convert_to_fphpf.py`) and computes all breakpoints
+  itself; its partition is compared with `hpac`'s and every breakpoint is
+  recomputed exactly from it.
 
 ## Analysis pipeline
 

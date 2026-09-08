@@ -21,7 +21,8 @@ All campaigns were frozen in `docs/EXPERIMENTAL_PLAN_V3.md` before any run, toge
 | C | `mixed-forest` | $10\,000,\dots,100\,000$ | 240 | 3 | `HPaC`, `DHPaC`, `RaC`; `PaC`, `DPaC` at $10^4$, $2\cdot10^4$ |
 | D | `path-`, `binary-`, `star-mixed` | 10 sizes, $100\dots100\,000$ | 60 | 3 | `HPaC`, `RaC`, `DHPaC`, `PaC`, `DPaC` |
 | E | `in-`, `out-forest` | 20 sizes, $100\dots100\,000$ | 240 | 3 | `HPaC`, `DHPaC`, `HIPaC`/`HOPaC`, `RaC` |
-| G | `mixed-forest` | $100,200,\dots,1\,000$ | 240 | 3 | `HPaC` against `BPPF` |
+| H | `mixed-forest` | $100,200,\dots,1\,000$ | 240 | 11 | `HPaC` against `FPHPF` (both from scratch) |
+| H$'$ | `mixed-forest` | $10^4,2\cdot10^4,5\cdot10^4,10^5$ | 24, 24, 6, 1 | 1 | `HPaC` against `FPHPF`, exploratory |
 
 
 <a id="table-4"></a>

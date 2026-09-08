@@ -552,7 +552,7 @@ def main() -> None:
                         contents_markdown(pages) + "\n---\n")
     body = re.sub(r"\n---\n\s*·\s*", "\n---\n\nNext: ", body)
     header = ("# Parametric Maximum Closure on Directed Forests\n"
-              "## Computational report — data release `v0.3.0`\n\n"
+              "## Computational report — data release `v0.4.0`\n\n"
               "Valerio Dose · Fabio Furini · Marco Locatelli\n\n"
               "*Browsable edition of "
               "[`report/computational_report.pdf`](../../report/computational_report.pdf); "

@@ -4,7 +4,7 @@ All of them solve the same problem and return the same object: given a directed 
 
 <a id="table-1"></a>
 
-**Table 1.** The algorithms compared in this report: the class of forests each one applies to, its worst-case time and space bounds, and how it selects the next candidate. Bounds are those proved in the manuscript, except `BPPF`'s, which is the published bound of the parametric pseudoflow method on a graph with $n$ vertices and $m$ arcs. A forest has $m\le n-1$, i.e. $m=\mathcal O(n)$, so on *our* inputs `BPPF`'s bounds specialize to $\mathcal O(n^2\log n)$ time and $\mathcal O(n)$ space: its time bound is worse than that of every algorithm above it, which is the theoretical reason a forest-specific method is worth having.
+**Table 1.** The algorithms compared in this report: the class of forests each one applies to, its worst-case time and space bounds, and how it selects the next candidate. Bounds are those proved in the manuscript, except `FPHPF`'s, which is the published bound of the parametric pseudoflow method on a graph with $n$ vertices and $m$ arcs. A forest has $m\le n-1$, i.e. $m=\mathcal O(n)$, so on *our* inputs `FPHPF`'s bounds specialize to $\mathcal O(n^2\log n)$ time and $\mathcal O(n)$ space: its time bound is worse than that of every algorithm above it, which is the theoretical reason a forest-specific method is worth having.
 
 |  | Applies to | Time | Space | Selection of the best candidate |
 |---|---|---|---|---|
@@ -15,7 +15,7 @@ All of them solve the same problem and return the same object: given a directed 
 | `HIPaC` | in-forests | $\mathcal O(n\log n)$ | $\mathcal O(n)$ | one heap over the vertices |
 | `HOPaC` | out-forests | $\mathcal O(n\log n)$ | $\mathcal O(n)$ | one heap, dual order |
 | `RaC` | any tree | $\mathcal O(n\log n)$ | $\mathcal O(n\log n)$ | none: top-tree contraction |
-| `BPPF` | general graphs | $\mathcal O(mn\log n)$ | $\mathcal O(m)$ | external, parametric pseudoflow |
+| `FPHPF` | general graphs | $\mathcal O(mn\log n)$ | $\mathcal O(m)$ | external, fully parametric pseudoflow |
 |  | *on a forest* | $\mathcal O(n^2\log n)$ | $\mathcal O(n)$ | *since $m\le n-1$* |
 
 
@@ -27,7 +27,7 @@ What each one does, and what the experiments below add:
 - **`DHPaC`** is its dual, within $25\%$ of it everywhere.
 - **`HIPaC`** exploits out-degree $\le1$: the minimal preceding set of an arc is then a singleton, so one heap value per vertex suffices and no closure sums are propagated. Takes $0.52$–$0.75$ of `HPaC`'s time. **`HOPaC`** is the symmetric case (in-degree $\le1$): $0.57$–$0.78$.
 - **`RaC`** contracts the tree in $\mathcal O(\log n)$ rake-and-compress rounds, computing cluster functions, then recovers the thresholds top-down. It is the only algorithm whose cost does not depend on how often a single vertex is touched – hence the winner on stars, by up to $250\times$.
-- **`BPPF`** is the external baseline: it solves a strictly more general problem, evaluates minimum cuts at parameter values supplied by the caller, and uses fixed-point arithmetic – hence the precision caveat of [Comparison with parametric pseudoflow](12-comparison-with-parametric-pseudoflow.md). Its $\mathcal O(mn\log n)$ bound is stated for a general precedence graph; a forest has $m\le n-1$, so on the instances of this report it reads $\mathcal O(n^2\log n)$: a factor $n$ above the $\mathcal O(n\log n)$ of `RaC` and of the single-orientation variants, and a factor $\log n$ above the $\mathcal O(n^2)$ of `PaC`. The measured gap of [Comparison with parametric pseudoflow](12-comparison-with-parametric-pseudoflow.md) should be read against that: it is a factor of a few, far smaller than the gap between the bounds.
+- **`FPHPF`** is the external baseline: Hochbaum's fully parametric pseudoflow solver, which solves a strictly more general problem and, given a parameter range only, locates every breakpoint by itself. It works in floating point with a fixed tolerance $10^{-7}$ on the parameter – hence the precision caveat of [Comparison with the fully parametric pseudoflow solver](12-comparison-with-the-fully-parametric-pseudoflow-solver.md). Its $\mathcal O(mn\log n)$ bound is stated for a general precedence graph; a forest has $m\le n-1$, so on the instances of this report it reads $\mathcal O(n^2\log n)$: a factor $n$ above the $\mathcal O(n\log n)$ of `RaC` and of the single-orientation variants, and a factor $\log n$ above the $\mathcal O(n^2)$ of `PaC`.
 
 Two remarks that matter for reading the results. First, `PaC` and `HPaC` are the *same algorithm* under two schedules – the difference measured in [Medium sizes: direct scan versus heap](08-random-forests.md#medium-sizes-direct-scan-versus-heap) is entirely the cost of finding the maximum-ratio candidate. Second, `RaC` pays a structural overhead per component (cluster bookkeeping) that the others do not, which is why density matters so much in [Large sizes, and the effect of density](08-random-forests.md#large-sizes-and-the-effect-of-density): a sparse forest is many small components.
 

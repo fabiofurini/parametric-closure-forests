@@ -1,5 +1,5 @@
 # Parametric Maximum Closure on Directed Forests
-## Computational report — data release `v0.3.0`
+## Computational report — data release `v0.4.0`
 
 Valerio Dose · Fabio Furini · Marco Locatelli
 
@@ -39,7 +39,7 @@ Unless a caption says otherwise, every time is CPU time in milliseconds, every �
 - [Structured classes](09-structured-classes.md)
 - [Single orientations](10-single-orientations.md)
 - [Implementation note: heap policy](11-implementation-note-heap-policy.md)
-- [Comparison with parametric pseudoflow](12-comparison-with-parametric-pseudoflow.md)
+- [Comparison with the fully parametric pseudoflow solver](12-comparison-with-the-fully-parametric-pseudoflow-solver.md)
 - [Dispersion of the measurements](13-dispersion-of-the-measurements.md)
 
 ### Appendix

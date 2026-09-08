@@ -106,8 +106,8 @@ present on the machine:
    (or the committed fixture manifest) against a tracked small fixture
 8. `build/pcf_solve --instance instances/mixed_tree.pcf --algorithm pac`,
    `...--algorithm hpac`, `...--algorithm rac` and diff the outputs
-9. `python3 tools/run_bppf_native_campaign.py ...` on one small instance
-   (BPPF comparison driver smoke test)
+9. `python3 tools/race_fphpf.py --hpf build/pcf_fphpf ...` on one small
+   instance (fully-parametric pseudoflow race smoke test)
 10. `tools/run_benchmark.py` on the `/tmp/smoke` instances followed by
     `tools/aggregate_results.py` and `tools/emit_latex_tables.py`, producing
     a table from data generated entirely inside the clean clone

@@ -11,6 +11,16 @@ Data Availability and the instance appendix rewritten from this sweep
 release v0.3.0 cut with the packaged assets. Remaining open items are
 tracked in the checklists below.
 
+**Addendum (2026-09-08).** Campaign G (BPPF, the bounded-precision *simple*
+parametric solver driven with probe values derived from `hpac`'s thresholds)
+is withdrawn and replaced by campaign H: a head-to-head race against
+Hochbaum's *fully parametric* HPF (`third_party/fphpf/`), which computes all
+breakpoints from a parameter range alone. Same 2,400 campaign-B instances,
+11 repetitions per side, plus a small exploratory extension to `n = 10^5`.
+The results and the sweep protocol are in `docs/EXPERIMENTAL_PROTOCOL.md`;
+the rationale in `PROVENANCE_local.md` and `COMPUTATIONAL_HISTORY_local.md`.
+The text below is left as the historical record of the V3 sweep.
+
 This plan supersedes every benchmark result produced before 2026-08-31. All
 prior raw/processed results were moved to the untracked local folder
 `_OLD_RUNS_ARCHIVE_20260831/` (kept only for reference during the redo, and
