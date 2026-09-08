@@ -49,8 +49,16 @@ target_compile_definitions(pcf_benchmark PRIVATE PCF_GIT_COMMIT="${PCF_GIT_COMMI
 
 # Hochbaum's fully parametric HPF solver, the comparison baseline: given only
 # a parameter range it computes every breakpoint itself, so it solves the same
-# problem HPaC does and can be raced against it directly. Vendored with its
-# licence and a patch of two printf formats only -- see
+# problem HPaC does and can be raced against it directly. Its source is not
+# redistributed: third_party/fphpf/fetch.sh downloads the pinned upstream
+# commit and applies two printf-format changes only -- see
 # third_party/fphpf/UPSTREAM_README.md. Never linked into libpcf.
-add_executable(pcf_fphpf third_party/fphpf/c/hpf.c third_party/fphpf/core/libhpf.c)
-target_link_libraries(pcf_fphpf PRIVATE m)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/fphpf/c/hpf.c")
+  add_executable(pcf_fphpf third_party/fphpf/c/hpf.c third_party/fphpf/core/libhpf.c)
+  target_link_libraries(pcf_fphpf PRIVATE m)
+else()
+  message(STATUS
+    "pcf_fphpf not configured: run third_party/fphpf/fetch.sh to download the "
+    "solver from its own repository (it is not redistributed here). Only the "
+    "campaign-H comparison needs it.")
+endif()

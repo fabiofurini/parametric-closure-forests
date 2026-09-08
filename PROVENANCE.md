@@ -61,12 +61,13 @@ from: everything below was copied once, adapted, and is maintained here.
   *fully parametric* HPF solver, which is given only a parameter range and
   locates every breakpoint itself. Files taken: `src/pseudoflow/c/hpf.c`,
   `src/pseudoflow/core/libhpf.{c,h}` and `LICENSE.md`.
-- **Destination**: `third_party/fphpf/`, keeping the upstream `c/` and `core/`
-  layout so no include path changes. Built as the standalone `pcf_fphpf`
-  executable; never linked into `libpcf`.
-- **License**: UC Berkeley research license, reproduced verbatim in
-  `third_party/fphpf/LICENSE.md` as it requires. Created by Quico Spaen and
-  Dorit S. Hochbaum, modified by Ayleen Irribarra.
+- **Destination**: not redistributed. `third_party/fphpf/fetch.sh` downloads
+  the pinned commit from the authors' repository into `third_party/fphpf/`
+  (upstream `c/` and `core/` layout, git-ignored) and applies the two format
+  changes below. Built as the standalone `pcf_fphpf` executable; never linked
+  into `libpcf`.
+- **License**: UC Berkeley research licence, fetched with the source. Created
+  by Quico Spaen and Dorit S. Hochbaum, modified by Ayleen Irribarra.
 - **Transformation**: two `printf` format strings, and nothing else, recorded
   as `third_party/fphpf/local.patch` — the timing line `%.3lf` → `%.9lf`, and
   the per-group parameter line `%lf` → `%.17g`. No algorithmic line is

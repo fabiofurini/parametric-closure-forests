@@ -1,4 +1,4 @@
-# Fully parametric HPF (upstream vendored copy)
+# Fully parametric HPF (fetched from upstream, not redistributed)
 
 Hochbaum's **fully parametric** pseudoflow minimum-cut solver: given only a
 range for the parameter, it computes every breakpoint by itself. This is the
@@ -9,25 +9,28 @@ Section "Comparison with parametric pseudoflow".
   ("Fully Parametric Cut HPF for Linear parameter functions, Version 2 --
   May 2025"), landing page
   <https://riot.ieor.berkeley.edu/Applications/full-para-HPF/pseudoflow-parametric-cut.html>.
-- **Commit vendored**: `fbd480fb1c4215792768b2a22f01d731a9fb6a27` (2025-05-27).
-- **Files taken** (kept in the upstream `c/` and `core/` layout so that `hpf.c`'s `#include "../core/libhpf.h"` needs no change): `src/pseudoflow/c/hpf.c`, `src/pseudoflow/core/libhpf.c`,
-  `src/pseudoflow/core/libhpf.h`, `LICENSE.md`. Nothing else is used; the
-  Python and Matlab wrappers are not built.
+- **Commit used** (pinned in `fetch.sh`): `fbd480fb1c4215792768b2a22f01d731a9fb6a27` (2025-05-27).
+- **Not redistributed**: the solver's source is not committed here. Run
+  `third_party/fphpf/fetch.sh`, which downloads the pinned commit from the
+  authors' repository into `c/` and `core/` (the upstream layout, so that
+  `hpf.c`'s `#include "../core/libhpf.h"` needs no change), copies their
+  `LICENSE.md`, and applies the two format changes below, verifying each.
+  Files used: `src/pseudoflow/c/hpf.c`, `src/pseudoflow/core/libhpf.c`,
+  `src/pseudoflow/core/libhpf.h`. The Python and Matlab wrappers are not
+  built. `c/`, `core/` and `LICENSE.md` are git-ignored.
 - **Method**: a variant of the fully parametric HPF algorithm of
   DS Hochbaum (2008), *The Pseudoflow algorithm: a new algorithm for the
   maximum flow problem*, Operations Research 58(4):992-1009 -- the same
   reference the manuscript cites as the state of the art for arbitrary
   precedence graphs.
-- **License**: UC Berkeley (see `LICENSE.md`), which permits use, copying,
-  modification and distribution for research and not-for-profit purposes
-  provided the copyright notice and its two disclaimer paragraphs travel with
-  every copy and modification. `LICENSE.md` is reproduced here verbatim for
-  that reason. Created by Quico Spaen and Dorit S. Hochbaum, modified by
-  Ayleen Irribarra.
+- **License**: UC Berkeley research licence, fetched together with the
+  source (`LICENSE.md`, git-ignored). Created by Quico Spaen and Dorit S.
+  Hochbaum, modified by Ayleen Irribarra.
 
 ## Local modifications
 
-`local.patch` is the exact diff against the upstream commit above. It touches
+`local.patch` is the exact diff against the upstream commit above (applied by
+`fetch.sh` as two explicit substitutions, each verified). It touches
 **two `printf` format strings and nothing else** -- no algorithm, no data
 structure, no control flow:
 
@@ -47,8 +50,8 @@ structure, no control flow:
    partition had 5413 layers against HPaC's 5414; at 17 significant digits
    both have 5414.
 
-Reproduce with: clone the upstream commit, apply `local.patch`, and the
-sources here are byte-identical.
+Reproduce with `fetch.sh`; the result is byte-identical to the sources the
+measurements of campaign H were made with.
 
 ## Reading the output (important)
 
@@ -140,6 +143,8 @@ parametric pseudoflow solver" states the protocol in full. In short:
 Reproduce the whole campaign with:
 
 ```bash
+third_party/fphpf/fetch.sh          # downloads the solver from its authors' repo
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --target pcf_fphpf
 python3 tools/race_fphpf.py --pcf-solve build/pcf_solve \
   --pcf-benchmark build/pcf_benchmark --hpf build/pcf_fphpf \

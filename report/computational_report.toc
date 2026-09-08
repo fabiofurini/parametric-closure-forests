@@ -31,6 +31,6 @@
 \contentsline {paragraph}{Agreement and precision.}{28}{section*.12}%
 \contentsline {paragraph}{Caveat stated by the solver's authors.}{29}{section*.13}%
 \contentsline {paragraph}{Superseded comparison.}{29}{section*.14}%
-\contentsline {section}{\numberline {13}Dispersion of the measurements}{29}{section.13}%
+\contentsline {section}{\numberline {13}Dispersion of the measurements}{30}{section.13}%
 \contentsline {section}{\numberline {A}Per-family detail at every size}{30}{appendix.A}%
 \contentsline {section}{\numberline {B}Reproducing this report}{30}{appendix.B}%

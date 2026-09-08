@@ -31,10 +31,10 @@ src/                          implementation, one algorithm per file
   benchmark.cpp                 pcf_benchmark executable
   internal/work_graph.hpp      shared internal graph-contraction helper
 tests/test_main.cpp           CTest suite (pcf_tests) — see docs/VALIDATION.md
-third_party/fphpf/            upstream fully parametric HPF source
-                               (Hochbaum group; two printf formats patched,
-                               see its UPSTREAM_README.md) -- comparison
-                               baseline
+third_party/fphpf/            fetch.sh + local.patch for the upstream fully
+                               parametric HPF (Hochbaum group), the comparison
+                               baseline; its source is downloaded, not
+                               redistributed (see its UPSTREAM_README.md)
 tools/                        Python: instance generators, benchmark runner,
                                FPHPF race driver, aggregation/reporting
 instances/                    committed small fixtures + manifests;

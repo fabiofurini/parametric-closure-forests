@@ -30,3 +30,9 @@ report/*.bbl
 report/*.blg
 _OLD_RUNS_ARCHIVE_*/
 build-asan/
+
+# Hochbaum's fully parametric HPF solver is fetched, not redistributed:
+# run third_party/fphpf/fetch.sh (see third_party/fphpf/UPSTREAM_README.md).
+third_party/fphpf/c/
+third_party/fphpf/core/
+third_party/fphpf/LICENSE.md

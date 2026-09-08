@@ -67,6 +67,8 @@ jobs:
             --campaign-id ci_smoke --baseline hpac --candidate rac --group-by n_nodes
       - name: Fully-parametric HPF race smoke test (one small instance)
         run: |
+          third_party/fphpf/fetch.sh
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build --target pcf_fphpf --parallel 2
           mkdir -p /tmp/ci_fphpf && cp instances/mixed_tree.pcf /tmp/ci_fphpf/
           python3 tools/race_fphpf.py --pcf-solve build/pcf_solve \

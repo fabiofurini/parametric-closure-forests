@@ -1,6 +1,6 @@
 # Comparison with the fully parametric pseudoflow solver
 
-The external baseline is the public implementation of Hochbaum's *fully parametric* pseudoflow algorithm, `FPHPF` (`hochbaumGroup/pseudoflow-parametric-cut-v2`, version 2, May 2025, vendored in `third_party/fphpf/` with its license and a two-line `printf` patch). Unlike a simple parametric solver, which evaluates minimum cuts at parameter values supplied by the caller, `FPHPF` receives the instance and a parameter range only and locates every breakpoint by itself. It therefore solves exactly the problem `HPaC` solves, and the two can be raced with no information passing from one to the other.
+The external baseline is the public implementation of Hochbaum's *fully parametric* pseudoflow algorithm, `FPHPF` (`hochbaumGroup/pseudoflow-parametric-cut-v2`, version 2, May 2025; its source is not redistributed in our repository but downloaded from the authors' one by `third_party/fphpf/fetch.sh` at a pinned commit, with a two-line `printf` patch). Unlike a simple parametric solver, which evaluates minimum cuts at parameter values supplied by the caller, `FPHPF` receives the instance and a parameter range only and locates every breakpoint by itself. It therefore solves exactly the problem `HPaC` solves, and the two can be raced with no information passing from one to the other.
 
 ### Protocol
 

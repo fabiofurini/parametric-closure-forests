@@ -1453,8 +1453,9 @@ $n$ & \#inst & ms & MiB & ms & MiB \\
 
 The external baseline is the public implementation of Hochbaum's \emph{fully
 parametric} pseudoflow algorithm, \texttt{FPHPF}
-(\texttt{hochbaumGroup/pseudoflow-parametric-cut-v2}, version 2, May 2025,
-vendored in \texttt{third\_party/fphpf/} with its license and a two-line
+(\texttt{hochbaumGroup/pseudoflow-parametric-cut-v2}, version 2, May 2025; its
+source is not redistributed in our repository but downloaded from the authors'
+one by \texttt{third\_party/fphpf/fetch.sh} at a pinned commit, with a two-line
 \texttt{printf} patch). Unlike a simple parametric solver, which evaluates
 minimum cuts at parameter values supplied by the caller, \texttt{FPHPF}
 receives the instance and a parameter range only and locates every breakpoint

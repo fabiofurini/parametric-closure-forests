@@ -77,7 +77,9 @@ differential-testing check in `pcf_tests`.
 ### The comparison with parametric pseudoflow
 
 The external baseline is Hochbaum's **fully parametric** HPF solver
-(`third_party/fphpf/`, `pseudoflow-parametric-cut-v2`, May 2025): given the
+(`pseudoflow-parametric-cut-v2`, May 2025, downloaded by
+`third_party/fphpf/fetch.sh` from the authors' repository — its source is not
+redistributed here): given the
 instance and a parameter range only, it locates every breakpoint by itself,
 so it solves exactly the problem the algorithms above solve and can be raced
 against them with no information passing from one side to the other
@@ -129,7 +131,7 @@ include/, src/     C++ library, CLI solver (pcf_solve) and benchmark runner (pcf
 tests/             CTest suite (pcf_tests) — exhaustive oracle + differential checks
 tools/             instance generators, benchmark runner, FPHPF converter and race driver,
                    aggregation/reporting/packaging pipeline (Python + shell)
-third_party/fphpf/ upstream fully-parametric HPF source (+2-line printf patch) — comparison baseline
+third_party/fphpf/ fetch script + 2-line printf patch for the upstream fully-parametric HPF (source not redistributed)
 instances/         committed small fixtures + manifests; bulk archives are
                    generated, not committed (see docs/REPRODUCIBILITY.md)
 results/           raw and processed campaign data, LaTeX table fragments
