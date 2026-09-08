@@ -189,4 +189,5 @@ coefficient families, sizes, seeds, algorithms) are as follows:
   single solver run already takes seconds to minutes there. Campaign G, the
   earlier comparison against the bounded-precision *simple* parametric solver
   fed with probes built from `hpac`'s own thresholds, was withdrawn on
-  2026-09-08 (see `PROVENANCE_local.md`).
+  2026-09-08; the rationale, and the full provenance of the solver used
+  here, are in `third_party/fphpf/UPSTREAM_README.md`.

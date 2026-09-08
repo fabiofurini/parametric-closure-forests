@@ -105,10 +105,58 @@ This is reported in the manuscript alongside the measurements: the numbers
 here characterise this public implementation, not a lower bound on what the
 fully parametric HPF method could achieve.
 
+## How this solver is used here
+
+`tools/convert_to_fphpf.py` writes one input file per instance and
+`tools/race_fphpf.py` runs the race; `docs/EXPERIMENTAL_PROTOCOL.md`
+(campaign H) states the sweep, and the report's "Comparison with the fully
+parametric pseudoflow solver" states the protocol in full. In short:
+
+- **Input.** The instance is encoded through the standard
+  maximum-closure/minimum-cut reduction, with source- and sink-adjacent
+  capacities affine in the parameter. Because the solver requires
+  source-adjacent capacities to be non-decreasing in its parameter while the
+  manuscript's vertex value `p_i - lambda*w_i` decreases in lambda, the
+  solver is run on `mu = -lambda`: `source->i` gets `(const, mult) =
+  (p_i, w_i)`, `i->sink` gets `(-p_i, -w_i)`, and each precedence arc gets a
+  large constant capacity with zero multiplier. The parameter range is
+  `[-max|p_i|-1, +max|p_i|+1]`, which brackets every vertex ratio because
+  `w_i >= 1`, and is derived from the instance alone.
+- **What is given to it.** The instance and that range, and nothing else. In
+  particular no threshold, probe or breakpoint computed by any algorithm of
+  this repository ever reaches it: the solver locates all breakpoints itself.
+- **What is taken from it.** Only the partition of the vertices into closure
+  layers. Every breakpoint is then recomputed here in exact rational
+  arithmetic as `lambda_r = P(I_r)/W(I_r)`, so no floating-point value it
+  produces enters any reported number.
+- **What is timed.** Its own internal solve timer (the third field of the `t`
+  line, input parsing and process start-up excluded), against `hpac`'s
+  in-process time for the full parametric sweep on the same instance, both as
+  medians of 11 repetitions run in the same session.
+- **Role.** Competitor in a timed race, never a correctness oracle. The
+  algorithms of this repository are validated independently
+  (`docs/VALIDATION.md`).
+
+Reproduce the whole campaign with:
+
+```bash
+cmake --build build --target pcf_fphpf
+python3 tools/race_fphpf.py --pcf-solve build/pcf_solve \
+  --pcf-benchmark build/pcf_benchmark --hpf build/pcf_fphpf \
+  --instances instances/campaign_b --repetitions 11 \
+  --output results/raw/campaign_h_fphpf_mixed_n100-1000.csv
+```
+
 ## Relationship to the simple-parametric solver
 
 Not to be confused with
 <https://github.com/hochbaumGroup/Bounded-precision-simple-parametric>, the
 *simple* parametric solver, which only evaluates minimum cuts at parameter
 values supplied by the caller and therefore cannot compute the parametric
-solution on its own.
+solution on its own. Every earlier version of this study used that solver as
+its baseline, which forced the comparison to hand it the `k+1` probe values
+bracketing `hpac`'s own exact thresholds. That protocol was withdrawn on
+2026-09-08 together with `third_party/bppf/`, the tools
+`convert_to_bppf_sequence.py` and `run_bppf_native_campaign.py`, the CMake
+targets `pcf_bppf`/`pcf_bppf_oracle` and campaign G's data; all of it remains
+in git history at tag `v0.3.0`.

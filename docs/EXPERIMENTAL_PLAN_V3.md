@@ -18,7 +18,9 @@ Hochbaum's *fully parametric* HPF (`third_party/fphpf/`), which computes all
 breakpoints from a parameter range alone. Same 2,400 campaign-B instances,
 11 repetitions per side, plus a small exploratory extension to `n = 10^5`.
 The results and the sweep protocol are in `docs/EXPERIMENTAL_PROTOCOL.md`;
-the rationale in `PROVENANCE_local.md` and `COMPUTATIONAL_HISTORY_local.md`.
+the provenance of the solver, the two format-only patches applied to it and
+the reason the previous baseline was withdrawn are in
+`third_party/fphpf/UPSTREAM_README.md`.
 The text below is left as the historical record of the V3 sweep.
 
 This plan supersedes every benchmark result produced before 2026-08-31. All
