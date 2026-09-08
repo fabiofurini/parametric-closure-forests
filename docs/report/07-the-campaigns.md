@@ -29,7 +29,7 @@ All campaigns were frozen in `docs/EXPERIMENTAL_PLAN_V3.md` before any run, toge
 
 **Table 4.** Work actually done per algorithm over the sweep. The runs-per-instance column reflects the mix of repetition counts and cutoffs: `PaC` and `DPaC` appear on fewer instances (size cutoffs) but with more repetitions each, since they were mostly exercised on the medium campaign where 11 repetitions were used. `RaC` appears on the most instances, being the only algorithm run on every class at every size.
 
-| algorithm | instances | timed runs | runs/instance |
+| algorithm | #inst | timed runs | runs/instance |
 |---|---|---|---|
 | `PaC` | 4 080 | 31 200 | 7.6 |
 | `DPaC` | 3 480 | 29 400 | 8.4 |
